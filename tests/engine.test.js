@@ -190,3 +190,20 @@ test('الجواب يسجّل مين جاوب وكم أخذ وقت', () => {
   s = step(s, { type: 'next' });
   assert.deepEqual(s.attempts, [], 'المحاولات تنمسح كل جولة');
 });
+
+test('اختيار الفئات: اللعبة ما تطلع إلا من الفئات المختارة', () => {
+  const cats = Object.keys(BANK).slice(0, 3);
+  let s = step(E.create({ seed: 9 }), { type: 'setCats', cats });
+  s = step(s, { type: 'start', bank: BANK });
+  assert.ok(s.deck.every(c => cats.includes(c.cat)) && cats.includes(s.cur.cat));
+});
+
+test('اختيار الفئات: أقل من 3 مرفوض، وnull يرجع للكل، والإعادة تحفظ الاختيار', () => {
+  const s0 = E.create();
+  assert.equal(E.reduce(s0, { type: 'setCats', cats: Object.keys(BANK).slice(0, 2) }).ok, false);
+  let s = step(s0, { type: 'setCats', cats: Object.keys(BANK).slice(0, 4) });
+  assert.equal(E.reduce(s, { type: 'reset' }).state.cats.length, 4);
+  s = step(s, { type: 'setCats', cats: null }); assert.equal(s.cats, null);
+  s = step(s, { type: 'start', bank: BANK });
+  assert.ok(E.reduce(s, { type: 'setCats', cats: Object.keys(BANK).slice(0, 3) }).ok === false, 'ما ينفع وسط اللعبة');
+});

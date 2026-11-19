@@ -7,6 +7,7 @@ const SAVE_KEY = 'mazad-host', SAVE_MAX_AGE = 6 * 3600 * 1000;
 let S = null;          // حالة المحرّك
 let P = {};            // اللاعبين: id -> { name, team, pub, seq }
 let ROOM = null, net = null;
+const KICKED = new Set();  // اللي طلّعهم المضيف ما يرجعون لنفس الغرفة
 let T = null, auto = null;
 let shownRound = 0;    // آخر جولة انعرضت فيها حركة الفئة
 let shownReveal = 0;   // آخر جولة انعرض فيها العد التنازلي
@@ -64,9 +65,11 @@ async function onJoin(m) {
   if (await Auth.idFromPub(m.pub) !== m.id) return;
   if (!await Auth.verify(m.pub, Auth.joinParts(m), m.sig)) return;
   const known = P[m.id];
+  if (KICKED.has(m.id)) { net.send({ t: 'denied', room: ROOM, id: m.id, why: 'المضيف طلّعك من الغرفة.' }); return; }
   if (S.phase === 'lobby') {
     if (!(m.team >= 0 && m.team < S.teams.length)) return;
-    P[m.id] = { name: String(m.name || 'لاعب').trim().slice(0, 14) || 'لاعب', team: m.team, pub: m.pub, seq: known ? known.seq : 0 };
+    // لو المضيف نقله، فريقه يبقى اللي اختاره المضيف
+    P[m.id] = { name: String(m.name || 'لاعب').trim().slice(0, 14) || 'لاعب', team: known && known.movedBy ? known.team : m.team, pub: m.pub, seq: known ? known.seq : 0, movedBy: known ? known.movedBy : false };
     save(); lobbyRoster();
   } else if (!known) {
     net.send({ t: 'denied', room: ROOM, id: m.id, why: 'اللعبة بدأت. انتظروا اللعبة الجاية.' });
@@ -123,19 +126,45 @@ function lobby() {
       </div>
     </div>
     <div class="roster" id="roster"></div>
-    <p class="mute">الفريق اللي ما عنده جوال يقدر يراهن ويجاوب من هالشاشة.</p>
+    <p class="mute">الفريق اللي ما عنده جوال يقدر يراهن ويجاوب من هالشاشة. اضغط ⇄ تنقل لاعب، أو ✕ تطلّعه.</p>
+    <div class="catpick" id="cats"></div>
     <div class="row"><button class="px g" id="go">ابدأ اللعبة</button><button class="px d mini" id="newroom">غرفة جديدة</button></div></div>`;
   try { new QRCode($('qr'), { text: url, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { $('qr').textContent = ROOM; }
-  lobbyRoster();
-  $('go').onclick = () => { SFX.win(); dispatch({ type: 'start', bank: BANK, seed: crypto.getRandomValues(new Uint32Array(1))[0] }); };
+  lobbyRoster(); catPicker();
+  $('go').onclick = () => { SFX.win(); if (!dispatch({ type: 'start', bank: BANK, seed: crypto.getRandomValues(new Uint32Array(1))[0] })) { const n = $('catnote'); if (n) n.textContent = 'اختاروا ' + Engine.MIN_CATS + ' فئات على الأقل'; } };
   $('newroom').onclick = () => { P = {}; switchRoom(newCode()); };
 }
 function lobbyRoster() {
   const r = $('roster'); if (!r) return;
   r.innerHTML = S.teams.map((t, i) => `<div class="box ${i ? 'b' : 'a'}">
     <input class="tname" data-t="${i}" value="${esc(t.name)}" maxlength="14" aria-label="اسم الفريق ${i + 1}">
-    <p>${Object.values(P).filter(p => p.team === i).map(p => esc(p.name)).join('، ') || 'ما أحد دخل للحين'}</p></div>`).join('');
+    <div class="pchips">${Object.entries(P).filter(([, p]) => p.team === i).map(([id, p]) => `<span class="pchip">${esc(p.name)}<button data-mv="${id}" aria-label="انقل ${esc(p.name)} للفريق الثاني">⇄</button><button data-rm="${id}" aria-label="طلّع ${esc(p.name)}">✕</button></span>`).join('') || '<p>ما أحد دخل للحين</p>'}</div></div>`).join('');
+  r.onclick = e => {
+    const mv = e.target.dataset.mv, rm = e.target.dataset.rm;
+    if (mv && P[mv]) { P[mv].team = 1 - P[mv].team; P[mv].movedBy = true; net.send({ t: 'moved', room: ROOM, id: mv, team: P[mv].team }); }
+    else if (rm && P[rm]) { delete P[rm]; KICKED.add(rm); net.send({ t: 'denied', room: ROOM, id: rm, why: 'المضيف طلّعك من الغرفة.' }); }
+    else return;
+    SFX.tap(); save(); lobbyRoster(); send();
+  };
   r.querySelectorAll('.tname').forEach(inp => inp.onchange = () => { const r2 = Engine.reduce(S, { type: 'rename', team: +inp.dataset.t, name: inp.value }); if (r2.ok) { S = r2.state; save(); send(); } });
+}
+
+// اختيار الفئات: الافتراضي كلها، وأقل شي 3
+function catPicker() {
+  const box = $('cats'); if (!box) return;
+  const all = Object.keys(BANK), on = new Set(S.cats || all);
+  box.innerHTML = `<p class="k">الفئات <span class="hostnote" id="catnote">${on.size} من ${all.length}</span></p>
+    <div class="catgrid">${all.map(c => `<button class="catbtn ${on.has(c) ? 'on' : ''}" data-c="${esc(c)}" aria-pressed="${on.has(c)}">${esc(c)} <small>${BANK[c].length}</small></button>`).join('')}</div>
+    <div class="row"><button class="px d mini" id="callall">الكل</button></div>`;
+  box.onclick = e => {
+    const b = e.target.closest('.catbtn'); let next;
+    if (b) { const c = b.dataset.c; next = new Set(on); next.has(c) ? next.delete(c) : next.add(c); }
+    else if (e.target.id === 'callall') next = new Set(all);
+    else return;
+    if (next.size < Engine.MIN_CATS) { $('catnote').textContent = 'أقل شي ' + Engine.MIN_CATS + ' فئات'; return; }
+    const r = Engine.reduce(S, { type: 'setCats', cats: next.size === all.length ? null : [...next] });
+    if (r.ok) { S = r.state; save(); SFX.tap(); catPicker(); }
+  };
 }
 
 function roll() {
@@ -173,14 +202,30 @@ function howto() {
   sk.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(); });
 }
 
+// الشاشة ما تتحكم إلا بالفريق اللي ما عنده جوال
+const phonesOf = i => Object.values(P).filter(p => p.team === i).length;
+const BET_S = 30, DECIDE_S = 10;
+let betEnds = 0;
+
 function betPhase() {
   shownRound = S.round;
-  const box = i => { const t = S.teams[i], done = S.bids[i] !== null, phones = Object.values(P).filter(p => p.team === i).length;
+  if (!betEnds || betEnds < Date.now() - 60000) betEnds = Date.now() + BET_S * 1000;
+  const box = i => { const t = S.teams[i], done = S.bids[i] !== null, phones = phonesOf(i);
     return `<div class="box ${i ? 'b' : 'a'}"><b>${esc(t.name)}</b><span class="st ${done ? '' : 'blink'}">${done ? 'BET ✓' : 'WAITING…'}</span>
-      ${done ? '' : `<button class="px d mini" data-t="${i}">${phones ? 'راهن من الشاشة' : 'راهن هنا'}</button>`}</div>`; };
+      ${done ? '' : phones ? `<span class="hostnote">📱 من الجوال</span>` : `<button class="px d mini" data-t="${i}">راهن هنا</button>`}</div>`; };
   app.innerHTML = `${header()}<div class="stage"><p class="k">الفئة</p><p class="cat">${esc(S.cur.cat)}</p>
-    <p class="k">راهنوا من جوالاتكم بالسر</p><div class="wait2" id="w2">${box(0)}${box(1)}</div></div>`;
+    <p class="k">راهنوا من جوالاتكم بالسر</p><div class="wait2" id="w2">${box(0)}${box(1)}</div>
+    <div class="tm" id="btm"><b id="bsec"></b></div><p class="hostnote">اللي ما يراهن قبل نهاية الوقت يراهن بأقل مبلغ</p></div>`;
   $('w2').onclick = e => { const b = e.target.closest('button[data-t]'); if (b) screenBet(+b.dataset.t); };
+  const tick = () => {
+    const left = Math.max(0, Math.ceil((betEnds - Date.now()) / 1000));
+    const s = $('bsec'); if (s) { s.textContent = left; $('btm').classList.toggle('low', left <= 5); }
+    if (left <= 0) {
+      clearInterval(T); T = null; betEnds = 0;
+      for (let i = 0; i < S.teams.length && S.phase === 'bet'; i++) if (S.bids[i] === null) dispatch({ type: 'bid', team: i, amount: S.config.minBet });
+    }
+  };
+  tick(); T = setInterval(tick, 250);
 }
 
 function screenBet(i) {
@@ -230,7 +275,8 @@ function question() {
     <p class="q">${esc(S.cur.q)}</p>
     <div class="opts" id="ops">${S.cur.opts.map((o, k) => `<button class="opt ${k === S.gone ? 'gone' : ''}" data-k="${k}" ${k === S.gone ? 'disabled' : ''} style="background:${COLS[k]};${k === 1 || k === 2 ? 'color:var(--ink)' : ''}"><i>${LET[k]}</i>${esc(o)}</button>`).join('')}</div>
     <div class="row" style="align-items:center"><div class="tm"><b id="sec"></b><div class="bars" id="bars"></div></div>
-    <p class="stake">${S.steal ? `STEAL: +${S.stake}` : `WIN: +${S.stake} · LOSE: −${S.stake}`}</p></div></div>`;
+    <p class="stake">${S.steal ? `STEAL: +${S.stake}` : `WIN: +${S.stake} · LOSE: −${S.stake}`}</p></div>
+    ${phonesOf(S.answering) ? '<p class="hostnote">📱 جاوبوا من جوالكم</p>' : ''}</div>`;
   let lastLeft = null;
   const tick = () => {
     const left = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
@@ -245,7 +291,9 @@ function question() {
     if (left <= 0) { clearInterval(T); T = null; answer(-1); }
   };
   tick(); T = setInterval(tick, 250);
-  $('ops').onclick = e => { const b = e.target.closest('.opt'); if (b && !b.disabled) answer(+b.dataset.k, 'الشاشة'); };
+  // الشاشة تجاوب بس عن الفريق اللي ما عنده جوال
+  $('ops').onclick = e => { if (phonesOf(S.answering)) return; const b = e.target.closest('.opt'); if (b && !b.disabled) answer(+b.dataset.k, 'الشاشة'); };
+  if (phonesOf(S.answering)) $('ops').style.cursor = 'default';
 }
 let answering = false;
 function answer(k, by) {
@@ -275,7 +323,7 @@ function fx(cls) { app.classList.remove('shake', 'flash'); void app.offsetWidth;
 
 function result(prev, opts) {
   const L = S.last, t = S.teams[L.team], o = S.teams[1 - L.team];
-  const canSteal = S.phase === 'stealOffer';
+  const canSteal = S.phase === 'stealOffer', stealPhones = canSteal && phonesOf(1 - L.team) > 0;
   const amount = L.delta > 0 ? '+' + L.delta : L.delta < 0 ? '−' + (-L.delta) : '0';
   const color = L.delta > 0 ? 'var(--green)' : L.delta < 0 ? 'var(--red)' : 'var(--mute)';
   const line = L.ok ? (L.steal ? `${esc(t.name)} سرقوها!` : `صح! ${esc(t.name)} كسبوا`)
@@ -293,15 +341,25 @@ function result(prev, opts) {
     <p class="big" style="color:${color}">${amount}</p><p class="k">${line}</p>
     ${cards ? `<div class="res">${cards}</div>` : ''}
     ${L.delta ? `<div class="tally"><span class="from">${pad(startCoins[L.team])}</span><span class="arrow">▶</span><span class="to" id="tallyTo">${pad(opts.restore ? t.coins : startCoins[L.team])}</span></div>` : ''}
-    ${!canSteal ? `<p class="mute">الجواب: <b style="color:var(--ink)">${esc(L.answer)}</b></p>` : `<p class="k">${esc(o.name)}، تبون تسرقون السؤال؟ قرروا من جوالكم أو من هنا</p>`}
-    <div class="row">${canSteal ? `<button class="px r" id="st">${esc(o.name)} يسرقون</button><button class="px d" id="skip">لا، التالي</button>` : `<button class="px g" id="nx">${S.round >= S.config.rounds ? 'النتيجة النهائية' : 'السؤال الجاي'}</button>`}</div></div>`;
+    ${!canSteal ? `<p class="mute">الجواب: <b style="color:var(--ink)">${esc(L.answer)}</b></p>` : `<p class="k">${esc(o.name)}، تبون تسرقون السؤال؟ ${stealPhones ? 'قرروا من جوالكم' : ''}</p>`}
+    <div class="row">${canSteal ? (stealPhones ? '' : `<button class="px r" id="st">${esc(o.name)} يسرقون</button><button class="px d" id="skip">لا، التالي</button>`) : `<button class="px g" id="nx">${S.round >= S.config.rounds ? 'النتيجة النهائية' : 'السؤال الجاي'}</button>`}</div>
+    ${canSteal ? `<div class="tm" id="dtm"><b id="dsec">${DECIDE_S}</b></div><p class="hostnote">لو ما قرروا، نكمّل بدون سرقة</p>` : ''}</div>`;
   if (!opts.restore) {
     countUp(L.team, startCoins[L.team], t.coins);
     const to = $('tallyTo');
     if (to) { const from = startCoins[L.team], steps = 20; let k = 0; const id = setInterval(() => { k++; to.textContent = pad(Math.round(from + (t.coins - from) * k / steps)); if (k >= steps) clearInterval(id); }, 50); }
     if (L.ok) { fx('flash'); SFX.win(); if (L.delta >= 400) burst(); } else { fx('shake'); SFX.lose(); }
   }
-  if (canSteal) { $('st').onclick = () => dispatch({ type: 'steal', yes: true, now: Date.now() }); $('skip').onclick = () => dispatch({ type: 'steal', yes: false }); }
+  if (canSteal) {
+    if (!stealPhones) { $('st').onclick = () => dispatch({ type: 'steal', yes: true, now: Date.now() }); $('skip').onclick = () => dispatch({ type: 'steal', yes: false }); }
+    // مهلة القرار: بعدها نكمّل بدون سرقة
+    const ends = Date.now() + DECIDE_S * 1000;
+    T = setInterval(() => {
+      const left = Math.max(0, Math.ceil((ends - Date.now()) / 1000)), s = $('dsec');
+      if (s) { s.textContent = left; $('dtm').classList.toggle('low', left <= 3); }
+      if (left <= 0) { clearInterval(T); T = null; if (S.phase === 'stealOffer') dispatch({ type: 'steal', yes: false }); }
+    }, 250);
+  }
   else $('nx').onclick = () => dispatch({ type: 'next' });
 }
 

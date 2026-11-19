@@ -89,7 +89,8 @@ function bar() {
 /* ---------- رسائل الشاشة ---------- */
 function onMsg(m) {
   if (!m || m.room !== ME.room) return;
-  if (m.t === 'denied' && m.id === ID.id) { tab.del('mazad-seat'); return joinScreen(m.why || 'ما قدرت تدخل.'); }
+  if (m.t === 'denied' && m.id === ID.id) { tab.del('mazad-seat'); net = null; return joinScreen(m.why || 'ما قدرت تدخل.'); }
+  if (m.t === 'moved' && m.id === ID.id) { ME.team = m.team; tab.set('mazad-seat', JSON.stringify(ME)); lastKey = ''; sendJoin(); return; }
   if (m.t !== 'state') return;
   const prev = S; S = m;
   joined = (S.players[ME.team] || []).includes(ME.name);

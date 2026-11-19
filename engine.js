@@ -5,6 +5,7 @@
   if (typeof module === 'object' && module.exports) module.exports = E;
   else root.Engine = E;
 })(typeof self !== 'undefined' ? self : this, function () {
+  const MIN_CATS = 3;
   const DEFAULTS = { rounds: 12, start: 1000, minBet: 50, answerS: 10, stealS: 8, rescue: 100, teams: 2 };
 
   // مولّد أرقام عشوائية ثابت من بذرة، عشان الاختبارات تتكرر بنفس النتيجة
@@ -39,7 +40,7 @@
       teams: names.map(n => ({ name: String(n), coins: config.start, allinUsed: false })),
       deck: [], cur: null, lastCat: null, bids: names.map(() => null), allin: names.map(() => false),
       winner: null, tie: false, answering: null, steal: false, stake: 0, gone: null, deadline: null,
-      last: null, final: null, rescued: [], attempts: [], openedAt: null
+      last: null, final: null, rescued: [], attempts: [], openedAt: null, cats: null
     };
   }
 
@@ -99,10 +100,23 @@
         if (s.phase !== 'lobby' && s.phase !== 'over') return fail('ما تقدر تبدأ الحين');
         if (!a.bank) return fail('ما فيه أسئلة');
         if (a.seed !== undefined) { s.seed = a.seed >>> 0 || 1; s.rngCalls = 0; }
-        s.deck = buildDeck(a.bank, randFn(s));
+        let bank = a.bank;
+        if (Array.isArray(s.cats) && s.cats.length) {
+          bank = {}; s.cats.forEach(c => { if (a.bank[c]) bank[c] = a.bank[c]; });
+          if (Object.keys(bank).length < MIN_CATS) return fail('اختاروا ' + MIN_CATS + ' فئات على الأقل');
+        }
+        s.deck = buildDeck(bank, randFn(s));
         s.teams.forEach(t => { t.coins = s.config.start; t.allinUsed = false; });
         s.round = 0; s.lastCat = null; s.final = null;
         nextRound(s); return done();
+      }
+      case 'setCats': {
+        if (s.phase !== 'lobby' && s.phase !== 'over') return fail('ما ينفع الحين');
+        if (a.cats === null) { s.cats = null; return done(); }
+        if (!Array.isArray(a.cats)) return fail('فئات غير صالحة');
+        const uniq = [...new Set(a.cats.map(String))];
+        if (uniq.length < MIN_CATS) return fail('اختاروا ' + MIN_CATS + ' فئات على الأقل');
+        s.cats = uniq; return done();
       }
       case 'rename': {
         if (s.phase !== 'lobby' || !validTeam(a.team)) return fail('ما ينفع');
@@ -157,7 +171,7 @@
         nextRound(s); return done();
       }
       case 'reset': {
-        const fresh = create({ config: s.config, names: s.teams.map(t => t.name), seed: s.seed });
+        const fresh = create({ config: s.config, names: s.teams.map(t => t.name), seed: s.seed }); fresh.cats = s.cats;
         return { state: fresh, ok: true };
       }
       default: return fail('حركة غير معروفة');
@@ -177,5 +191,5 @@
     return v;
   }
 
-  return { DEFAULTS, create, reduce, publicView, buildDeck, rng };
+  return { DEFAULTS, MIN_CATS, create, reduce, publicView, buildDeck, rng };
 });

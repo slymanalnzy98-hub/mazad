@@ -142,3 +142,20 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--purple);outline
 .tally .from{font-size:1.1rem;color:var(--mute)}.tally .arrow{color:var(--yellow)}.tally .to{font-size:clamp(1.8rem,5vw,2.6rem);color:var(--green);text-shadow:4px 4px 0 var(--black)}
 @media (max-width:560px){.steps,.res{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.step,.res .pl,.tm.low b,.picks span{animation:none;opacity:1}#app::before,#app::after,.opt.right,.blink,.paddle.win .p,.count,.land,.shake,.pop,.pix{animation:none}.pix{display:none}}
+.knobs .homebtn{font-family:var(--pixel);font-size:.55rem;color:#c9c9d6;text-decoration:none;padding:4px 6px}
+.knobs .homebtn:focus-visible{outline:2px solid var(--yellow)}
+.hostnote{font-family:var(--pixel);font-size:.55rem;color:var(--mute)}
+/* اللوبي: لاعبين وفئات */
+.pchips{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{display:inline-flex;align-items:center;gap:4px;background:var(--black);border:2px solid var(--ink);padding:2px 4px 2px 8px;font-weight:700}
+.pchip button{all:unset;cursor:pointer;font-size:.85rem;padding:0 4px;color:var(--yellow)}
+.pchip button[data-rm]{color:var(--pink)}
+.pchip button:focus-visible{outline:2px solid var(--yellow)}
+.catpick{width:min(900px,100%);display:flex;flex-direction:column;gap:8px}
+.catgrid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.catbtn{font:inherit;font-family:var(--display);font-size:1.05rem;color:var(--mute);background:var(--black);border:3px solid #3b3b66;padding:4px 12px;cursor:pointer}
+.catbtn small{font-family:var(--pixel);font-size:.5rem;opacity:.7}
+.catbtn.on{color:var(--black);background:var(--green);border-color:var(--ink);box-shadow:3px 3px 0 var(--black)}
+.catbtn:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+/* شاشات ضيقة: الشريط العلوي ما يطلع برا */
+@media (max-width:640px){.bar{gap:6px}.team{min-width:0;padding:4px 8px}.team small{font-size:1rem}.rd{font-size:.45rem}.wait2,.roster,.res{grid-template-columns:1fr}}
