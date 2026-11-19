@@ -6,8 +6,9 @@ const MINBET = 50;
 document.getElementById('snd').onclick = e => { sound = !sound; e.target.textContent = 'SOUND: ' + (sound ? 'ON' : 'OFF'); };
 
 const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
-let ME = { id: store.get('mazad-id') || Math.random().toString(36).slice(2, 10), name: store.get('mazad-name') || '', team: null };
-store.set('mazad-id', ME.id);
+// المعرّف لكل تبويب، عشان جهازين أو تبويبين ما يتداخلون
+const tabId = (() => { try { let v = sessionStorage.getItem('mazad-id'); if (!v) { v = Math.random().toString(36).slice(2, 10); sessionStorage.setItem('mazad-id', v); } return v; } catch (e) { return Math.random().toString(36).slice(2, 10); } })();
+let ME = { id: tabId, name: store.get('mazad-name') || '', team: null };
 let net = null, S = null, lastKey = '', draft = null, myAnswer = null;
 
 function joinScreen(err) {
