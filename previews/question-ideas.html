@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أجل كم: شاشات السؤال</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Press+Start+2P&display=swap">
+<style>
+:root{--y:#ffd23f;--pink:#ff4fa3;--cyan:#39f3ff;--green:#4ef08a;--purple:#a45cff;--a:#2f80ed;--b:#eb5757;--px:"Press Start 2P",monospace;--d:"Lalezar",Tahoma,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#07061a;color:#fff;font-family:var(--d);padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tabs button{font-family:var(--d);font-size:1.15rem;color:#fff;background:#000;border:3px solid #fff;box-shadow:4px 4px 0 var(--purple);padding:4px 16px;cursor:pointer}
+.tabs button.on{background:var(--y);color:#000}
+.replay{font-family:var(--px)!important;font-size:.6rem!important;background:var(--pink)!important}
+.scr{position:relative;width:min(1140px,100%);aspect-ratio:16/9;min-height:560px;overflow:hidden;border:10px solid #2a2a36;outline:4px solid #000;box-shadow:12px 12px 0 #000;border-radius:22px;
+ background:radial-gradient(110% 90% at 50% 40%,#24245e,#16163a 55%,#0a0a22)}
+.scr::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(2px 2px at 12% 18%,#fff 98%,transparent),radial-gradient(2px 2px at 82% 12%,var(--y) 98%,transparent),radial-gradient(2px 2px at 68% 30%,#fff 98%,transparent),radial-gradient(2px 2px at 30% 40%,var(--green) 98%,transparent),radial-gradient(2px 2px at 92% 46%,#fff 98%,transparent),radial-gradient(2px 2px at 44% 8%,#fff 98%,transparent);animation:tw 1.2s steps(2) infinite}
+@keyframes tw{50%{opacity:.6}}
+.scr::after{content:"";position:absolute;inset-inline:0;bottom:0;height:22%;pointer-events:none;background:linear-gradient(rgba(255,79,163,.5) 2px,transparent 2px) 0 0/100% 20px,linear-gradient(90deg,rgba(255,79,163,.5) 2px,transparent 2px) 0 0/44px 100%;transform:perspective(220px) rotateX(58deg);transform-origin:bottom;-webkit-mask:linear-gradient(transparent,#000);mask:linear-gradient(transparent,#000);animation:fl 1s linear infinite}
+@keyframes fl{to{background-position:0 20px,0 0}}
+.hud{position:absolute;top:14px;inset-inline:3.5%;display:flex;justify-content:space-between;align-items:flex-start;z-index:3}
+.tm{color:#fff;border:4px solid #fff;box-shadow:6px 6px 0 #000;padding:4px 14px;min-width:130px}
+.tm small{display:block;font-size:1.3rem;line-height:1.1}.tm b{font-family:var(--px);font-weight:400;font-size:1rem}
+.tm.a{background:var(--a)}.tm.b{background:var(--b)}.tm.off{opacity:.45}
+.rd{font-family:var(--px);font-size:.55rem;color:var(--y);text-align:center;line-height:2}
+.rd b{display:block;font-family:var(--d);font-weight:400;font-size:1.8rem;line-height:1;color:var(--y);text-shadow:3px 3px 0 var(--pink),5px 5px 0 #000}
+.v{position:absolute;inset:0;display:none;z-index:2}.v.on{display:block}
+.qtxt{font-size:clamp(1.5rem,3.2vw,2.4rem);line-height:1.4}
+.who{font-size:1.2rem;color:#000;background:var(--cyan);padding:0 14px;box-shadow:4px 4px 0 #000;display:inline-block}
+.shake{animation:shake .4s steps(5)}@keyframes shake{25%{transform:translate(-8px,4px)}50%{transform:translate(7px,-4px)}75%{transform:translate(-4px,2px)}}
+
+/* 1 INVADERS */
+#inv .top{position:absolute;top:96px;inset-inline:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 6%}
+#inv .qtxt{background:#000;border:4px solid #fff;padding:6px 24px;box-shadow:6px 6px 0 var(--purple)}
+.fleet{position:absolute;top:44%;inset-inline:8%;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;animation:march 1.6s steps(1) infinite}
+@keyframes march{50%{transform:translateX(18px)}}
+.alien{display:flex;flex-direction:column;align-items:center;gap:6px;transition:transform .3s}
+.alien canvas{width:clamp(56px,7vw,84px);image-rendering:pixelated}
+.alien span{font-size:clamp(1.1rem,2.2vw,1.6rem);background:#000;border:3px solid var(--c);padding:0 12px;box-shadow:4px 4px 0 #000;white-space:nowrap}
+.alien i{font-style:normal;font-family:var(--px);font-size:.6rem;color:var(--c)}
+.descend{animation:down 18s linear forwards}@keyframes down{to{top:62%}}
+.ship{position:absolute;bottom:7%;left:50%;width:70px;transform:translateX(-50%);image-rendering:pixelated;z-index:2;transition:left .4s steps(4)}
+.laser{position:absolute;width:6px;background:var(--green);box-shadow:0 0 10px var(--green);z-index:2;display:none}
+.boom{position:absolute;font-family:var(--px);font-size:1.4rem;color:var(--y);text-shadow:3px 3px 0 var(--pink);z-index:3;display:none}
+.alien.dead{opacity:0;transform:scale(1.8)}.alien.win span{background:var(--green);color:#000}
+.danger{position:absolute;inset-inline:0;top:72%;border-top:3px dashed rgba(255,79,163,.7);z-index:1}
+.danger::after{content:"DANGER";position:absolute;left:10px;top:4px;font-family:var(--px);font-size:.5rem;color:var(--pink)}
+
+/* 2 HOST */
+#host .stage{position:absolute;top:90px;bottom:24px;inset-inline:4%;display:grid;grid-template-rows:1fr auto;gap:14px}
+.hostrow{display:flex;align-items:flex-end;gap:16px}
+.portrait{flex:0 0 auto;width:clamp(120px,15vw,170px);aspect-ratio:1;background:#000;border:4px solid #fff;box-shadow:6px 6px 0 var(--purple);display:grid;place-items:center;position:relative}
+.portrait canvas{width:88%;image-rendering:pixelated}
+.portrait em{position:absolute;bottom:-14px;font-style:normal;font-family:var(--px);font-size:.55rem;background:var(--y);color:#000;padding:4px 8px}
+.dlg{flex:1;background:#000c;border:4px solid #fff;outline:4px solid #000;padding:14px 22px 22px;position:relative;min-height:150px;box-shadow:inset 0 0 0 4px #2f2a6b}
+.dlg .nm{position:absolute;top:-18px;right:18px;font-size:1.1rem;background:var(--pink);padding:0 12px;border:3px solid #000}
+.dlg .qtxt::after{content:"▌";color:var(--y);animation:tw .6s steps(1) infinite}
+.dlg .more{position:absolute;left:14px;bottom:6px;color:var(--y);font-family:var(--px);font-size:.7rem;animation:tw .5s steps(1) infinite}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px 30px;background:#000c;border:4px solid #fff;outline:4px solid #000;padding:14px 26px;box-shadow:inset 0 0 0 4px #2f2a6b}
+.menu div{font-size:clamp(1.2rem,2.4vw,1.7rem);display:flex;align-items:center;gap:12px;padding:2px 8px}
+.menu div::before{content:"▶";font-size:.9rem;color:var(--y);visibility:hidden;animation:tw .5s steps(1) infinite}
+.menu div.sel{background:#2f2a6b}.menu div.sel::before{visibility:visible}
+.menu i{font-style:normal;font-family:var(--px);font-size:.6rem;color:var(--c)}
+.menu .ok{color:var(--green)}
+
+/* 3 SLOT */
+#slot .wrap{position:absolute;top:92px;bottom:20px;inset-inline:4%;display:flex;flex-direction:column;align-items:center;gap:14px}
+.machine{background:linear-gradient(#c22,#7a0d1e);border:6px solid #000;box-shadow:8px 8px 0 #000,inset 0 0 0 6px var(--y);padding:14px 18px 18px;border-radius:18px 18px 8px 8px;position:relative;width:min(900px,100%)}
+.bulbs{position:absolute;top:-4px;inset-inline:20px;height:14px;background:radial-gradient(circle,var(--y) 4px,transparent 5px) 0 0/22px 14px;animation:ch .4s steps(2) infinite}
+@keyframes ch{50%{background-position:11px 0;filter:brightness(.6)}}
+.mtitle{text-align:center;font-size:1.6rem;color:var(--y);text-shadow:3px 3px 0 #000;margin:4px 0 10px}
+.reels{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.reel{height:clamp(84px,11vw,120px);background:#fffbe8;border:5px solid #000;overflow:hidden;position:relative;box-shadow:inset 0 10px 14px rgba(0,0,0,.35),inset 0 -10px 14px rgba(0,0,0,.35)}
+.strip{position:absolute;inset-inline:0;top:0}
+.strip div{height:clamp(84px,11vw,120px);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#1a1033;font-size:clamp(1.1rem,2.2vw,1.6rem);line-height:1.2}
+.strip div i{font-style:normal;font-family:var(--px);font-size:.6rem;color:#fff;background:var(--c);padding:3px 6px;margin-bottom:4px}
+.spinning .strip{animation:spin .25s linear infinite;filter:blur(1.5px)}
+@keyframes spin{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+.reel.stop{animation:land .3s steps(3)}@keyframes land{0%{transform:translateY(-8px)}}
+.reel.win{outline:5px solid var(--green);outline-offset:3px;animation:tw .3s steps(1) 6}
+.lever{position:absolute;left:-34px;top:30px;width:14px;height:110px;background:#999;border:3px solid #000;transform-origin:bottom;transition:transform .3s}
+.lever::before{content:"";position:absolute;top:-22px;left:-10px;width:28px;height:28px;border-radius:50%;background:var(--pink);border:3px solid #000}
+.pulled .lever{transform:scaleY(-.6)}
+.coins{font-family:var(--px);font-size:.6rem;color:var(--y);display:flex;gap:10px;justify-content:center;margin-top:10px}
+#slot .qcard{background:#000;border:4px solid #fff;padding:6px 26px;box-shadow:6px 6px 0 var(--purple);opacity:0;transition:opacity .3s}
+#slot .qcard.show{opacity:1}
+
+/* 4 LED BOARD */
+#led .wrap{position:absolute;top:92px;bottom:22px;inset-inline:3.5%;display:flex;flex-direction:column;align-items:center;gap:14px}
+.board{width:100%;background:#050505;border:8px solid #222;outline:4px solid #000;box-shadow:8px 8px 0 #000;padding:14px;position:relative;overflow:hidden}
+.board::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle,transparent 1.2px,#050505 1.8px) 0 0/6px 6px;z-index:2}
+.ticker{white-space:nowrap;font-family:var(--px);font-size:1.2rem;color:var(--pink);text-shadow:0 0 6px var(--pink);animation:tick 9s linear infinite;direction:ltr}
+@keyframes tick{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+.ledq{position:relative;z-index:3;font-size:clamp(1.8rem,4vw,3rem);line-height:1.35;color:#ffc04d;text-shadow:0 0 10px #ff8a00;text-align:center;padding:8px 0}
+.ledrow{display:flex;justify-content:space-between;font-family:var(--px);font-size:.9rem;color:var(--green);text-shadow:0 0 6px var(--green)}
+.btns{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:100%}
+.ab{display:flex;flex-direction:column;align-items:center;gap:8px}
+.ab .cap{width:clamp(70px,9vw,104px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff8,transparent 40%),var(--c);border:5px solid #000;box-shadow:0 8px 0 #000,0 0 0 6px #333,0 8px 0 6px #111;display:grid;place-items:center;font-family:var(--px);font-size:1rem;color:#000;transition:transform .1s}
+.ab.press .cap{transform:translateY(6px);box-shadow:0 2px 0 #000,0 0 0 6px #333,0 2px 0 6px #111}
+.ab span{font-size:clamp(1.1rem,2.2vw,1.6rem);background:#000;border:3px solid var(--c);padding:0 12px}
+.ab.lit .cap{box-shadow:0 8px 0 #000,0 0 0 6px #333,0 0 40px 10px var(--c)}
+@media(max-width:720px){.scr{aspect-ratio:auto;min-height:700px}.fleet,.reels,.btns{grid-template-columns:1fr 1fr}.menu{grid-template-columns:1fr}.portrait{display:none}.lever{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<div class="tabs" id="tabs"><button data-p="inv" class="on">غزاة الفضاء</button><button data-p="host">مذيع اللعبة</button><button data-p="slot">ماكينة الحظ</button><button data-p="led">اللوحة العملاقة</button><button class="replay" id="again">↻ REPLAY</button></div>
+<div class="scr" id="scr">
+ <div class="hud"><div class="tm a off"><small>الصقور</small><b>0800</b></div><div class="rd"><b>أجل كم؟</b>ROUND 2/12 · BET 300</div><div class="tm b"><small>النمور</small><b id="sb">1000</b></div></div>
+
+ <div class="v on" id="inv">
+  <div class="top"><span class="who">تقنية · دور النمور</span><div class="qtxt">أي شركة تصنع الآيفون؟</div></div>
+  <div class="danger"></div>
+  <div class="fleet" id="fleet"></div>
+  <canvas class="ship" id="ship" width="13" height="8"></canvas>
+  <div class="laser" id="laser"></div><div class="boom" id="boom">BOOM!</div>
+ </div>
+
+ <div class="v" id="host"><div class="stage">
+  <div class="hostrow"><div class="portrait"><canvas id="hostc" width="16" height="16"></canvas><em>HOST</em></div>
+   <div class="dlg"><span class="nm">أبو كم</span><div class="qtxt" id="type"></div><span class="more">▼</span></div></div>
+  <div class="menu" id="menu"></div>
+ </div></div>
+
+ <div class="v" id="slot"><div class="wrap">
+  <div class="machine" id="mach"><div class="bulbs"></div><div class="lever"></div><div class="mtitle">★ أجل كم؟ ★</div><div class="reels" id="reels"></div><div class="coins"><span>INSERT 300</span><span>·</span><span>×2 IF RIGHT</span></div></div>
+  <div class="qcard qtxt" id="qc">أي شركة تصنع الآيفون؟</div>
+ </div></div>
+
+ <div class="v" id="led"><div class="wrap">
+  <div class="board"><div class="ticker">+++ ROUND 2 +++ TIGERS BET 300 +++ CATEGORY: TECH +++ أجل كم؟ +++</div>
+   <div class="ledq">أي شركة تصنع الآيفون؟</div><div class="ledrow"><span>WIN +300</span><span id="ledt">TIME 18</span><span>LOSE -300</span></div></div>
+  <div class="btns" id="btns"></div>
+ </div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id);let T=[];const later=(f,ms)=>T.push(setTimeout(f,ms));const clear=()=>{T.forEach(clearTimeout);T=[]};
+const OPTS=[["A","سامسونج","#ffd23f"],["B","أبل","#39f3ff"],["C","هواوي","#ff4fa3"],["D","سوني","#4ef08a"]],RIGHT=1;
+function paint(c,rows,pal){const x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);rows.forEach((r,y)=>[...r].forEach((ch,i)=>{if(pal[ch]){x.fillStyle=pal[ch];x.fillRect(i,y,1,1)}}))}
+const ALIEN=["..k.....k..","...k...k...","..kkkkkkk..",".kk.kkk.kk.","kkkkkkkkkkk","k.kkkkkkk.k","k.k.....k.k","...kk.kk..."];
+paint($("ship"),["......k......",".....kkk.....",".....kkk.....",".kkkkkkkkkkk.","kkkkkkkkkkkkk","kkkkkkkkkkkkk","kkkkkkkkkkkkk","kkkkkkkkkkkkk"],{k:"#4ef08a"});
+paint($("hostc"),["....kkkkkkk.....","...kYYYYYYYk....","..kYYYYYYYYYk...","..kkkkkkkkkkkk..","..ksssssssssk...","..kswwssswwsk...","..kskkssskksk...","..ksssssssssk...","..kssskkksssk...","...kssRRRssk....","...kkkkkkkkk....","..kPPPPWPPPPk...",".kPPPPPWPPPPPk..",".kPPPPRRRPPPPk..",".kPPPPPRPPPPPk..","kkkkkkkkkkkkkkk."],{k:"#000",Y:"#ffd23f",s:"#d9a06b",w:"#fff",R:"#ff4fa3",P:"#a45cff",W:"#fff"});
+
+function inv(){const f=$("fleet");f.className="fleet";f.style.top="";f.innerHTML="";
+ OPTS.forEach(([l,t,c],i)=>{const d=document.createElement("div");d.className="alien";d.style.setProperty("--c",c);const cv=document.createElement("canvas");cv.width=11;cv.height=8;paint(cv,ALIEN,{k:c});d.append(cv);d.insertAdjacentHTML("beforeend",`<i>${l}</i><span>${t}</span>`);f.append(d)});
+ void f.offsetWidth;f.classList.add("descend");$("ship").style.left="50%";$("laser").style.display="none";$("boom").style.display="none";
+ later(()=>{const t=f.children[RIGHT].getBoundingClientRect(),s=$("scr").getBoundingClientRect();const cx=t.left+t.width/2-s.left;$("ship").style.left=cx+"px";
+  later(()=>{const L=$("laser");L.style.left=(cx-3)+"px";L.style.top=(t.bottom-s.top)+"px";L.style.height=(s.height*.93-(t.bottom-s.top)-30)+"px";L.style.display="block";
+   later(()=>{L.style.display="none";[...f.children].forEach((a,i)=>a.classList.add(i==RIGHT?"win":"dead"));const B=$("boom");B.style.left=(cx-60)+"px";B.style.top=(t.top-s.top-30)+"px";B.style.display="block";$("scr").classList.remove("shake");void $("scr").offsetWidth;$("scr").classList.add("shake");$("sb").textContent=1300},250)},500)},4500)}
+
+function host(){const txt="هلا والله! سؤال تقنية للنمور… أي شركة تصنع الآيفون؟";const el=$("type");el.textContent="";let i=0;
+ const m=$("menu");m.innerHTML=OPTS.map(([l,t,c])=>`<div style="--c:${c}"><i>${l}</i>${t}</div>`).join("");m.style.opacity=0;
+ const step=()=>{el.textContent=txt.slice(0,++i);if(i<txt.length)later(step,45);else{m.style.opacity=1;let s=0;const mv=[0,2,1];mv.forEach((k,j)=>later(()=>{[...m.children].forEach((d,n)=>d.classList.toggle("sel",n==k))},700+j*600));
+  later(()=>{m.children[RIGHT].classList.add("ok");el.textContent="صح عليكم! ٣٠٠ نقطة دخلت الجيب… لا تشوفون حالكم.";$("sb").textContent=1300},2700)}};step()}
+
+function slot(){const R=$("reels");R.innerHTML="";$("qc").classList.remove("show");
+ OPTS.forEach(([l,t,c],i)=>{const r=document.createElement("div");r.className="reel";const others=["؟","★","٧","💰"];
+  const cells=[...others.map(o=>`<div>${o}</div>`),`<div><i style="--c:${c}">${l}</i>${t}</div>`];r.innerHTML=`<div class="strip">${cells.join("")+cells.join("")}</div>`;R.append(r)});
+ const M=$("mach");M.classList.add("pulled");later(()=>M.classList.remove("pulled"),400);R.classList.add("spinning");
+ [...R.children].forEach((r,i)=>later(()=>{r.classList.add("stop");const s=r.querySelector(".strip");s.style.animation="none";s.style.filter="none";s.style.transform=`translateY(-${4/10*100}%)`},900+i*600));
+ later(()=>{R.classList.remove("spinning");$("qc").classList.add("show")},900+4*600);
+ later(()=>{R.children[RIGHT].classList.add("win");$("sb").textContent=1300},5600)}
+
+function led(){const B=$("btns");B.innerHTML=OPTS.map(([l,t,c])=>`<div class="ab" style="--c:${c}"><div class="cap">${l}</div><span>${t}</span></div>`).join("");let n=18;$("ledt").textContent="TIME "+n;
+ for(let k=1;k<6;k++)later(()=>$("ledt").textContent="TIME "+(n-k),k*700);
+ later(()=>B.children[RIGHT].classList.add("press"),3500);later(()=>{B.children[RIGHT].classList.remove("press");B.children[RIGHT].classList.add("lit");$("sb").textContent=1300},3800)}
+
+const RUN={inv,host,slot,led};let cur="inv";
+function go(p){clear();cur=p;$("sb").textContent=1000;document.querySelectorAll(".v").forEach(v=>v.classList.toggle("on",v.id==p));document.querySelectorAll("#tabs button[data-p]").forEach(b=>b.classList.toggle("on",b.dataset.p==p));RUN[p]()}
+$("tabs").onclick=e=>{if(e.target.dataset.p)go(e.target.dataset.p)};$("again").onclick=()=>go(cur);
+go("inv");
+</script></body></html>
