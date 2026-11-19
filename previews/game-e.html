@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بورصة المزاد</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=JetBrains+Mono:wght@700&family=IBM+Plex+Sans+Arabic:wght@600;700&display=swap">
+<style>
+:root{--bg:#05080b;--panel:#0b1218;--line:#1b2a36;--ink:#e9f2f7;--mute:#7f97a8;--up:#19e68c;--down:#ff3b5c;--a:#2fa8ff;--b:#ff8a2a;--gold:#ffd24a;
+--display:"Lalezar",Tahoma,sans-serif;--num:"JetBrains Mono",monospace;--body:"IBM Plex Sans Arabic",Tahoma,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);padding:16px;display:flex;flex-direction:column;align-items:center}
+.note{max-width:1100px;width:100%;color:var(--mute);font-weight:700;margin:0 0 10px}
+.tv{width:min(1100px,100%);aspect-ratio:16/9;min-height:560px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;position:relative}
+.head{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-size:1.6rem}.brand span{color:var(--up)}
+.live{font-family:var(--num);font-size:.8rem;color:var(--down);display:flex;gap:6px;align-items:center}.live i{width:9px;height:9px;border-radius:50%;background:var(--down);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.2}}
+.clock{font-family:var(--num);color:var(--mute)}
+.body{display:grid;grid-template-columns:1fr 1.6fr;min-height:0}
+.side{border-inline-end:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:14px}
+.stock{background:#08101a;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stock .t{display:flex;justify-content:space-between;align-items:baseline}
+.stock .nm{font-family:var(--display);font-size:1.5rem}
+.stock .sym{font-family:var(--num);font-size:.8rem;color:var(--mute)}
+.stock .px{font-family:var(--num);font-size:2.2rem;direction:ltr;text-align:right}
+.chg{font-family:var(--num);font-size:.95rem;direction:ltr;text-align:right}.chg.up{color:var(--up)}.chg.down{color:var(--down)}
+svg.ch{width:100%;height:70px;display:block;margin-top:6px}
+.round{font-family:var(--num);color:var(--mute);font-size:.85rem;text-align:center}
+.main{position:relative;padding:18px 22px;display:flex}
+.ph{position:absolute;inset:18px 22px;display:flex;flex-direction:column;justify-content:center;gap:16px;opacity:0;transform:translateY(10px);transition:.4s;pointer-events:none}
+.ph.on{opacity:1;transform:none}
+.kick{font-family:var(--num);color:var(--gold);font-size:.9rem;letter-spacing:.08em}
+.big{font-family:var(--display);font-size:clamp(2.4rem,6vw,4.4rem);line-height:1.05}
+/* order book */
+.book{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.side2 h4{margin:0 0 6px;font-family:var(--display);font-weight:400;font-size:1.3rem}
+.ord{font-family:var(--num);display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;margin-bottom:4px;position:relative;overflow:hidden;direction:ltr;opacity:0;transition:.3s}
+.ord.show{opacity:1}
+.ord::before{content:"";position:absolute;inset:0;width:var(--w);opacity:.18;background:currentColor}
+.ord.a{color:var(--a)}.ord.b{color:var(--b)}
+.deal{font-family:var(--display);font-size:1.6rem;background:var(--up);color:#032;padding:6px 16px;border-radius:8px;align-self:flex-start;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.7,.5,1)}
+.deal.on{transform:scale(1)}
+.q{font-family:var(--display);font-size:clamp(1.5rem,3vw,2.2rem);line-height:1.45}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);background:#08101a;border-radius:10px;padding:12px 16px;font-family:var(--display);font-size:1.5rem;transition:.3s}
+.opt i{font-style:normal;font-family:var(--num);font-size:.9rem;color:var(--mute)}
+.rv .opt{opacity:.3}.rv .opt.ok{opacity:1;border-color:var(--up);background:rgba(25,230,140,.15);color:var(--up)}
+.rv .opt.ok::after{content:"▲ +400";font-family:var(--num);font-size:1rem}
+.tape{border-top:1px solid var(--line);background:#03060a;overflow:hidden;white-space:nowrap;padding:8px 0;direction:ltr}
+.tape div{display:inline-block;animation:tape 30s linear infinite;font-family:var(--num);font-size:.95rem}
+.tape span{margin:0 22px}.tape .u{color:var(--up)}.tape .d{color:var(--down)}
+@keyframes tape{to{transform:translateX(-50%)}}
+.ctrl{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.ctrl button{font-family:var(--display);font-size:1.05rem;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 16px;cursor:pointer}
+.ctrl button.on{background:var(--up);color:#032}
+@media(max-width:760px){.tv{aspect-ratio:auto}.body{grid-template-columns:1fr}.side{flex-direction:row;border:0;border-bottom:1px solid var(--line)}.stock{flex:1}.main{min-height:380px}.opts{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<p class="note">اتجاه هـ — «بورصة المزاد»: كل فريق سهم في السوق. الرهان صفقة، ونقاطك سعر سهمك يطلع وينزل على رسم بياني حي، وشريط أسعار يمشي تحت. يشتغل لحاله — أو اختر مرحلة.</p>
+<div class="tv">
+ <div class="head"><div class="brand">بورصة <span>المزاد</span></div><div class="live"><i></i>LIVE · R3/8</div><div class="clock" id="clk">00:14</div></div>
+ <div class="body">
+  <div class="side">
+   <div class="stock"><div class="t"><span class="nm" style="color:var(--a)">الصقور</span><span class="sym">SQR</span></div>
+    <div class="px" id="pa">1,200</div><div class="chg up" id="ca">▲ +200 (20.0%)</div><svg class="ch" viewBox="0 0 200 70" preserveAspectRatio="none"><polyline id="la" fill="none" stroke="#2fa8ff" stroke-width="2.5"/></svg></div>
+   <div class="stock"><div class="t"><span class="nm" style="color:var(--b)">النمور</span><span class="sym">NMR</span></div>
+    <div class="px" id="pb">900</div><div class="chg down">▼ -100 (10.0%)</div><svg class="ch" viewBox="0 0 200 70" preserveAspectRatio="none"><polyline id="lb" fill="none" stroke="#ff8a2a" stroke-width="2.5"/></svg></div>
+  </div>
+  <div class="main">
+   <div class="ph" id="p0"><div class="kick">OPEN AUCTION · جغرافيا</div><div class="big">مين يشتري السؤال؟</div>
+    <div class="book"><div class="side2"><h4 style="color:var(--a)">عروض الصقور</h4><div id="oa"></div></div><div class="side2"><h4 style="color:var(--b)">عروض النمور</h4><div id="ob"></div></div></div>
+    <div class="deal" id="deal">تمت الصفقة: الصقور × 400</div></div>
+   <div class="ph" id="p1"><div class="kick">SQR · صفقة 400 · 14 ثانية</div>
+    <div class="q">كم عدد مناطق المملكة العربية السعودية الإدارية؟</div>
+    <div class="opts" id="opts"><div class="opt">11<i>A</i></div><div class="opt ok">13<i>B</i></div><div class="opt">15<i>C</i></div><div class="opt">9<i>D</i></div></div></div>
+  </div>
+ </div>
+ <div class="tape"><div id="tp"></div></div>
+</div>
+<div class="ctrl" id="ctrl"><button data-p="0">المزاد</button><button data-p="1">السؤال</button><button data-p="2">الجواب</button><button data-p="auto">تلقائي</button></div>
+<script>
+const $=id=>document.getElementById(id);
+const t="<span>SQR <b class=u>1,200 ▲</b></span><span>NMR <b class=d>900 ▼</b></span><span>آخر صفقة: الصقور 400 على «جغرافيا»</span><span>أعلى رهان الليلة: 600</span><span>السؤال الجاي: رياضة</span><span>NMR خسر 3 صفقات ورا بعض <b class=d>▼</b></span>";
+$("tp").innerHTML=t+t;
+const hA=[1000,1100,900,1000,1200],hB=[1000,800,1000,1000,900];
+function line(el,h){const mx=1700,mn=600;el.setAttribute("points",h.map((v,i)=>(i*200/(h.length-1))+","+(70-(v-mn)/(mx-mn)*70)).join(" "))}
+function num(el,from,to){const s=performance.now();const f=n=>{const k=Math.min(1,(n-s)/900);el.textContent=Math.round(from+(to-from)*(1-Math.pow(1-k,3))).toLocaleString("en");if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)}
+let T=[];const later=(f,ms)=>T.push(setTimeout(f,ms));const clear=()=>{T.forEach(clearTimeout);T=[]};
+function reset(){line($("la"),hA);line($("lb"),hB);$("pa").textContent="1,200";$("ca").textContent="▲ +200 (20.0%)"}
+function show(p){reset();document.querySelectorAll(".ph").forEach(x=>x.classList.remove("on"));$("opts").parentElement.classList.remove("rv");$("deal").classList.remove("on");
+ document.querySelectorAll("#ctrl button").forEach(b=>b.classList.toggle("on",b.dataset.p==String(p)));
+ if(p==0){$("p0").classList.add("on");$("oa").innerHTML="";$("ob").innerHTML="";
+  [["a",200],["b",250],["a",300],["b",350],["a",400]].forEach(([w,v],i)=>later(()=>{const d=document.createElement("div");d.className="ord "+w;d.style.setProperty("--w",v/4+"%");d.innerHTML="<span>BID</span><span>"+v+"</span>";$("o"+w).prepend(d);requestAnimationFrame(()=>d.classList.add("show"))},500+i*650));
+  later(()=>$("deal").classList.add("on"),3900)}
+ if(p>=1)$("p1").classList.add("on");
+ if(p==2){$("opts").parentElement.classList.add("rv");line($("la"),[...hA,1600]);num($("pa"),1200,1600);$("ca").textContent="▲ +400 (33.3%)"}}
+function auto(){clear();show(0);later(()=>show(1),5600);later(()=>show(2),8800);later(auto,13000);later(()=>document.querySelector("[data-p=auto]").classList.add("on"),10)}
+$("ctrl").onclick=e=>{const p=e.target.dataset.p;if(p==null)return;clear();p=="auto"?auto():show(+p)};
+auto();
+</script></body></html>
