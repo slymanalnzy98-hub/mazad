@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>المزاد · الشاشة</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Press+Start+2P&family=IBM+Plex+Sans+Arabic:wght@500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+body{margin:0}
+.lobby{display:grid;grid-template-columns:auto minmax(0,1fr);gap:28px;align-items:center;width:min(900px,100%)}
+@media (max-width:700px){.lobby{grid-template-columns:1fr;justify-items:center}}
+.qr{background:#fff;padding:10px;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--black);width:180px;height:180px}
+.qr img,.qr canvas{width:100%!important;height:100%!important;image-rendering:pixelated}
+.code{font-family:var(--pixel);font-size:clamp(2rem,7vw,3.6rem);color:var(--yellow);text-shadow:5px 5px 0 var(--black);letter-spacing:.15em}
+.url{font-family:var(--pixel);font-size:.6rem;color:var(--mute);direction:ltr;word-break:break-all}
+.roster{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(700px,100%)}
+.roster .box{border:4px solid var(--ink);box-shadow:6px 6px 0 var(--black);padding:10px 14px;text-align:start;min-height:90px}
+.roster h2{font-size:1.5rem;margin-bottom:6px}
+.roster p{font-weight:700}
+.wait2{display:grid;grid-template-columns:1fr 1fr;gap:18px;width:min(760px,100%)}
+.wait2 .box{border:4px solid var(--ink);box-shadow:6px 6px 0 var(--black);padding:16px;display:flex;flex-direction:column;gap:10px;align-items:center}
+.wait2 .box b{font-family:var(--display);font-size:1.6rem;font-weight:400}
+.wait2 .st{font-family:var(--pixel);font-size:.7rem}
+.mini{font-size:1rem!important;padding:4px 14px!important}
+.modebadge{font-family:var(--pixel);font-size:.5rem;color:var(--mute)}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="crt">
+    <div id="app"></div>
+    <div class="knobs"><i></i><button id="snd" type="button">SOUND: ON</button><span class="modebadge" id="mode"></span><button id="quit" type="button">MENU</button><i></i></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="net.js"></script>
+<script src="common.js"></script>
+<script src="questions.js"></script>
+<script src="tv.js"></script>
+</body>
+</html>
