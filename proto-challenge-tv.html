@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تجربة ٣: تحدّاني · الشاشة</title>
+<style>
+/* نموذج تجريبي لاختبار المتعة فقط: شكل بسيط بدون تصميم */
+:root{--bg:#14142b;--ink:#fff;--mute:#9a9ac4;--a:#2f80ed;--b:#eb5757;--ok:#3ddc84;--bad:#ff5a5a;--y:#ffd23f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,"Segoe UI",sans-serif;min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;font-size:1.4rem}
+.team{padding:10px 22px;border-radius:12px;font-weight:700;min-width:180px;text-align:center}
+.team b{display:block;font-size:2.2rem}
+.a{background:var(--a)}.b{background:var(--b)}
+.dim{opacity:.35}
+.big{font-size:clamp(3rem,10vw,7rem);font-weight:900;margin:0}
+.mid{font-size:clamp(1.3rem,3vw,2.2rem);margin:0}
+.mute{color:var(--mute)}
+.q{font-size:clamp(1.6rem,4vw,2.8rem);font-weight:700;max-width:1000px;margin:0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(900px,100%)}
+.opt{padding:16px;border-radius:12px;background:#2a2a52;font-size:1.5rem;font-weight:700}
+.opt.right{background:var(--ok);color:#000}.opt.picked{outline:6px solid var(--y)}.opt.wrong{background:var(--bad)}
+.timer{font-size:2.2rem;font-weight:900;color:var(--y);margin:0}
+.liar{color:var(--bad)}.trust{color:var(--ok)}
+.stamp{font-size:clamp(3rem,11vw,8rem);font-weight:900;margin:0;animation:stamp .35s ease-out}
+@keyframes stamp{from{transform:scale(2.2) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+.deltas{display:flex;gap:30px;font-size:2rem;font-weight:900}
+.code{font-size:4rem;font-weight:900;letter-spacing:.2em;color:var(--y);direction:ltr}
+.roster{display:flex;gap:24px}
+.roster div{padding:14px 20px;border-radius:12px;min-width:220px}
+button{font:inherit;font-size:1.4rem;font-weight:700;padding:12px 32px;border:0;border-radius:12px;background:var(--y);cursor:pointer}
+#qr{background:#fff;padding:8px;border-radius:8px}
+@media (prefers-reduced-motion:reduce){.stamp{animation:none}}
+</style>
+</head>
+<body>
+<div class="top" id="top"></div>
+<main id="app"></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js?v=8"></script>
+<script src="net.js?v=8"></script>
+<script src="auth.js?v=8"></script>
+<script src="common.js?v=8"></script>
+<script src="questions.js?v=8"></script>
+<script>
+// تجربة ٣ «تحدّاني»: فريق يجاوب بالسر، والثاني يقرر: كذاب ولا صدقنا؟
+const ROUNDS = 6, START = 1000, ANS_S = 8, CALL_S = 6, RESULT_S = 4;
+const app = document.getElementById('app'), top_ = document.getElementById('top');
+const NAMES = ['الصقور', 'النمور'], L = 'أبجد';
+let ROOM, net, P = {}, G, T = null;
+const stop = () => { clearInterval(T); T = null; };
+
+function code() { const a = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', r = new Uint32Array(4); crypto.getRandomValues(r); return Array.from(r, n => a[n % a.length]).join(''); }
+function deck() { const d = []; Object.entries(BANK).forEach(([c, qs]) => qs.forEach(q => d.push({ cat: c, q: q[0], opts: q[1], a: q[2] }))); return shuffle(d); }
+const left = () => G && G.ends ? Math.max(0, Math.ceil((G.ends - Date.now()) / 1000)) : 0;
+
+function pub() {
+  const v = { t: 'state', room: ROOM, phase: G.phase, round: G.round, rounds: ROUNDS, coins: G.coins, names: NAMES,
+    players: [0, 1].map(i => Object.values(P).filter(p => p.team === i).map(p => p.name)), left: left(), answering: G.answering };
+  if (G.phase === 'answer') { v.cat = G.cur.cat; v.opts = G.cur.opts; }
+  if (G.phase === 'call') v.cat = G.cur.cat;
+  if (G.phase === 'reveal') v.last = G.last;
+  return v;
+}
+const send = () => net && net.send(pub());
+
+async function onMsg(m) {
+  if (!m || m.room !== ROOM) return;
+  try {
+    if (m.t === 'hello') return send();
+    if (m.t === 'join') {
+      if (await Auth.idFromPub(m.pub) !== m.id || !await Auth.verify(m.pub, Auth.joinParts(m), m.sig)) return;
+      if (!(m.team === 0 || m.team === 1)) return;
+      const k = P[m.id];
+      if (G.phase !== 'lobby' && !k) return;
+      P[m.id] = { name: String(m.name || 'لاعب').slice(0, 14), team: k && G.phase !== 'lobby' ? k.team : m.team, pub: m.pub, seq: k ? k.seq : 0 };
+      if (G.phase === 'lobby') lobby();
+      return send();
+    }
+    if (m.t === 'act') {
+      const p = P[m.id];
+      if (!p || !(m.seq > p.seq) || !await Auth.verify(p.pub, Auth.actParts(m), m.sig)) return;
+      p.seq = m.seq;
+      const b = m.body || {};
+      if (b.type === 'answer' && G.phase === 'answer' && p.team === G.answering && b.k >= 0 && b.k <= 3) { G.pick = { k: b.k, by: p.name }; toCall(); }
+      else if (b.type === 'call' && G.phase === 'call' && p.team !== G.answering) { G.call = { liar: !!b.liar, by: p.name }; reveal(); }
+    }
+  } catch (e) { console.warn(e); }
+}
+
+function lobby() {
+  const url = new URL('proto-challenge-play.html?room=' + ROOM, location.href).href;
+  top_.innerHTML = '';
+  app.innerHTML = `<p class="mid">تجربة ٣: تحدّاني</p>
+    <div style="display:flex;gap:30px;align-items:center"><div id="qr"></div><div><p class="mute">ادخلوا بالجوال على الرابط واكتبوا الرمز</p><p class="code">${ROOM}</p><p class="mute" style="direction:ltr;font-size:.8rem">${esc(url)}</p></div></div>
+    <div class="roster">${[0, 1].map(i => `<div class="${i ? 'b' : 'a'}"><b>${NAMES[i]}</b><br>${Object.values(P).filter(p => p.team === i).map(p => esc(p.name)).join('، ') || '—'}</div>`).join('')}</div>
+    <p class="mute">فريق يجاوب بالسر ويحاول يقنعكم، والثاني يقرر: «كذاب!» ولا «صدقنا»</p>
+    <button id="go">ابدأ</button><p class="mid" id="err" style="color:var(--bad)"></p>`;
+  try { new QRCode(document.getElementById('qr'), { text: url, width: 150, height: 150 }); } catch (e) {}
+  document.getElementById('go').onclick = () => {
+    if ([0, 1].some(i => !Object.values(P).some(p => p.team === i))) { document.getElementById('err').textContent = 'كل فريق يحتاج جوال واحد على الأقل'; return; }
+    G = { phase: 'lobby', round: 0, coins: [START, START], deck: deck() }; nextRound();
+  };
+}
+function header(active) { top_.innerHTML = [0, 1].map(i => `<div class="team ${i ? 'b' : 'a'} ${active !== undefined && active !== i ? 'dim' : ''}">${NAMES[i]}<b>${G.coins[i]}</b></div>`).join(`<span class="mute">سؤال ${G.round} من ${ROUNDS}</span>`); }
+
+function nextRound() {
+  stop();
+  if (G.round >= ROUNDS) return over();
+  G.round++; G.cur = G.deck.pop(); G.pick = null; G.call = null; G.last = null;
+  G.answering = (G.round - 1) % 2; // الفرق تتناوب
+  G.phase = 'answer'; G.ends = Date.now() + ANS_S * 1000;
+  header(G.answering);
+  app.innerHTML = `<p class="mid">${NAMES[G.answering]} يجاوبون بالسر · ${esc(G.cur.cat)}</p>
+    <p class="q">${esc(G.cur.q)}</p>
+    <div class="opts">${G.cur.opts.map((o, k) => `<div class="opt" data-k="${k}">${L[k]}) ${esc(o)}</div>`).join('')}</div>
+    <p class="timer" id="tl">${ANS_S}</p>`;
+  SFX.reveal(); send();
+  T = setInterval(() => { const l = left(); document.getElementById('tl').textContent = l; if (l <= 3 && l > 0) SFX.tick(); send(); if (l <= 0) { G.pick = { k: -1, by: null }; toCall(); } }, 1000);
+}
+function toCall() {
+  if (G.phase !== 'answer') return;
+  stop(); G.phase = 'call'; G.ends = Date.now() + CALL_S * 1000;
+  const o = 1 - G.answering;
+  header(o);
+  // الجواب مخفي: الشاشة تقول بس إنهم جاوبوا
+  app.innerHTML = `<p class="big">جاوبوا ✓</p>
+    <p class="q" style="opacity:.6">${esc(G.cur.q)}</p>
+    <p class="mid">${NAMES[o]}: «كذاب!» ولا «صدقنا»؟</p>
+    <p class="mute">يا ${NAMES[G.answering]}، اقنعوهم 😏</p>
+    <p class="timer" id="tl">${CALL_S}</p>`;
+  beep(440, .2); send();
+  T = setInterval(() => { const l = left(); document.getElementById('tl').textContent = l; if (l <= 3 && l > 0) SFX.tick(); send(); if (l <= 0) { G.call = { liar: false, by: null, timeout: true }; reveal(); } }, 1000);
+}
+function reveal() {
+  if (G.phase !== 'call') return;
+  stop(); G.phase = 'reveal';
+  const a = G.answering, o = 1 - a, right = G.pick.k === G.cur.a, liar = G.call.liar;
+  const d = [0, 0];
+  if (right && !liar) d[a] = 100;
+  else if (right && liar) { d[a] = 200; d[o] = -200; }
+  else if (!right && liar) { d[o] = 200; d[a] = -100; }
+  else d[a] = -100;
+  G.coins = G.coins.map((c, i) => Math.max(0, c + d[i]));
+  G.last = { answering: a, right, liar, picked: G.pick.k, d, answer: G.cur.opts[G.cur.a] };
+  header();
+  // أول شي القرار كبير، وبعدها الجواب ينكشف
+  app.innerHTML = `<p class="stamp ${liar ? 'liar' : 'trust'}">${liar ? 'كذاب!' : 'صدقنا'}</p>
+    <p class="mute mid">${G.call.by ? esc(G.call.by) + ' من ' + NAMES[o] : G.call.timeout ? 'ما قرروا… انحسبت «صدقنا»' : ''}</p>
+    <div class="opts" id="rv" style="visibility:hidden">${G.cur.opts.map((x, k) => `<div class="opt" data-k="${k}">${L[k]}) ${esc(x)}</div>`).join('')}</div>
+    <div class="deltas" id="dl" style="visibility:hidden">${[0, 1].map(i => `<span style="color:${d[i] > 0 ? 'var(--ok)' : d[i] < 0 ? 'var(--bad)' : 'var(--mute)'}">${NAMES[i]} ${d[i] > 0 ? '+' : ''}${d[i]}</span>`).join('')}</div>`;
+  beep(220, .3); send();
+  setTimeout(() => {
+    const rv = document.getElementById('rv'); if (!rv) return;
+    rv.style.visibility = 'visible';
+    rv.querySelectorAll('.opt').forEach(el => { const k = +el.dataset.k; if (k === G.pick.k) el.classList.add('picked', right ? 'right' : 'wrong'); if (k === G.cur.a) el.classList.add('right'); });
+    document.getElementById('dl').style.visibility = 'visible';
+    (right !== liar) ? SFX.win() : SFX.lose();
+    if (G.pick.k < 0) { const p = document.createElement('p'); p.className = 'mid'; p.textContent = 'ما جاوبوا أصلاً!'; rv.before(p); }
+  }, 1500);
+  setTimeout(nextRound, 1500 + RESULT_S * 1000);
+}
+function over() {
+  stop(); G.phase = 'over'; header();
+  const w = G.coins[0] === G.coins[1] ? null : G.coins[0] > G.coins[1] ? 0 : 1;
+  app.innerHTML = `<p class="big">${w === null ? 'تعادل!' : NAMES[w] + ' فازوا!'}</p><p class="mid">${G.coins[0]} مقابل ${G.coins[1]}</p><button id="again">لعبة جديدة</button>`;
+  tune([523, 659, 784, 1046], .12); send();
+  document.getElementById('again').onclick = () => { G = { phase: 'lobby', round: 0, coins: [START, START] }; lobby(); send(); };
+}
+
+(async () => {
+  ROOM = code(); G = { phase: 'lobby', round: 0, coins: [START, START] };
+  try { net = await Net.open(ROOM, onMsg, st => { if (st === 'up') send(); }); } catch (e) { app.innerHTML = '<p class="mid">ما قدرنا نتصل. حدّث الصفحة.</p>'; return; }
+  lobby(); setInterval(() => { if (G.phase !== 'answer' && G.phase !== 'call') send(); }, 3000);
+})();
+</script>
+</body>
+</html>
