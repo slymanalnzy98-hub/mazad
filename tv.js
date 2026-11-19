@@ -1,57 +1,116 @@
-// شاشة التلفزيون: هي اللي تدير اللعبة، والجوالات ترسل الرهان والجواب.
+// شاشة التلفزيون: تشغّل المحرّك، وتحفظ اللعبة، وتتحقق من توقيع كل جوال.
 const app = document.getElementById('app');
-const ROUNDS = 12, START = 1000, MINBET = 50, ANSWER_S = 20, STEAL_S = 10;
-const COLS = ['var(--yellow)', 'var(--blue)', 'var(--red)', 'var(--green)'], LET = ['A', 'B', 'C', 'D'];
-let G = null, T = null, net = null, ROOM = null;
-const stopTimer = () => { clearInterval(T); T = null; };
 const $ = id => document.getElementById(id);
+const COLS = ['var(--yellow)', 'var(--blue)', 'var(--red)', 'var(--green)'], LET = ['A', 'B', 'C', 'D'];
+const SAVE_KEY = 'mazad-host', SAVE_MAX_AGE = 6 * 3600 * 1000;
+
+let S = null;          // حالة المحرّك
+let P = {};            // اللاعبين: id -> { name, team, pub, seq }
+let ROOM = null, net = null;
+let T = null, auto = null;
+let shownRound = 0;    // آخر جولة انعرضت فيها حركة الفئة
+let shownReveal = 0;   // آخر جولة انعرض فيها العد التنازلي
+const stopTimers = () => { clearInterval(T); T = null; clearTimeout(auto); auto = null; };
 
 document.getElementById('snd').onclick = e => { sound = !sound; e.target.textContent = 'SOUND: ' + (sound ? 'ON' : 'OFF'); SFX.tap(); };
-document.getElementById('quit').onclick = () => { stopTimer(); lobby(); };
+const quitBtn = document.getElementById('quit');
+let quitArmed = null;
+quitBtn.onclick = () => {
+  if (!S || S.phase === 'lobby') return;
+  if (!quitArmed) { quitBtn.textContent = 'متأكد؟ اضغط مرة ثانية'; quitArmed = setTimeout(() => { quitArmed = null; quitBtn.textContent = 'MENU'; }, 3000); return; }
+  clearTimeout(quitArmed); quitArmed = null; quitBtn.textContent = 'MENU';
+  dispatch({ type: 'reset' });
+};
 
-/* ---------- الاتصال ---------- */
-function newCode() { const a = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; return Array.from({ length: 4 }, () => a[Math.floor(Math.random() * a.length)]).join(''); }
-function pub() {
-  const p = { t: 'state', phase: G.phase, round: G.round, rounds: ROUNDS,
-    teams: G.teams.map(t => ({ name: t.name, coins: t.coins, allinUsed: t.allinUsed, players: Object.values(t.players) })),
-    bidIn: G.bids.map(b => b !== null), answering: G.answering, steal: G.steal, left: G.left, last: G.last || null };
-  if (['bet', 'reveal', 'question', 'result', 'stealOffer'].includes(G.phase)) p.cat = G.cur[0];
-  if (G.phase === 'question') { p.opts = G.cur[2]; p.gone = G.gone; p.stake = G.stake; }
-  if (G.phase === 'reveal') { p.bids = G.bids; p.allin = G.allin; p.winner = G.winner; }
-  if (G.phase === 'over') p.winner = G.final;
-  return p;
+/* ---------- الحفظ والاسترجاع ---------- */
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify({ room: ROOM, S, P, at: Date.now() })); } catch (e) {} }
+function load() {
+  try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (d && d.room && d.S && Date.now() - d.at < SAVE_MAX_AGE) return d; } catch (e) {}
+  return null;
 }
-const send = () => net && net.send(pub());
-function onMsg(m) {
-  if (!G || !m || typeof m !== 'object') return;
-  const team = m.team === 0 || m.team === 1 ? m.team : null;
-  if (m.t === 'join' && team !== null && typeof m.id === 'string') {
-    G.teams.forEach(t => delete t.players[m.id]);
-    G.teams[team].players[m.id] = String(m.name || 'لاعب').slice(0, 14);
-    if (G.phase === 'lobby') lobbyRoster();
-    send();
-  } else if (m.t === 'hello') send();
-  else if (m.t === 'bid' && team !== null && G.phase === 'bet' && G.bids[team] === null) {
-    placeBid(team, Number(m.amount) || 0, !!m.allin);
-  } else if (m.t === 'answer' && team === G.answering && G.phase === 'question' && !G.locked) {
-    const k = Number(m.k); if (k >= 0 && k <= 3 && k !== G.gone) pick(k);
-  } else if (m.t === 'steal' && G.phase === 'stealOffer' && team === 1 - G.answering) {
-    m.yes ? startSteal() : nextRound();
+function newCode() { const a = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', r = new Uint32Array(5); crypto.getRandomValues(r); return Array.from(r, n => a[n % a.length]).join(''); }
+
+/* ---------- الإرسال ---------- */
+function teamsPlayers() { return S.teams.map((_, i) => Object.values(P).filter(p => p.team === i).map(p => p.name)); }
+function send() {
+  if (!net || !S) return;
+  const v = Engine.publicView(S);
+  v.t = 'state'; v.room = ROOM; v.players = teamsPlayers();
+  if (S.phase === 'question' && S.deadline) v.left = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
+  net.send(v);
+}
+
+/* ---------- المحرّك ---------- */
+function dispatch(action, opts) {
+  const prev = S;
+  const r = Engine.reduce(S, action);
+  if (!r.ok) return false;
+  S = r.state; save(); send();
+  render(prev, opts || {});
+  return true;
+}
+
+/* ---------- رسائل الجوالات ---------- */
+async function onMsg(m) {
+  if (!S || !m || typeof m !== 'object' || m.room !== ROOM) { if (m && m.t === 'hello') send(); return; }
+  try {
+    if (m.t === 'hello') return send();
+    if (m.t === 'join') return await onJoin(m);
+    if (m.t === 'act') return await onAct(m);
+  } catch (e) { console.warn('رسالة مرفوضة', e); }
+}
+async function onJoin(m) {
+  if (typeof m.id !== 'string' || !m.pub || typeof m.sig !== 'string') return;
+  if (await Auth.idFromPub(m.pub) !== m.id) return;
+  if (!await Auth.verify(m.pub, Auth.joinParts(m), m.sig)) return;
+  const known = P[m.id];
+  if (S.phase === 'lobby') {
+    if (!(m.team >= 0 && m.team < S.teams.length)) return;
+    P[m.id] = { name: String(m.name || 'لاعب').trim().slice(0, 14) || 'لاعب', team: m.team, pub: m.pub, seq: known ? known.seq : 0 };
+    save(); lobbyRoster();
+  } else if (!known) {
+    net.send({ t: 'denied', room: ROOM, id: m.id, why: 'اللعبة بدأت. انتظروا اللعبة الجاية.' });
+    return;
+  }
+  send();
+}
+async function onAct(m) {
+  const p = P[m.id];
+  if (!p || !Number.isFinite(m.seq) || m.seq <= p.seq || !m.body || typeof m.sig !== 'string') return;
+  if (!await Auth.verify(p.pub, Auth.actParts(m), m.sig)) return;
+  p.seq = m.seq; save();
+  const b = m.body;
+  if (b.type === 'bid' && S.phase === 'bet') {
+    if (S.bids[p.team] === null) dispatch({ type: 'bid', team: p.team, amount: b.amount, allin: !!b.allin });
+  } else if (b.type === 'answer' && S.phase === 'question' && p.team === S.answering) {
+    dispatch({ type: 'answer', k: b.k });
+  } else if (b.type === 'steal' && S.phase === 'stealOffer' && p.team === 1 - S.answering) {
+    dispatch({ type: 'steal', yes: !!b.yes, now: Date.now() });
+  } else send();
+}
+
+/* ---------- الشريط العلوي ---------- */
+function header(active, coins) {
+  const c = coins || S.teams.map(t => t.coins);
+  const t = i => { const tm = S.teams[i], n = Object.values(P).filter(p => p.team === i).length;
+    return `<div class="team ${i ? 'b' : 'a'} ${active !== undefined && active !== null && active !== i ? 'dim' : ''}"><small>${esc(tm.name)}</small><b>${c[i]}</b><span class="tag">${tm.allinUsed ? '' : 'ALL-IN ×1'} ${n ? '📱' + n : ''}</span></div>`; };
+  return `<div class="bar">${t(0)}<div class="rd">ROUND ${S.round}/${S.config.rounds}</div>${t(1)}</div>`;
+}
+
+/* ---------- العرض حسب المرحلة ---------- */
+function render(prev, opts) {
+  stopTimers();
+  switch (S.phase) {
+    case 'lobby': return lobby();
+    case 'bet': return S.round !== shownRound && !opts.restore ? roll() : betPhase();
+    case 'reveal': return shownReveal !== S.round && !opts.restore ? countdown() : reveal();
+    case 'question': return question();
+    case 'stealOffer': case 'result': return result(prev, opts);
+    case 'over': return over(opts);
   }
 }
 
-/* ---------- الشاشة الأولى: الغرفة ---------- */
-async function lobby() {
-  stopTimer();
-  if (!net) {
-    ROOM = newCode();
-    try { net = await Net.open(ROOM, onMsg); }
-    catch (e) { app.innerHTML = `<div class="stage"><p class="k">ما قدرنا نتصل بالسيرفر.</p><p class="mute">تأكد من الإنترنت ومن بيانات config.js، وبعدين حدّث الصفحة.</p></div>`; return; }
-    $('mode').textContent = net.mode === 'online' ? 'ONLINE' : 'LOCAL TEST';
-  }
-  const keep = G ? G.teams.map(t => t.players) : [{}, {}];
-  const names = G ? G.teams.map(t => t.name) : ['الصقور', 'النمور'];
-  G = { phase: 'lobby', round: 0, teams: names.map((n, i) => ({ name: n, coins: START, allinUsed: false, players: keep[i] })), bids: [null, null], allin: [false, false] };
+function lobby() {
   const url = new URL('play.html?room=' + ROOM, location.href).href;
   app.innerHTML = `<div class="stage">
     <h1 class="cat logo">المزاد</h1>
@@ -65,65 +124,45 @@ async function lobby() {
     </div>
     <div class="roster" id="roster"></div>
     <p class="mute">الفريق اللي ما عنده جوال يقدر يراهن ويجاوب من هالشاشة.</p>
-    <button class="px g" id="go">ابدأ اللعبة</button></div>`;
+    <div class="row"><button class="px g" id="go">ابدأ اللعبة</button><button class="px d mini" id="newroom">غرفة جديدة</button></div></div>`;
   try { new QRCode($('qr'), { text: url, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M }); } catch (e) { $('qr').textContent = ROOM; }
   lobbyRoster();
-  $('go').onclick = start;
-  send();
+  $('go').onclick = () => { SFX.win(); dispatch({ type: 'start', bank: BANK, seed: crypto.getRandomValues(new Uint32Array(1))[0] }); };
+  $('newroom').onclick = () => { P = {}; switchRoom(newCode()); };
 }
 function lobbyRoster() {
   const r = $('roster'); if (!r) return;
-  r.innerHTML = G.teams.map((t, i) => `<div class="box ${i ? 'b' : 'a'}"><h2>${esc(t.name)}</h2><p>${Object.values(t.players).map(esc).join('، ') || 'ما أحد دخل للحين'}</p></div>`).join('');
+  r.innerHTML = S.teams.map((t, i) => `<div class="box ${i ? 'b' : 'a'}">
+    <input class="tname" data-t="${i}" value="${esc(t.name)}" maxlength="14" aria-label="اسم الفريق ${i + 1}">
+    <p>${Object.values(P).filter(p => p.team === i).map(p => esc(p.name)).join('، ') || 'ما أحد دخل للحين'}</p></div>`).join('');
+  r.querySelectorAll('.tname').forEach(inp => inp.onchange = () => { const r2 = Engine.reduce(S, { type: 'rename', team: +inp.dataset.t, name: inp.value }); if (r2.ok) { S = r2.state; save(); send(); } });
 }
 
-function start() {
-  SFX.win();
-  const deck = []; Object.entries(BANK).forEach(([c, qs]) => shuffle(qs).forEach(q => deck.push([c, ...q])));
-  G.deck = shuffle(deck); G.round = 0;
-  G.teams.forEach(t => { t.coins = START; t.allinUsed = false; });
-  nextRound();
-}
-
-/* ---------- الشريط العلوي ---------- */
-function header(active) {
-  const t = i => { const tm = G.teams[i]; const n = Object.keys(tm.players).length;
-    return `<div class="team ${i ? 'b' : 'a'} ${active !== undefined && active !== i ? 'dim' : ''}"><small>${esc(tm.name)}</small><b>${tm.coins}</b><span class="tag">${tm.allinUsed ? '' : 'ALL-IN ×1'} ${n ? '📱' + n : ''}</span></div>`; };
-  return `<div class="bar">${t(0)}<div class="rd">ROUND ${G.round}/${ROUNDS}</div>${t(1)}</div>`;
-}
-
-/* ---------- الجولة ---------- */
-function nextRound() {
-  stopTimer();
-  if (G.round >= ROUNDS) return gameOver();
-  G.round++;
-  let i = G.deck.findIndex(q => q[0] !== G.lastCat); if (i < 0) i = 0;
-  G.cur = G.deck.splice(i, 1)[0]; G.lastCat = G.cur[0];
-  const rescued = G.teams.filter(t => t.coins <= 0); rescued.forEach(t => t.coins = 100);
-  G.bids = [null, null]; G.allin = [false, false]; G.answering = null; G.steal = false; G.gone = undefined; G.last = null; G.locked = false;
-  G.phase = 'roll'; send();
+function roll() {
+  shownRound = S.round;
+  const rescued = S.rescued.map(i => esc(S.teams[i].name));
   app.innerHTML = `${header()}<div class="stage"><p class="k">الفئة الجاية</p><p class="cat roll" id="cat">؟</p>
-    ${rescued.length ? `<p class="mute">${rescued.map(t => esc(t.name)).join(' و ')} أفلسوا، وعطيناهم 100 عملة يكملون فيها.</p>` : ''}</div>`;
+    ${rescued.length ? `<p class="mute">${rescued.join(' و ')} أفلسوا، وعطيناهم ${S.config.rescue} عملة يكملون فيها.</p>` : ''}</div>`;
   const el = $('cat'), cats = Object.keys(BANK); let n = 0;
   T = setInterval(() => {
     el.textContent = cats[n++ % cats.length]; beep(300 + (n % 5) * 80, .04, 'square', .03);
-    if (n >= 14) { stopTimer(); el.textContent = G.cur[0]; el.classList.remove('roll'); el.classList.add('land'); SFX.reveal(); setTimeout(betPhase, 900); }
+    if (n >= 14) { clearInterval(T); T = null; el.textContent = S.cur.cat; el.classList.remove('roll'); el.classList.add('land'); SFX.reveal(); auto = setTimeout(betPhase, 900); }
   }, 90);
 }
 
 function betPhase() {
-  G.phase = 'bet'; send();
-  const box = i => { const t = G.teams[i], done = G.bids[i] !== null, phones = Object.keys(t.players).length;
+  shownRound = S.round;
+  const box = i => { const t = S.teams[i], done = S.bids[i] !== null, phones = Object.values(P).filter(p => p.team === i).length;
     return `<div class="box ${i ? 'b' : 'a'}"><b>${esc(t.name)}</b><span class="st ${done ? '' : 'blink'}">${done ? 'BET ✓' : 'WAITING…'}</span>
       ${done ? '' : `<button class="px d mini" data-t="${i}">${phones ? 'راهن من الشاشة' : 'راهن هنا'}</button>`}</div>`; };
-  app.innerHTML = `${header()}<div class="stage"><p class="k">الفئة</p><p class="cat">${esc(G.cur[0])}</p>
+  app.innerHTML = `${header()}<div class="stage"><p class="k">الفئة</p><p class="cat">${esc(S.cur.cat)}</p>
     <p class="k">راهنوا من جوالاتكم بالسر</p><div class="wait2" id="w2">${box(0)}${box(1)}</div></div>`;
   $('w2').onclick = e => { const b = e.target.closest('button[data-t]'); if (b) screenBet(+b.dataset.t); };
 }
 
-// رهان من الشاشة للفريق اللي ما عنده جوال
 function screenBet(i) {
-  const t = G.teams[i], other = G.teams[1 - i];
-  let v = Math.min(Math.max(MINBET, Math.round(t.coins * .2 / 50) * 50), t.coins), all = false;
+  const t = S.teams[i], other = S.teams[1 - i], min = Math.min(S.config.minBet, t.coins);
+  let v = Math.min(Math.max(S.config.minBet, Math.round(t.coins * .2 / 50) * 50), t.coins), all = false;
   app.innerHTML = `${header(i)}<div class="stage">
     <p class="k">${esc(t.name)} يراهنون · ${esc(other.name)} لا يطالعون 🙈</p>
     <div class="betbox"><p class="amount" id="amt"></p><div class="meter" id="mt"></div>
@@ -135,66 +174,65 @@ function screenBet(i) {
     $('mt').innerHTML = Array.from({ length: 10 }, (_, k) => `<i class="${k < f ? '' : 'off'}"></i>`).join('');
     $('all').textContent = all ? 'إلغاء كل شي' : 'كل شي أو لا شي'; };
   draw();
-  app.querySelector('.chips').onclick = e => { const d = +e.target.dataset.d; if (!d || all) return; v = Math.min(t.coins, Math.max(Math.min(MINBET, t.coins), v + d)); SFX.tap(); draw(); };
+  app.querySelector('.chips').onclick = e => { const d = +e.target.dataset.d; if (!d || all) return; v = Math.min(t.coins, Math.max(min, v + d)); SFX.tap(); draw(); };
   $('all').onclick = () => { all = !all; SFX.tap(); draw(); };
   $('back').onclick = betPhase;
-  $('ok').onclick = () => placeBid(i, all ? t.coins : v, all);
+  $('ok').onclick = () => { SFX.tap(); if (S.phase === 'bet' && S.bids[i] === null) dispatch({ type: 'bid', team: i, amount: v, allin: all }); else betPhase(); };
 }
 
-function placeBid(i, amount, allin) {
-  const t = G.teams[i];
-  if (allin && t.allinUsed) allin = false;
-  amount = allin ? t.coins : Math.max(Math.min(MINBET, t.coins), Math.min(t.coins, Math.round(amount)));
-  G.bids[i] = amount; G.allin[i] = allin; SFX.tap();
-  if (G.bids.every(b => b !== null)) reveal(); else betPhase();
-}
-
-function reveal() {
-  G.phase = 'countdown'; send();
+function countdown() {
+  shownReveal = S.round;
   let c = 3;
   const show = () => { app.innerHTML = `${header()}<div class="stage"><p class="k">الرهانات تنكشف بعد</p><p class="count">${c}</p></div>`; beep(440, .12); };
-  show(); stopTimer();
-  T = setInterval(() => { c--; if (c > 0) show(); else { stopTimer(); revealNow(); } }, 800);
+  show();
+  T = setInterval(() => { c--; if (c > 0) show(); else { clearInterval(T); T = null; reveal(); } }, 800);
 }
-function revealNow() {
-  const [a, b] = G.bids; const w = a === b ? (Math.random() < .5 ? 0 : 1) : (a > b ? 0 : 1);
-  G.winner = w; G.phase = 'reveal'; send();
-  const pad = i => `<div class="paddle ${i === w ? 'win' : 'lose'}"><div class="p ${i ? 'b' : 'a'}">${G.allin[i] ? 'ALL' : G.bids[i]}</div><div class="s"></div><em>${esc(G.teams[i].name)}</em></div>`;
+function reveal() {
+  shownReveal = S.round;
+  const w = S.winner;
+  const pad = i => `<div class="paddle ${i === w ? 'win' : 'lose'}"><div class="p ${i ? 'b' : 'a'}">${S.allin[i] ? 'ALL' : S.bids[i]}</div><div class="s"></div><em>${esc(S.teams[i].name)}</em></div>`;
   app.innerHTML = `${header()}<div class="stage"><div class="paddles">${pad(0)}${pad(1)}</div>
-    <p class="k">${a === b ? 'تعادل! القرعة اختارت ' : ''}🔨 بيع على ${esc(G.teams[w].name)}!</p>
+    <p class="k">${S.tie ? 'تعادل! القرعة اختارت ' : ''}🔨 بيع على ${esc(S.teams[w].name)}!</p>
     <button class="px g" id="q">اعرض السؤال</button></div>`;
   SFX.win();
-  let auto = setTimeout(() => question(w, false), 3500);
-  $('q').onclick = () => { clearTimeout(auto); question(w, false); };
+  const go = () => { if (S.phase === 'reveal') dispatch({ type: 'toQuestion', now: Date.now() }); };
+  auto = setTimeout(go, 3500);
+  $('q').onclick = go;
 }
 
-function question(team, steal) {
-  stopTimer();
-  const [cat, q, opts] = G.cur;
-  G.answering = team; G.steal = steal; G.locked = false;
-  G.stake = steal ? G.stake : (G.allin[G.winner] ? G.bids[G.winner] * 2 : G.bids[G.winner]);
-  G.left = steal ? STEAL_S : ANSWER_S; const total = G.left;
-  G.phase = 'question'; send();
-  const t = G.teams[team];
-  app.innerHTML = `${header(team)}<div class="stage">
-    ${steal ? `<p class="steal">فرصة سرقة! ${esc(t.name)}</p>` : `<p class="k">${esc(t.name)} يجاوبون</p>`}
-    <p class="q">${esc(q)}</p>
-    <div class="opts" id="ops">${opts.map((o, k) => `<button class="opt ${k === G.gone ? 'gone' : ''}" data-k="${k}" ${k === G.gone ? 'disabled' : ''} style="background:${COLS[k]};${k === 1 || k === 2 ? 'color:var(--ink)' : ''}"><i>${LET[k]}</i>${esc(o)}</button>`).join('')}</div>
+function question() {
+  const t = S.teams[S.answering], total = S.steal ? S.config.stealS : S.config.answerS;
+  app.innerHTML = `${header(S.answering)}<div class="stage">
+    ${S.steal ? `<p class="steal">فرصة سرقة! ${esc(t.name)}</p>` : `<p class="k">${esc(t.name)} يجاوبون</p>`}
+    <p class="q">${esc(S.cur.q)}</p>
+    <div class="opts" id="ops">${S.cur.opts.map((o, k) => `<button class="opt ${k === S.gone ? 'gone' : ''}" data-k="${k}" ${k === S.gone ? 'disabled' : ''} style="background:${COLS[k]};${k === 1 || k === 2 ? 'color:var(--ink)' : ''}"><i>${LET[k]}</i>${esc(o)}</button>`).join('')}</div>
     <div class="row" style="align-items:center"><div class="tm"><b id="sec"></b><div class="bars" id="bars"></div></div>
-    <p class="stake">${steal ? `STEAL: +${G.stake}` : `WIN: +${G.stake} · LOSE: −${G.stake}`}</p></div></div>`;
-  const bars = () => { const on = Math.ceil(G.left / total * 10);
-    $('bars').innerHTML = Array.from({ length: 10 }, (_, k) => `<i class="${k < on ? '' : 'off'}"></i>`).join('');
-    const s = $('sec'); s.textContent = G.left; s.classList.toggle('alarm', G.left <= 5); };
-  bars();
-  T = setInterval(() => { G.left--; if (G.left <= 5 && G.left > 0) SFX.tick(); if (G.left <= 0) { stopTimer(); pick(-1); } else { bars(); send(); } }, 1000);
-  $('ops').onclick = e => { const b = e.target.closest('.opt'); if (b && !b.disabled) pick(+b.dataset.k); };
+    <p class="stake">${S.steal ? `STEAL: +${S.stake}` : `WIN: +${S.stake} · LOSE: −${S.stake}`}</p></div></div>`;
+  let lastLeft = null;
+  const tick = () => {
+    const left = Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000));
+    if (left !== lastLeft) {
+      lastLeft = left;
+      const on = Math.ceil(left / total * 10);
+      $('bars').innerHTML = Array.from({ length: 10 }, (_, k) => `<i class="${k < on ? '' : 'off'}"></i>`).join('');
+      const s = $('sec'); s.textContent = left; s.classList.toggle('alarm', left <= 5);
+      if (left <= 5 && left > 0) SFX.tick();
+      send();
+    }
+    if (left <= 0) { clearInterval(T); T = null; answer(-1); }
+  };
+  tick(); T = setInterval(tick, 250);
+  $('ops').onclick = e => { const b = e.target.closest('.opt'); if (b && !b.disabled) answer(+b.dataset.k); };
 }
-
-function pick(k) {
-  if (G.locked) return; G.locked = true; stopTimer();
-  const right = G.cur[3];
-  document.querySelectorAll('.opt').forEach((b, j) => { b.disabled = true; if (j === right) b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
-  setTimeout(() => result(G.answering, G.steal, k === right, k), 1100);
+function answer(k) {
+  if (S.phase !== 'question') return;
+  stopTimers();
+  const right = S.cur.a;
+  document.querySelectorAll('.opt').forEach((b, j) => { b.disabled = true; if (j === right && S.phase === 'question') b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
+  // نخفي الجواب الصح لو فيه سرقة جاية
+  const willSteal = k !== right && !S.steal;
+  if (willSteal) document.querySelectorAll('.opt.right').forEach(b => b.classList.remove('right'));
+  setTimeout(() => dispatch({ type: 'answer', k }), 1100);
 }
 
 function countUp(i, from, to) {
@@ -209,40 +247,64 @@ function burst() {
 }
 function fx(cls) { app.classList.remove('shake', 'flash'); void app.offsetWidth; app.classList.add(cls); }
 
-function result(team, steal, ok, picked) {
-  const t = G.teams[team], o = G.teams[1 - team], before = t.coins, stake = G.stake;
-  if (G.allin[team] && !steal) t.allinUsed = true;
-  let line, color, amount;
-  if (ok) { t.coins += stake; amount = '+' + stake; color = 'var(--green)'; line = steal ? `${esc(t.name)} سرقوها!` : `صح! ${esc(t.name)} كسبوا`; SFX.win(); }
-  else if (!steal) { t.coins = Math.max(0, t.coins - stake); amount = '−' + stake; color = 'var(--red)'; line = picked < 0 ? `خلص الوقت! ${esc(t.name)} خسروا` : `غلط! ${esc(t.name)} خسروا`; SFX.lose(); }
-  else { amount = '0'; color = 'var(--mute)'; line = `ولا ${esc(t.name)} عرفوها`; SFX.lose(); }
-  const canSteal = !ok && !steal;
-  G.gone = picked >= 0 ? picked : undefined;
-  G.last = { team, ok, amount, steal, answer: canSteal ? null : G.cur[2][G.cur[3]] };
-  G.phase = canSteal ? 'stealOffer' : 'result'; send();
-  app.innerHTML = `${header()}<div class="stage">
+function result(prev, opts) {
+  const L = S.last, t = S.teams[L.team], o = S.teams[1 - L.team];
+  const canSteal = S.phase === 'stealOffer';
+  const amount = L.delta > 0 ? '+' + L.delta : L.delta < 0 ? '−' + (-L.delta) : '0';
+  const color = L.delta > 0 ? 'var(--green)' : L.delta < 0 ? 'var(--red)' : 'var(--mute)';
+  const line = L.ok ? (L.steal ? `${esc(t.name)} سرقوها!` : `صح! ${esc(t.name)} كسبوا`)
+    : L.steal ? `ولا ${esc(t.name)} عرفوها` : L.timeout ? `خلص الوقت! ${esc(t.name)} خسروا` : `غلط! ${esc(t.name)} خسروا`;
+  const startCoins = S.teams.map(x => x.coins); startCoins[L.team] -= L.delta;
+  app.innerHTML = `${header(null, opts.restore ? null : startCoins)}<div class="stage">
     <p class="big" style="color:${color}">${amount}</p><p class="k">${line}</p>
-    ${!canSteal ? `<p class="mute">الجواب: <b style="color:var(--ink)">${esc(G.cur[2][G.cur[3]])}</b></p>` : `<p class="k">${esc(o.name)}، تبون تسرقون السؤال؟ قرروا من جوالكم أو من هنا</p>`}
-    <div class="row">${canSteal ? `<button class="px r" id="st">${esc(o.name)} يسرقون</button><button class="px d" id="skip">لا، التالي</button>` : `<button class="px g" id="nx">${G.round >= ROUNDS ? 'النتيجة النهائية' : 'السؤال الجاي'}</button>`}</div></div>`;
-  countUp(team, before, t.coins);
-  if (ok) { fx('flash'); if (stake >= 400) burst(); } else fx('shake');
-  if (canSteal) { $('st').onclick = startSteal; $('skip').onclick = nextRound; }
-  else $('nx').onclick = nextRound;
+    ${!canSteal ? `<p class="mute">الجواب: <b style="color:var(--ink)">${esc(L.answer)}</b></p>` : `<p class="k">${esc(o.name)}، تبون تسرقون السؤال؟ قرروا من جوالكم أو من هنا</p>`}
+    <div class="row">${canSteal ? `<button class="px r" id="st">${esc(o.name)} يسرقون</button><button class="px d" id="skip">لا، التالي</button>` : `<button class="px g" id="nx">${S.round >= S.config.rounds ? 'النتيجة النهائية' : 'السؤال الجاي'}</button>`}</div></div>`;
+  if (!opts.restore) {
+    countUp(L.team, startCoins[L.team], t.coins);
+    if (L.ok) { fx('flash'); SFX.win(); if (L.delta >= 400) burst(); } else { fx('shake'); SFX.lose(); }
+  }
+  if (canSteal) { $('st').onclick = () => dispatch({ type: 'steal', yes: true, now: Date.now() }); $('skip').onclick = () => dispatch({ type: 'steal', yes: false }); }
+  else $('nx').onclick = () => dispatch({ type: 'next' });
 }
-function startSteal() { if (G.phase === 'stealOffer') question(1 - G.answering, true); }
 
-function gameOver() {
-  stopTimer();
-  const [a, b] = G.teams; const w = a.coins === b.coins ? null : (a.coins > b.coins ? 0 : 1);
-  G.final = w; G.phase = 'over'; send();
+function over(opts) {
+  const w = S.final;
   app.innerHTML = `<div class="stage"><p class="k blink">GAME OVER</p>
-    <p class="cat">${w === null ? 'تعادل!' : `${esc(G.teams[w].name)} فازوا!`}</p>
-    <div class="final">${G.teams.map((t, i) => `<div class="team ${i ? 'b' : 'a'}"><small>${esc(t.name)}</small><b>${t.coins}</b></div>`).join('')}</div>
-    <div class="row"><button class="px g" id="again">لعبة جديدة</button></div></div>`;
-  tune([523, 523, 659, 784, 659, 784, 1046], .12); burst(); setTimeout(burst, 900);
-  $('again').onclick = lobby;
+    <p class="cat">${w === null ? 'تعادل!' : `${esc(S.teams[w].name)} فازوا!`}</p>
+    <div class="final">${S.teams.map((t, i) => `<div class="team ${i ? 'b' : 'a'}"><small>${esc(t.name)}</small><b>${t.coins}</b></div>`).join('')}</div>
+    <div class="row"><button class="px g" id="again">لعبة جديدة بنفس اللاعبين</button></div></div>`;
+  if (!opts.restore) { tune([523, 523, 659, 784, 659, 784, 1046], .12); burst(); setTimeout(burst, 900); }
+  $('again').onclick = () => dispatch({ type: 'reset' });
 }
 
-// لو جوال دخل متأخر، يوصله الوضع الحالي كل 3 ثواني
-setInterval(() => { if (G && G.phase !== 'question') send(); }, 3000);
-lobby();
+/* ---------- التشغيل ---------- */
+async function switchRoom(room) {
+  ROOM = room;
+  try { net = await Net.open(ROOM, onMsg, st => { $('mode').textContent = (net && net.mode === 'online' ? 'ONLINE' : 'LOCAL TEST') + (st === 'down' ? ' · RECONNECTING' : ''); if (st === 'up') send(); }); }
+  catch (e) { app.innerHTML = `<div class="stage"><p class="k">ما قدرنا نتصل بالسيرفر.</p><p class="mute">تأكد من الإنترنت وحدّث الصفحة.</p></div>`; return false; }
+  $('mode').textContent = net.mode === 'online' ? 'ONLINE' : 'LOCAL TEST';
+  save(); render(null, {}); send();
+  return true;
+}
+
+async function boot() {
+  if (!Auth.available()) { app.innerHTML = `<div class="stage"><p class="k">المتصفح هذا قديم.</p><p class="mute">افتح اللعبة من كروم أو سفاري حديث.</p></div>`; return; }
+  const saved = load();
+  if (saved) {
+    S = saved.S; P = saved.P || {}; ROOM = saved.room;
+    shownRound = S.round; shownReveal = S.round;
+    try { net = await Net.open(ROOM, onMsg, st => { $('mode').textContent = (net && net.mode === 'online' ? 'ONLINE' : 'LOCAL TEST') + (st === 'down' ? ' · RECONNECTING' : ''); if (st === 'up') send(); }); }
+    catch (e) { app.innerHTML = `<div class="stage"><p class="k">ما قدرنا نتصل بالسيرفر.</p><p class="mute">تأكد من الإنترنت وحدّث الصفحة.</p></div>`; return; }
+    $('mode').textContent = net.mode === 'online' ? 'ONLINE' : 'LOCAL TEST';
+    // لو الوقت خلص والشاشة مطفية، ينحسب غلط
+    if (S.phase === 'question' && S.deadline && Date.now() > S.deadline) { const r = Engine.reduce(S, { type: 'answer', k: -1 }); if (r.ok) S = r.state; save(); }
+    render(null, { restore: true }); send();
+    return;
+  }
+  S = Engine.create();
+  await switchRoom(newCode());
+}
+
+// كل 3 ثواني ترسل الوضع للجوالات اللي دخلت متأخر أو انقطع نتها
+setInterval(() => { if (S && S.phase !== 'question') send(); }, 3000);
+boot();

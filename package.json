@@ -1,0 +1,9 @@
+{
+  "name": "mazad",
+  "private": true,
+  "description": "المزاد: لعبة أسئلة جماعية بالرهان",
+  "scripts": {
+    "test": "node --test tests/engine.test.js tests/auth.test.js",
+    "serve": "python -m http.server 5173"
+  }
+}

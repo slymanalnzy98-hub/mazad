@@ -1,0 +1,50 @@
+# يشغّل الاختبارات مع كل دفع، وما ينشر اللعبة إلا إذا نجحت كلها.
+# يحتاج: Settings → Pages → Source = GitHub Actions
+name: test-and-deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Syntax check
+        run: for f in *.js; do node --check "$f"; done
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect site files
+        run: |
+          mkdir _site
+          cp *.html *.js *.css _site/
+          cp -r previews _site/ 2>/dev/null || true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
