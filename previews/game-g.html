@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المزاد أركيد كوميكس</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Marhey:wght@700&family=Press+Start+2P&display=swap">
+<style>
+:root{--ink:#111;--paper:#fff;--y:#ffe14d;--pink:#ff2d6f;--cyan:#22d3ee;--green:#3ddc84;--purple:#7c3aed;--a:#2f7bff;--b:#ff4040;
+--display:"Lalezar",Tahoma,sans-serif;--comic:"Marhey",Tahoma,sans-serif;--pixel:"Press Start 2P",monospace}
+*{box-sizing:border-box}body{margin:0;background:#1a1033;color:#fff;font-family:var(--comic);padding:16px;display:flex;flex-direction:column;align-items:center}
+.note{max-width:1100px;width:100%;color:#cbbcff;margin:0 0 10px;font-weight:700}
+/* the screen: comic page with pixel frame */
+.scr{position:relative;width:min(1100px,100%);aspect-ratio:16/9;min-height:560px;overflow:hidden;border:6px solid var(--ink);
+ box-shadow:0 0 0 6px var(--y),12px 12px 0 6px var(--ink);
+ background:var(--y);background-image:radial-gradient(#f0b400 2px,transparent 2.2px);background-size:14px 14px}
+.rays{position:absolute;inset:-50%;background:repeating-conic-gradient(rgba(255,255,255,.35) 0 8deg,transparent 8deg 20deg);animation:spin 30s linear infinite;opacity:0;transition:opacity .4s}
+.rays.on{opacity:1}@keyframes spin{to{transform:rotate(360deg)}}
+.ui{position:absolute;inset:0;padding:18px 4%;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2}
+.team{background:var(--paper);color:var(--ink);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:6px 14px;min-width:140px}
+.team small{display:block;font-family:var(--display);font-size:1.4rem;line-height:1.1}
+.team b{font-family:var(--pixel);font-size:1.15rem;font-weight:400;direction:ltr;display:block}
+.team.a{transform:rotate(-2deg)}.team.b{transform:rotate(2deg)}
+.team.a small{color:var(--a)}.team.b small{color:var(--b)}
+.lives{display:flex;gap:3px;margin-top:4px}.lives i{width:10px;height:16px;background:var(--pink);border:2px solid var(--ink)}.lives i.off{background:#ddd}
+.rd{font-family:var(--pixel);font-size:.6rem;color:var(--ink);background:var(--paper);border:3px solid var(--ink);padding:8px 10px;box-shadow:4px 4px 0 var(--ink);line-height:1.8;text-align:center}
+.center{flex:1;position:relative}
+.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;opacity:0;pointer-events:none}
+.ph.on{opacity:1}
+/* burst */
+.burst{position:relative;display:grid;place-items:center;width:min(440px,60vw);aspect-ratio:1.6}
+.burst::before{content:"";position:absolute;inset:0;background:var(--pink);
+ clip-path:polygon(50% 0,58% 22%,78% 6%,74% 30%,100% 24%,84% 46%,100% 62%,76% 66%,84% 92%,60% 76%,50% 100%,40% 76%,16% 92%,24% 66%,0 62%,16% 46%,0 24%,26% 30%,22% 6%,42% 22%);
+ filter:drop-shadow(6px 6px 0 var(--ink))}
+.burst span{position:relative;font-family:var(--display);font-size:clamp(2.6rem,6vw,4.4rem);color:var(--paper);-webkit-text-stroke:2px var(--ink);paint-order:stroke fill;text-shadow:4px 4px 0 var(--ink)}
+.ph.on .burst{animation:pop .5s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes pop{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(-4deg)}}
+/* bidding characters: pixel paddles in comic panels */
+.panels{display:flex;gap:clamp(16px,5vw,60px)}
+.panel{background:var(--paper);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--ink);padding:10px 16px 0;display:flex;flex-direction:column;align-items:center;position:relative;width:clamp(140px,20vw,200px)}
+.panel .bub{position:absolute;top:-30px;background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:20px;padding:2px 12px;font-family:var(--pixel);font-size:.75rem;white-space:nowrap;opacity:0}
+.panel .bub::after{content:"";position:absolute;bottom:-12px;right:30%;border:7px solid transparent;border-top:9px solid var(--ink)}
+.panel.say .bub{opacity:1;animation:pop2 .25s steps(3)}
+@keyframes pop2{from{transform:scale(.4)}}
+.sign{width:84px;height:62px;border:4px solid var(--ink);display:grid;place-items:center;font-family:var(--pixel);font-size:.9rem;color:#fff;transition:transform .15s steps(2)}
+.stick{width:12px;height:46px;background:#8a5a2b;border:3px solid var(--ink);border-top:0}
+.panel.say .sign{transform:translateY(-14px)}
+.panel em{font-style:normal;font-family:var(--display);font-size:1.3rem;color:var(--ink);margin:4px 0 6px}
+/* question */
+.qbub{position:relative;background:var(--paper);color:var(--ink);border:5px solid var(--ink);border-radius:36px;padding:16px 30px;font-size:clamp(1.4rem,3vw,2.1rem);line-height:1.45;max-width:820px;box-shadow:8px 8px 0 var(--ink)}
+.qbub::after{content:"";position:absolute;bottom:-34px;right:80px;border:16px solid transparent;border-top:24px solid var(--ink);transform:skewX(-20deg)}
+.stake{font-family:var(--pixel);font-size:.7rem;background:var(--ink);color:var(--y);padding:8px 12px;transform:rotate(-2deg)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:min(820px,100%);margin-top:10px}
+.opt{display:flex;align-items:center;gap:12px;background:var(--paper);color:var(--ink);border:4px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:8px 14px;font-size:clamp(1.2rem,2.4vw,1.6rem);font-weight:700;text-align:start;transition:transform .2s steps(2)}
+.opt i{font-style:normal;font-family:var(--pixel);font-size:.75rem;width:34px;height:34px;display:grid;place-items:center;color:#fff;border:3px solid var(--ink)}
+.rv .opt{opacity:.35}
+.rv .opt.ok{opacity:1;background:var(--green);transform:rotate(-2deg) scale(1.06)}
+.tm{font-family:var(--pixel);font-size:1rem;background:var(--pink);color:#fff;border:4px solid var(--ink);padding:8px;box-shadow:4px 4px 0 var(--ink);min-width:3em;text-align:center}
+/* score popup */
+.plus{position:absolute;font-family:var(--pixel);font-size:2.2rem;color:var(--green);-webkit-text-stroke:2px var(--ink);text-shadow:4px 4px 0 var(--ink);top:70px;right:6%;opacity:0;z-index:3}
+.plus.go{animation:up 1.4s steps(8) forwards}
+@keyframes up{0%{opacity:1;transform:translateY(40px)}80%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
+.px{position:absolute;width:12px;height:12px;border:2px solid var(--ink);z-index:4;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(700px) rotate(180deg)}}
+.shake{animation:shake .4s steps(5)}
+@keyframes shake{25%{transform:translate(-8px,4px)}50%{transform:translate(7px,-4px)}75%{transform:translate(-4px,2px)}}
+.ctrl{margin-top:22px;display:flex;gap:8px;flex-wrap:wrap}
+.ctrl button{font-family:var(--display);font-size:1.1rem;background:var(--paper);color:var(--ink);border:3px solid var(--ink);box-shadow:4px 4px 0 #000;padding:4px 16px;cursor:pointer}
+.ctrl button.on{background:var(--y)}
+@media(max-width:700px){.scr{aspect-ratio:auto;min-height:640px}.opts{grid-template-columns:1fr}.team{min-width:110px}.rd{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<p class="note">أركيد × كوميكس: صفحة مجلة رسوم بإطار وأرقام أركيد. فقاعات كلام للسوم، انفجارات «زوّدها!» و«بيع!»، ونقاط بكسل تطير لما تجاوب صح. يشتغل لحاله — أو اختر مرحلة.</p>
+<div class="scr" id="scr"><div class="rays" id="rays"></div>
+ <div class="ui">
+  <div class="top">
+   <div class="team a"><small>الصقور</small><b id="sa">1200</b><div class="lives"><i></i><i></i><i></i><i class="off"></i></div></div>
+   <div class="rd">ROUND 3/8<br>INSERT BET</div>
+   <div class="team b"><small>النمور</small><b>0900</b><div class="lives"><i></i><i></i><i class="off"></i><i class="off"></i></div></div>
+  </div>
+  <div class="plus" id="plus">+400</div>
+  <div class="center">
+   <div class="ph" id="p0"><div class="burst"><span>على كم؟</span></div>
+    <div class="panels"><div class="panel" id="pa"><div class="bub" id="ba">200!</div><div class="sign" style="background:var(--a)" id="sga">100</div><div class="stick"></div><em>الصقور</em></div>
+    <div class="panel" id="pb"><div class="bub" id="bb">250!</div><div class="sign" style="background:var(--b)" id="sgb">100</div><div class="stick"></div><em>النمور</em></div></div></div>
+   <div class="ph" id="p1"><div class="burst"><span>بيع!</span></div><div class="stake" style="font-size:1rem">SQR × 400</div></div>
+   <div class="ph" id="p2"><div style="display:flex;gap:12px;align-items:center"><span class="stake">BET 400</span><span class="tm" id="tm">14</span></div>
+    <div class="qbub">كم عدد مناطق المملكة العربية السعودية الإدارية؟</div>
+    <div class="opts" id="opts"><div class="opt"><i style="background:var(--purple)">A</i>11</div><div class="opt ok"><i style="background:var(--cyan)">B</i>13</div><div class="opt"><i style="background:var(--pink)">C</i>15</div><div class="opt"><i style="background:var(--a)">D</i>9</div></div></div>
+  </div>
+ </div>
+</div>
+<div class="ctrl" id="ctrl"><button data-p="0">السوم</button><button data-p="1">بيع!</button><button data-p="2">السؤال</button><button data-p="3">الجواب</button><button data-p="auto">تلقائي</button></div>
+<script>
+const $=id=>document.getElementById(id);let T=[];const later=(f,ms)=>T.push(setTimeout(f,ms));const clear=()=>{T.forEach(clearTimeout);T=[]};
+function restart(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c)}
+function show(p){document.querySelectorAll(".ph").forEach(x=>x.classList.remove("on"));$("opts").parentElement.classList.remove("rv");$("rays").classList.remove("on");$("sa").textContent="1200";
+ document.querySelectorAll("#ctrl button").forEach(b=>b.classList.toggle("on",b.dataset.p==String(p)));
+ if(p==0){restart($("p0"),"on");$("sga").textContent=100;$("sgb").textContent=100;
+  [["a",200],["b",250],["a",300],["b",350],["a",400]].forEach(([w,v],i)=>later(()=>{const pn=$("p"+w);$("b"+w).textContent=v+"!";$("sg"+w).textContent=v;pn.classList.remove("say");void pn.offsetWidth;pn.classList.add("say");later(()=>pn.classList.remove("say"),550)},700+i*650))}
+ if(p==1){restart($("p1"),"on");$("rays").classList.add("on");restart($("scr"),"shake")}
+ if(p>=2){$("p2").classList.add("on");let n=14;$("tm").textContent=n;if(p==2)for(let i=1;i<=3;i++)later(()=>$("tm").textContent=n-i,i*1000)}
+ if(p==3){$("opts").parentElement.classList.add("rv");$("rays").classList.add("on");restart($("plus"),"go");$("sa").textContent="1600";rain()}}
+function rain(){const c=["#ff2d6f","#22d3ee","#3ddc84","#7c3aed","#fff"];for(let i=0;i<36;i++){const d=document.createElement("div");d.className="px";d.style.left=Math.random()*100+"%";d.style.top="-20px";d.style.background=c[i%5];d.style.animationDuration=1.4+Math.random()*1.4+"s";d.style.animationDelay=Math.random()*.6+"s";$("scr").appendChild(d);setTimeout(()=>d.remove(),3600)}}
+function auto(){clear();show(0);later(()=>show(1),4400);later(()=>show(2),6400);later(()=>show(3),10000);later(auto,13800);later(()=>document.querySelector("[data-p=auto]").classList.add("on"),10)}
+$("ctrl").onclick=e=>{const p=e.target.dataset.p;if(p==null)return;clear();p=="auto"?auto():show(+p)};
+auto();
+</script></body></html>
