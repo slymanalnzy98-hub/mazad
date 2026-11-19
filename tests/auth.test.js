@@ -9,6 +9,14 @@ test('التوقيع الصحيح ينقبل', async () => {
   assert.equal(await A.verify(me.pub, A.actParts(m), m.sig), true);
 });
 
+test('تغيير ترتيب المفاتيح في الطريق ما يكسر التوقيع', async () => {
+  const me = await A.createIdentity(); const sign = await A.signer(me);
+  const m = { room: 'K7Q2X', id: me.id, seq: 9, body: { type: 'bid', amount: 300, allin: false } };
+  const sig = await sign(A.actParts(m));
+  const reordered = { ...m, body: { allin: false, amount: 300, type: 'bid' } };
+  assert.equal(await A.verify(me.pub, A.actParts(reordered), sig), true);
+});
+
 test('أي تعديل على الرسالة يكسر التوقيع', async () => {
   const me = await A.createIdentity(); const sign = await A.signer(me);
   const m = { room: 'K7Q2X', id: me.id, seq: 5, body: { type: 'bid', team: 0, amount: 300 } };

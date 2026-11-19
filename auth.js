@@ -13,7 +13,10 @@
   const b64 = buf => { let s = ''; new Uint8Array(buf).forEach(b => s += String.fromCharCode(b)); return btoa(s); };
   const unb64 = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
   const hex = buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-  const canon = parts => JSON.stringify(parts);
+  // ترتيب ثابت للمفاتيح، لأن السيرفر ممكن يغيّر ترتيبها في الطريق
+  const sortDeep = v => Array.isArray(v) ? v.map(sortDeep)
+    : v && typeof v === 'object' ? Object.keys(v).sort().reduce((o, k) => (o[k] = sortDeep(v[k]), o), {}) : v;
+  const canon = parts => JSON.stringify(sortDeep(parts));
 
   function available() { return !!subtle(); }
 
