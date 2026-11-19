@@ -31,7 +31,7 @@
 @keyframes zoom{from{transform:scale(2.4);opacity:0}50%{opacity:1}to{transform:scale(1)}}
 .panels{display:flex;gap:clamp(30px,8vw,100px);align-items:flex-end}
 .panel{display:flex;flex-direction:column;align-items:center;position:relative}
-.panel .bub{position:absolute;top:-34px;font-family:var(--pixel);font-size:.8rem;color:var(--green);opacity:0}
+.panel .bub{display:none;position:absolute;top:-34px;font-family:var(--pixel);font-size:.8rem;color:var(--green);opacity:0}
 .panel.say .bub{opacity:1;animation:up2 .5s steps(4) forwards}
 @keyframes up2{to{transform:translateY(-16px)}}
 .sign{width:clamp(100px,14vw,140px);aspect-ratio:1;border:5px solid #fff;box-shadow:7px 7px 0 #000;display:grid;place-items:center;font-family:var(--pixel);font-size:clamp(1rem,2.4vw,1.5rem);color:#fff;transition:transform .15s steps(2)}
