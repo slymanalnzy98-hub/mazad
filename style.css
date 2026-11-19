@@ -115,4 +115,30 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--purple);outline
 .pop{animation:land .3s steps(3)}
 .pix{position:absolute;width:12px;height:12px;z-index:3;pointer-events:none;animation:fallpx linear forwards}
 @keyframes fallpx{to{transform:translateY(110vh) rotate(180deg)}}
-@media (prefers-reduced-motion:reduce){#app::before,#app::after,.opt.right,.blink,.paddle.win .p,.count,.land,.shake,.pop,.pix{animation:none}.pix{display:none}}
+
+/* Polish (previews/game-arcade-polish.html): round how-to, short timers, player picks, result reveal. New classes; tv.js must emit them. */
+.howto{background:var(--black);border:4px solid var(--ink);box-shadow:8px 8px 0 var(--purple);padding:16px 22px;width:min(780px,100%);box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
+.howto h2{color:var(--yellow);font-size:2rem}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.step{border:3px solid var(--c,var(--blue));padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:1.05rem;opacity:0;animation:stepin .3s steps(3) forwards}
+.step:nth-child(2){animation-delay:.6s}.step:nth-child(3){animation-delay:1.2s}
+.step b{font-family:var(--pixel);font-weight:400;font-size:1.4rem;color:var(--c,var(--blue))}
+@keyframes stepin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.skip{display:flex;align-items:center;gap:10px;font-family:var(--pixel);font-size:.55rem;color:var(--mute);align-self:center}
+.hold{position:relative;width:170px;height:18px;border:3px solid var(--ink);background:#222}
+.hold i{position:absolute;inset:0;width:var(--p,0%);background:var(--green)}
+.skip .auto{color:var(--yellow)}
+.tm.low b{background:var(--pink);color:var(--ink);animation:blink .3s steps(1) infinite}
+.picks{display:flex;gap:4px;margin-inline-start:auto}
+.picks span{font-family:var(--body);font-size:.85rem;font-weight:700;background:var(--black);color:var(--ink);padding:0 6px;animation:land .2s steps(2)}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(780px,100%)}
+.res .pl{background:var(--black);border:3px solid var(--green);padding:8px 12px;display:flex;flex-direction:column;gap:6px;text-align:start;opacity:0;animation:stepin .25s steps(3) forwards}
+.res .pl.bad{border-color:var(--pink)}
+.res .pl small{font-family:var(--display);font-size:1.3rem;display:flex;justify-content:space-between;align-items:center}
+.res .pl b{font-family:var(--pixel);font-weight:400;font-size:.6rem;color:var(--green)}.res .pl.bad b{color:var(--pink)}
+.res .pl em{font-style:normal;font-family:var(--pixel);font-size:.5rem;color:var(--mute)}
+.mvp{font-family:var(--pixel);font-size:.5rem;background:var(--yellow);color:var(--black);padding:4px 6px}
+.tally{display:flex;align-items:center;gap:16px;font-family:var(--pixel);direction:ltr}
+.tally .from{font-size:1.1rem;color:var(--mute)}.tally .arrow{color:var(--yellow)}.tally .to{font-size:clamp(1.8rem,5vw,2.6rem);color:var(--green);text-shadow:4px 4px 0 var(--black)}
+@media (max-width:560px){.steps,.res{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.step,.res .pl,.tm.low b,.picks span{animation:none;opacity:1}#app::before,#app::after,.opt.right,.blink,.paddle.win .p,.count,.land,.shake,.pop,.pix{animation:none}.pix{display:none}}
