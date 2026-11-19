@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أربع أفكار للمزاد</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Rakkas&family=Aref+Ruqaa:wght@700&family=Marhey:wght@600;700&family=IBM+Plex+Sans+Arabic:wght@700&display=swap">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111;color:#fff;font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;padding:20px 16px 60px}
+main{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+.h{font-family:Lalezar;font-size:1.8rem;margin:0}.d{color:#aaa;margin:4px 0 12px}
+.s{position:relative;overflow:hidden;border-radius:16px;aspect-ratio:16/9;min-height:440px;padding:24px 5%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.top{position:absolute;top:16px;inset-inline:5%;display:flex;justify-content:space-between;align-items:center}
+.o4{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(760px,100%)}
+@media(max-width:640px){.s{aspect-ratio:auto;min-height:560px;padding-top:90px}.o4{grid-template-columns:1fr}}
+
+/* 1 BALOOT: card table */
+.t1{background:radial-gradient(70% 70% at 50% 50%,#1f7a4a,#0d3d24);font-family:Rakkas}
+.t1::before{content:"";position:absolute;inset:14px;border:3px solid rgba(255,255,255,.12);border-radius:200px}
+.t1 .sc{background:#fff;color:#111;border-radius:8px;padding:4px 14px;font-size:1.3rem;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+.card{background:#fffdf6;color:#1a1a1a;border-radius:16px;width:min(560px,90%);padding:22px 30px;box-shadow:0 14px 30px rgba(0,0,0,.45);position:relative;font-size:clamp(1.4rem,3vw,2rem);line-height:1.4;animation:deal .8s cubic-bezier(.2,1.4,.4,1) both;transform-origin:bottom}
+.card::before,.card::after{content:"♦ ق";position:absolute;font-size:1.1rem;color:#c8102e}
+.card::before{top:10px;right:14px}.card::after{bottom:10px;left:14px;transform:rotate(180deg)}
+@keyframes deal{from{transform:translateY(-300px) rotate(-25deg);opacity:0}}
+.chips{display:flex;gap:8px}.chip{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-family:"IBM Plex Sans Arabic";font-weight:700;border:5px dashed rgba(255,255,255,.8);box-shadow:0 4px 0 rgba(0,0,0,.4)}
+.t1 .opt{background:rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;font-size:1.4rem}
+
+/* 2 COMIC */
+.t2{background:#ffe14d;background-image:radial-gradient(#e8a800 1.5px,transparent 1.6px);background-size:12px 12px;color:#111;font-family:Marhey}
+.t2 .sc{background:#fff;border:4px solid #111;padding:2px 14px;font-weight:700;font-size:1.3rem;transform:rotate(-2deg);box-shadow:5px 5px 0 #111}
+.boom{font-family:Lalezar;font-size:clamp(3rem,8vw,5.5rem);color:#ff2d55;-webkit-text-stroke:3px #111;text-shadow:6px 6px 0 #111;transform:rotate(-6deg);animation:pop .5s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes pop{from{transform:rotate(-6deg) scale(0)}}
+.bub{position:relative;background:#fff;border:4px solid #111;border-radius:30px;padding:14px 26px;font-size:clamp(1.3rem,2.8vw,1.9rem);font-weight:700;box-shadow:6px 6px 0 #111;max-width:640px}
+.bub::after{content:"";position:absolute;bottom:-26px;right:60px;border:14px solid transparent;border-top:18px solid #111}
+.t2 .opt{background:#fff;border:4px solid #111;padding:6px 14px;font-weight:700;font-size:1.3rem;box-shadow:4px 4px 0 #111}
+.t2 .opt.ok{background:#3ddc84}
+
+/* 3 CAMPFIRE */
+.t3{background:radial-gradient(50% 40% at 50% 100%,#ff8a1f55,transparent 70%),linear-gradient(#0a0f2a,#1c1530 60%,#2b1a14);font-family:"Aref Ruqaa"}
+.t3::before{content:"";position:absolute;inset:0;background:radial-gradient(1.5px 1.5px at 10% 15%,#fff,transparent),radial-gradient(1.5px 1.5px at 30% 8%,#fff,transparent),radial-gradient(2px 2px at 55% 20%,#fff,transparent),radial-gradient(1.5px 1.5px at 75% 10%,#fff,transparent),radial-gradient(1.5px 1.5px at 90% 25%,#fff,transparent),radial-gradient(1px 1px at 45% 30%,#fff,transparent);animation:tw 3s ease-in-out infinite alternate}
+@keyframes tw{to{opacity:.4}}
+.dune{position:absolute;bottom:0;inset-inline:0;height:22%;background:#3a2216;border-radius:50% 50% 0 0/100% 100% 0 0}
+.fire{position:absolute;bottom:8%;width:40px;height:60px;background:radial-gradient(#fff3b0,#ffb020 40%,#ff4d00 70%,transparent 72%);border-radius:50% 50% 40% 40%;filter:blur(2px);animation:fl .3s ease-in-out infinite alternate}
+@keyframes fl{to{transform:scaleY(1.15) skewX(4deg)}}
+.t3 .sc{color:#ffcf7a;font-size:1.6rem}
+.t3 .q{color:#fff4dc;font-size:clamp(1.7rem,3.6vw,2.6rem);line-height:1.5;text-shadow:0 0 30px rgba(255,160,60,.5);position:relative;z-index:1}
+.t3 .opt{position:relative;z-index:1;border:1px solid #ffcf7a66;color:#fff4dc;border-radius:30px;padding:6px 18px;font-size:1.5rem;background:#00000040}
+.t3 .bet{position:relative;z-index:1;color:#1c1530;background:#ffcf7a;padding:2px 20px;border-radius:30px;font-size:1.4rem}
+
+/* 4 NEON STREET */
+.t4{background:#0b0614;background-image:linear-gradient(90deg,#1a0f28 1px,transparent 1px),linear-gradient(#1a0f28 1px,transparent 1px);background-size:40px 40px;font-family:Lalezar}
+.neon{font-size:clamp(3rem,8vw,5.5rem);color:#fff;text-shadow:0 0 6px #fff,0 0 18px #ff2bd6,0 0 40px #ff2bd6;animation:flick 4s infinite}
+@keyframes flick{0%,18%,22%,60%,100%{opacity:1}20%,61%{opacity:.4}}
+.sign{border:3px solid #39f3ff;border-radius:14px;padding:12px 26px;font-size:clamp(1.4rem,3vw,2.1rem);line-height:1.45;box-shadow:0 0 16px #39f3ff,inset 0 0 16px #39f3ff66;background:#0b0614;max-width:760px}
+.t4 .sc{font-size:1.5rem;padding:0 14px;border-radius:8px;border:2px solid currentColor;box-shadow:0 0 12px currentColor}
+.t4 .opt{border:2px solid #fff3;border-radius:10px;padding:6px 14px;font-size:1.4rem;background:#140b22}
+.t4 .opt.ok{border-color:#3dff8f;box-shadow:0 0 14px #3dff8f;color:#3dff8f}
+</style></head><body><main>
+<p class="d">أربع أفكار مختلفة تماماً، كل وحدة عالم لحاله. اختر وحدة (أو اخلط بينهم) وأطوّرها كاملة متحركة.</p>
+
+<section><p class="h">١. طاولة البلوت</p><p class="d">المجلس السعودي الحقيقي: جوخ أخضر، السؤال ورقة لعب تنرمي على الطاولة، والرهان فيش.</p>
+<div class="s t1"><div class="top"><span class="sc">الصقور 1200</span><span class="sc">النمور 900</span></div>
+<div class="card">كم عدد مناطق المملكة العربية السعودية الإدارية؟</div>
+<div class="chips"><div class="chip" style="background:#c8102e">100</div><div class="chip" style="background:#1d4ed8">200</div><div class="chip" style="background:#111">100</div></div>
+<div class="o4"><div class="opt">أ — 11</div><div class="opt">ب — 13</div><div class="opt">ج — 15</div><div class="opt">د — 9</div></div></div></section>
+
+<section><p class="h">٢. كوميكس</p><p class="d">مجلة رسوم: نقاط طباعة، فقاعات كلام، وكلمات تنفجر «بووم!» مع كل رهان.</p>
+<div class="s t2"><div class="top"><span class="sc">الصقور 1200</span><span class="sc">النمور 900</span></div>
+<div class="boom">زوّدها!</div><div class="bub">كم عدد مناطق المملكة العربية السعودية الإدارية؟</div><br>
+<div class="o4"><div class="opt">أ — 11</div><div class="opt ok">ب — 13</div><div class="opt">ج — 15</div><div class="opt">د — 9</div></div></div></section>
+
+<section><p class="h">٣. سمرة البر</p><p class="d">ليل الصحراء: نجوم تلمع، نار تشتعل، وخط رقعة دافي. هادية وسعودية بحتة.</p>
+<div class="s t3"><div class="dune"></div><div class="fire"></div><div class="top"><span class="sc">الصقور ١٢٠٠</span><span class="sc">النمور ٩٠٠</span></div>
+<span class="bet">الرهان ٤٠٠</span><div class="q">كم عدد مناطق المملكة العربية السعودية الإدارية؟</div>
+<div class="o4" style="position:relative;z-index:1"><div class="opt">١١</div><div class="opt">١٣</div><div class="opt">١٥</div><div class="opt">٩</div></div></div></section>
+
+<section><p class="h">٤. شارع النيون</p><p class="d">لوحات محلات بالليل: الاسم نيون يرمش، والسؤال لوحة مضيئة.</p>
+<div class="s t4"><div class="top"><span class="sc" style="color:#39f3ff">الصقور 1200</span><span class="sc" style="color:#ff2bd6">النمور 900</span></div>
+<div class="neon">على كم؟</div><div class="sign">كم عدد مناطق المملكة العربية السعودية الإدارية؟</div>
+<div class="o4"><div class="opt">أ — 11</div><div class="opt ok">ب — 13</div><div class="opt">ج — 15</div><div class="opt">د — 9</div></div></div></section>
+</main></body></html>
