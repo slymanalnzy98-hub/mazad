@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المزاد برنامج مسابقات</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@600;700&display=swap">
+<style>
+:root{--bg:#0a0620;--stage:#1a0f4a;--ink:#fff;--mute:#c9c2ff;--gold:#ffc83d;--a:#00b4ff;--b:#ff3d6e;--ok:#22e07a;--card:#2a1b6e;
+--display:"Lalezar",Tahoma,sans-serif;--body:"IBM Plex Sans Arabic",Tahoma,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);padding:20px 16px 60px}
+main{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.lbl{font-weight:700;color:var(--mute)}
+.scr{position:relative;overflow:hidden;border-radius:24px;min-height:520px;padding:22px clamp(14px,3vw,34px);display:flex;flex-direction:column;gap:18px;
+ background:radial-gradient(60% 50% at 50% 0%,rgba(255,200,61,.35),transparent 70%),conic-gradient(from 180deg at 50% 0%,#1a0f4a,#2b1572,#1a0f4a,#2b1572,#1a0f4a);}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.team{border-radius:16px;padding:8px 20px;min-width:140px;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.35)}
+.team small{font-family:var(--display);font-size:1.3rem;display:block}
+.team b{font-family:var(--display);font-size:2.4rem;line-height:1}
+.a{background:var(--a)}.b{background:var(--b)}
+.timer{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-size:2.4rem;
+ background:conic-gradient(var(--gold) 0 60%,rgba(255,255,255,.15) 0);position:relative}
+.timer span{position:absolute;inset:8px;border-radius:50%;background:var(--stage);display:grid;place-items:center}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center}
+.pill{background:var(--gold);color:#1a0f4a;font-family:var(--display);font-size:1.4rem;padding:4px 22px;border-radius:999px;box-shadow:0 5px 0 #b8860b}
+.q{background:#fff;color:#1a0f4a;font-family:var(--display);font-size:clamp(1.5rem,3.4vw,2.4rem);line-height:1.45;max-width:880px;padding:16px 28px;border-radius:20px;box-shadow:0 8px 0 rgba(0,0,0,.35)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(860px,100%)}
+.opt{display:flex;align-items:center;gap:14px;border-radius:16px;padding:14px 18px;font-family:var(--display);font-size:clamp(1.3rem,2.6vw,1.8rem);box-shadow:0 6px 0 rgba(0,0,0,.35);text-align:start}
+.opt i{font-style:normal;width:42px;height:42px;border-radius:12px;background:rgba(0,0,0,.25);display:grid;place-items:center}
+.o1{background:#7b2cff}.o2{background:#ff7a00}.o3{background:#00a6a6}.o4{background:#e0367a}
+.opt.right{background:var(--ok);outline:5px solid #fff}.opt.gone{opacity:.25}
+.big{font-family:var(--display);font-size:clamp(4rem,12vw,8rem);line-height:1;color:var(--gold);text-shadow:0 8px 0 rgba(0,0,0,.35)}
+.paddles{display:flex;gap:60px;justify-content:center}
+.pad{width:160px;padding:20px 0;border-radius:20px;font-family:var(--display);font-size:2.6rem;box-shadow:0 8px 0 rgba(0,0,0,.35)}
+.pad small{display:block;font-size:1.2rem}
+.pad.lose{opacity:.35}
+.chips{display:flex;gap:10px}.chips span{background:var(--card);border:2px solid var(--mute);border-radius:999px;padding:6px 16px;font-family:var(--display);font-size:1.3rem}
+@media(max-width:560px){.opts{grid-template-columns:1fr}.paddles{gap:16px}.pad{width:130px}}
+</style></head><body><main>
+<p class="lbl">اتجاه ج — برنامج مسابقات تلفزيوني: ألوان صاخبة، زوايا دائرية، أرقام كبيرة. بدون بكسل.</p>
+
+<p class="lbl">١. المزاد على السؤال</p>
+<div class="scr"><div class="bar"><div class="team a"><small>الصقور</small><b>1200</b></div><div class="pill">الجولة 3 من 8</div><div class="team b"><small>النمور</small><b>900</b></div></div>
+<div class="stage"><div class="pill">الفئة: جغرافيا</div><div class="big">على كم؟</div>
+<div class="paddles"><div class="pad a"><small>الصقور</small>400</div><div class="pad b lose"><small>النمور</small>300</div></div>
+<div class="chips"><span>+100</span><span>+200</span><span>كل شي</span></div></div></div>
+
+<p class="lbl">٢. السؤال</p>
+<div class="scr"><div class="bar"><div class="team a"><small>الصقور</small><b>1200</b></div><div class="timer"><span>14</span></div><div class="team b"><small>النمور</small><b>900</b></div></div>
+<div class="stage"><div class="pill">الصقور راهنوا بـ 400</div>
+<div class="q">كم عدد مناطق المملكة العربية السعودية الإدارية؟</div>
+<div class="opts"><div class="opt o1"><i>أ</i>11</div><div class="opt right"><i>ب</i>13</div><div class="opt o3 gone"><i>ج</i>15</div><div class="opt o4 gone"><i>د</i>9</div></div></div></div>
+
+<p class="lbl">٣. النتيجة</p>
+<div class="scr"><div class="stage"><div class="pill">إجابة صح!</div><div class="big">+400</div><div class="team a" style="font-size:1.2rem"><small>الصقور</small><b>1600</b></div></div></div>
+</main></body></html>

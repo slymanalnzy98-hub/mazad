@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أجل كم: كرتون</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Readex+Pro:wght@500;700&display=swap">
+<style>
+:root{--k:#141414;--bg:#2b2d6e;--cream:#fff8ec;--y:#ffc83d;--coral:#ff6b57;--teal:#2ec4b6;--pink:#ff8fb1;--sky:#6ec1ff;--lime:#b8e05a;--f:"Readex Pro",Tahoma,sans-serif;--d:"Lalezar",Tahoma,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#111;color:var(--k);font-family:var(--f);padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.tabs{display:flex;gap:10px}
+.tabs button{font-family:var(--f);font-weight:700;font-size:1rem;background:var(--cream);border:3px solid var(--k);border-radius:14px;padding:4px 18px;cursor:pointer;box-shadow:0 4px 0 var(--k)}
+.tabs button.on{background:var(--y)}
+.box{border:3px solid var(--k);border-radius:20px;box-shadow:0 6px 0 var(--k)}
+.scr{position:relative;width:min(1140px,100%);aspect-ratio:16/9;min-height:580px;overflow:hidden;border-radius:22px;background:var(--bg);display:grid;grid-template-columns:1fr 210px}
+.conf{position:absolute;border:3px solid var(--k);animation:fl 6s ease-in-out infinite alternate}
+@keyframes fl{to{transform:translateY(-14px) rotate(25deg)}}
+.main{position:relative;display:flex;flex-direction:column;padding:20px 26px;gap:14px;min-width:0}
+.side{background:var(--y);border-inline-start:3px solid var(--k);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:20px 14px}
+.logo{white-space:nowrap;font-family:var(--d);font-size:2.8rem;line-height:1;color:var(--cream);-webkit-text-stroke:3px var(--k);paint-order:stroke fill;text-shadow:0 5px 0 var(--k);transform:rotate(-4deg)}
+.tag{font-size:.75rem;font-weight:700;background:var(--cream);border:2px solid var(--k);border-radius:999px;padding:2px 10px;margin-top:6px;transform:rotate(-4deg)}
+.team{width:100%;padding:10px;text-align:center;background:var(--c)}
+.team h4{margin:0;font-family:var(--d);font-weight:400;font-size:1.5rem}
+.team .n{margin:6px auto 0;background:#fff;border:3px solid var(--k);border-radius:999px;font-weight:700;font-size:1.8rem;width:fit-content;padding:0 18px}
+.team .who{display:flex;justify-content:center;margin-top:8px}
+.av{width:38px;height:38px;border-radius:50%;border:3px solid var(--k);background:var(--sky);margin-inline-start:-10px;display:grid;place-items:center;overflow:hidden}
+.team.off{filter:saturate(.4);opacity:.75}
+.pill{display:flex;align-items:center;gap:14px;background:var(--k);color:#fff;border-radius:999px;padding:8px 20px;font-weight:700;align-self:center}
+.pill b{background:var(--y);color:var(--k);border-radius:999px;padding:0 14px}
+.pill span{color:#c9c9ff}
+.steps{display:flex;gap:10px;align-self:center;background:#fff;border:3px solid var(--k);border-top:0;border-radius:0 0 16px 16px;padding:4px 16px;margin-top:-14px;font-weight:700;font-size:.85rem;color:#999}
+.steps .now{color:var(--k)}
+.st{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.st.on{display:flex}
+.q{background:#fff;font-weight:700;font-size:clamp(1.5rem,3.2vw,2.4rem);line-height:1.4;padding:16px 30px;text-align:center;width:min(820px,100%)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(820px,100%)}
+.opt{display:flex;align-items:center;gap:12px;background:#fff;font-family:var(--f);font-weight:700;font-size:clamp(1.15rem,2.3vw,1.6rem);padding:10px 14px;cursor:pointer;text-align:start;transition:transform .15s}
+.opt:hover{transform:translateY(-3px)}
+.opt i{font-style:normal;width:40px;height:40px;border-radius:12px;border:3px solid var(--k);background:var(--c);display:grid;place-items:center;font-weight:700;flex:0 0 auto}
+.opt .votes{margin-inline-start:auto;display:flex}
+.done .opt{opacity:.45}
+.done .opt.ok{opacity:1;background:#e9fbe7;outline:5px solid #34c06a;outline-offset:2px}
+.timer{width:min(820px,100%);height:16px;background:#fff;border:3px solid var(--k);border-radius:999px;overflow:hidden}
+.timer i{display:block;height:100%;width:70%;background:var(--coral);animation:t 18s linear forwards}
+@keyframes t{to{width:0}}
+.bet{font-weight:700;background:var(--cream);padding:6px 16px}
+/* auction */
+.ask{font-family:var(--d);font-size:clamp(3.2rem,8vw,5.6rem);line-height:1;color:var(--y);-webkit-text-stroke:4px var(--k);paint-order:stroke fill;text-shadow:0 7px 0 var(--k);transform:rotate(-3deg)}
+.duel{display:flex;gap:clamp(20px,5vw,60px);align-items:stretch}
+.card{width:clamp(170px,22vw,230px);padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--c);transition:transform .25s cubic-bezier(.3,1.7,.5,1)}
+.card h4{margin:0;font-family:var(--d);font-weight:400;font-size:1.5rem}
+.card .amt{background:#fff;border:3px solid var(--k);border-radius:16px;font-weight:700;font-size:2.4rem;width:100%;text-align:center}
+.card .row{display:flex;gap:6px}
+.card .row span{font-weight:700;font-size:.9rem;background:#fff;border:2px solid var(--k);border-radius:999px;padding:0 10px}
+.card.lead{transform:translateY(-14px) rotate(-2deg)}
+.card.lead::before{content:"👑 الأعلى";position:absolute;margin-top:-34px;font-weight:700;font-size:.9rem;background:var(--y);border:2px solid var(--k);border-radius:999px;padding:0 10px}
+.vs{align-self:center;font-family:var(--d);font-size:2rem;color:#fff;-webkit-text-stroke:2px var(--k);paint-order:stroke fill}
+.sold{font-weight:700;font-size:1.3rem;background:var(--coral);color:#fff;padding:6px 22px}
+.pop{animation:pop .35s cubic-bezier(.3,1.8,.5,1)}@keyframes pop{0%{transform:scale(.85)}}
+@media(max-width:760px){.scr{grid-template-columns:1fr;aspect-ratio:auto}.side{display:none}.opts{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<div class="tabs" id="tabs"><button data-p="q" class="on">السؤال</button><button data-p="auc">المزايدة العلنية</button></div>
+<div class="scr">
+ <div class="main">
+  <i class="conf" style="width:26px;height:26px;background:var(--y);border-radius:6px;top:16%;right:4%"></i>
+  <i class="conf" style="width:20px;height:20px;background:var(--pink);border-radius:50%;bottom:10%;right:30%;animation-delay:-2s"></i>
+  <i class="conf" style="width:18px;height:18px;background:var(--cream);border-radius:50%;top:46%;left:3%;animation-delay:-4s"></i>
+  <i class="conf" style="width:24px;height:24px;background:var(--teal);border-radius:6px;bottom:8%;left:12%;animation-delay:-1s"></i>
+  <div class="pill box" style="border-radius:999px"><span>الجولة ٢ من ١٢</span>تقنية<b>رهان ٣٠٠</b></div>
+  <div class="steps"><span>١</span>—<span class="now">● ٢</span>—<span>٣</span>—<span>٤</span>—<span>٥</span></div>
+
+  <div class="st on" id="q">
+   <div class="bet box">دور <b style="color:var(--coral)">النمور</b> · صح = +٣٠٠ · غلط = −٣٠٠</div>
+   <div class="q box">أي شركة تصنع الآيفون؟</div>
+   <div class="opts" id="opts">
+    <button class="opt box" style="--c:var(--y)"><i>أ</i>سامسونج</button>
+    <button class="opt box ok" style="--c:var(--sky)"><i>ب</i>أبل<span class="votes"><span class="av" style="background:var(--coral)">🐯</span><span class="av" style="background:var(--coral)">🐯</span></span></button>
+    <button class="opt box" style="--c:var(--pink)"><i>ج</i>هواوي<span class="votes"><span class="av" style="background:var(--coral)">🐯</span></span></button>
+    <button class="opt box" style="--c:var(--lime)"><i>د</i>سوني</button></div>
+   <div class="timer"><i></i></div>
+  </div>
+
+  <div class="st" id="auc">
+   <div class="ask">أجل كم؟</div>
+   <div class="duel">
+    <div class="card box" id="ca" style="--c:var(--sky)"><h4>الصقور</h4><div class="amt" id="va">200</div><div class="row"><span>+٥٠</span><span>+١٠٠</span><span>باس</span></div></div>
+    <div class="vs">ضد</div>
+    <div class="card box lead" id="cb" style="--c:var(--coral)"><h4>النمور</h4><div class="amt" id="vb">250</div><div class="row"><span>+٥٠</span><span>+١٠٠</span><span>باس</span></div></div>
+   </div>
+   <div class="sold box" id="sold">⏱ ٥ ثواني وتنباع</div>
+  </div>
+ </div>
+ <div class="side">
+  <div style="text-align:center"><div class="logo">أجل كم؟</div><div class="tag">مزاد الأسئلة</div></div>
+  <div class="team box off" style="--c:var(--sky)"><h4>الصقور</h4><div class="n">800</div><div class="who"><span class="av">🦅</span><span class="av">🦅</span><span class="av">🦅</span></div></div>
+  <div class="team box" style="--c:var(--coral)"><h4>النمور</h4><div class="n" id="sb">1000</div><div class="who"><span class="av" style="background:var(--y)">🐯</span><span class="av" style="background:var(--y)">🐯</span></div></div>
+ </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);let T=[];const later=(f,ms)=>T.push(setTimeout(f,ms));const clear=()=>{T.forEach(clearTimeout);T=[]};
+const pop=e=>{e.classList.remove("pop");void e.offsetWidth;e.classList.add("pop")};const AR=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+function auc(){$("va").textContent=200;$("vb").textContent=250;$("ca").classList.remove("lead");$("cb").classList.add("lead");$("sold").textContent="⏱ ٥ ثواني وتنباع";
+ [["a",300],["b",350],["a",400]].forEach(([w,v],i)=>later(()=>{$("v"+w).textContent=v;pop($("v"+w));$("ca").classList.toggle("lead",w=="a");$("cb").classList.toggle("lead",w=="b");$("sold").textContent="⏱ ٥ ثواني وتنباع"},900+i*1100));
+ [4,3,2,1].forEach((n,i)=>later(()=>$("sold").textContent="⏱ "+AR(n)+" ثواني وتنباع",4200+i*700));later(()=>{$("sold").textContent="🔨 انباعت للصقور بـ ٤٠٠";pop($("sold"))},7000);later(auc,9800)}
+function go(p){clear();document.querySelectorAll(".st").forEach(s=>s.classList.toggle("on",s.id==p));document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.p==p));$("opts").classList.remove("done");$("sb").textContent=1000;if(p=="auc")auc()}
+$("tabs").onclick=e=>{if(e.target.dataset.p)go(e.target.dataset.p)};
+$("opts").onclick=e=>{if(!e.target.closest(".opt"))return;$("opts").classList.add("done");$("sb").textContent=1300;pop($("sb"))};
+</script></body></html>

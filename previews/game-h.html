@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المزاد بوستر</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=IBM+Plex+Sans+Arabic:wght@600;700&family=Space+Mono:wght@700&display=swap">
+<style>
+:root{--ink:#111014;--cream:#f4eee2;--or:#ff5a1f;--lime:#c6ff3d;--vio:#6b4bff;--a:#2f6bff;--b:#ff2e63;
+--d:"Lalezar",Tahoma,sans-serif;--t:"IBM Plex Sans Arabic",Tahoma,sans-serif;--m:"Space Mono",monospace}
+*{box-sizing:border-box}body{margin:0;background:#0a0a0c;color:var(--cream);font-family:var(--t);padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button{font-family:var(--d);font-size:1.15rem;background:transparent;color:var(--cream);border:2px solid var(--cream);border-radius:999px;padding:2px 18px;cursor:pointer}
+.tabs button.on{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.scr{position:relative;width:min(1140px,100%);aspect-ratio:16/9;min-height:580px;overflow:hidden;background:var(--ink);border-radius:20px}
+/* diagonal bands */
+.band{position:absolute;height:34%;width:160%;left:-30%;transform:rotate(-8deg);transition:transform .7s cubic-bezier(.7,0,.2,1)}
+.band.one{top:-14%;background:var(--vio)}
+.band.two{bottom:-16%;background:var(--or)}
+.band span{position:absolute;bottom:8px;white-space:nowrap;font-family:var(--d);font-size:5rem;line-height:1;color:rgba(0,0,0,.18);animation:slide 40s linear infinite}
+.band.two span{top:8px;bottom:auto;animation-direction:reverse}
+@keyframes slide{to{transform:translateX(30%)}}
+.scr[data-p=auc] .band.one{background:var(--lime)}.scr[data-p=auc] .band.two{background:var(--vio)}
+.scr[data-p=sec] .band.one{background:var(--b)}.scr[data-p=sec] .band.two{background:var(--lime)}
+.ui{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:18px 4%}
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.tm{display:flex;flex-direction:column;align-items:flex-start;gap:0;transform:rotate(-3deg)}
+.tm.b{align-items:flex-end;transform:rotate(3deg)}
+.tm small{font-family:var(--d);font-size:1.5rem;background:var(--ink);padding:0 12px;line-height:1.5}
+.tm b{font-family:var(--m);font-size:2.4rem;line-height:1;background:var(--cream);color:var(--ink);padding:4px 12px}
+.tm.a small{color:#8fb0ff}.tm.b small{color:#ff8fab}
+.tm em{font-style:normal;font-family:var(--m);font-size:.85rem;color:var(--ink);background:var(--lime);padding:1px 8px;margin-top:4px}
+.rd{font-family:var(--m);font-size:.9rem;background:var(--ink);padding:4px 10px;border:2px solid var(--cream)}
+.stage{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;position:relative}
+.stage.on{display:flex}
+.kick{font-family:var(--m);font-size:.9rem;letter-spacing:.1em;background:var(--ink);padding:3px 12px;border:2px solid var(--cream)}
+.q{font-family:var(--d);font-size:clamp(2rem,4.4vw,3.4rem);line-height:1.25;max-width:900px;background:var(--cream);color:var(--ink);padding:10px 30px 14px;transform:rotate(-1.5deg);box-shadow:10px 10px 0 var(--ink)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;width:min(860px,100%);margin-top:8px}
+.opt{display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--cream);border:3px solid var(--cream);padding:8px 14px;font-family:var(--d);font-size:clamp(1.3rem,2.6vw,1.9rem);text-align:start;cursor:pointer;transition:transform .2s,background .2s}
+.opt:hover{transform:translate(-3px,-3px);box-shadow:6px 6px 0 var(--lime)}
+.opt i{font-style:normal;font-family:var(--m);font-size:1rem;width:38px;height:38px;display:grid;place-items:center;background:var(--cream);color:var(--ink)}
+.done .opt{opacity:.3}.done .opt.ok{opacity:1;background:var(--lime);color:var(--ink);border-color:var(--ink);transform:rotate(-2deg) scale(1.05);box-shadow:8px 8px 0 var(--ink)}
+/* commentator bubble */
+.say{position:absolute;bottom:4%;left:2%;max-width:300px;background:var(--cream);color:var(--ink);font-weight:700;font-size:1.05rem;padding:10px 14px;border-radius:16px 16px 16px 2px;box-shadow:5px 5px 0 var(--ink);transform:rotate(2deg) scale(0);transform-origin:bottom left;transition:transform .35s cubic-bezier(.3,1.6,.5,1);text-align:start}
+.say.on{transform:rotate(2deg) scale(1)}
+.say b{display:block;font-family:var(--m);font-size:.7rem;color:var(--or)}
+/* timer */
+.timer{position:absolute;top:0;left:0;font-family:var(--m);font-size:2.6rem;color:var(--ink);background:var(--lime);width:84px;height:84px;border-radius:50%;display:grid;place-items:center;box-shadow:5px 5px 0 var(--ink);transform:rotate(-8deg)}
+/* auction */
+.huge{font-family:var(--d);font-size:clamp(4rem,11vw,8rem);line-height:.9;color:var(--ink);text-shadow:6px 6px 0 var(--cream)}
+.duel{display:flex;align-items:center;gap:clamp(20px,5vw,60px)}
+.bid{display:flex;flex-direction:column;align-items:center}
+.bid b{font-family:var(--m);font-size:clamp(2.4rem,6vw,4.4rem);line-height:1;background:var(--ink);color:var(--cream);padding:8px 20px;transition:transform .2s cubic-bezier(.3,1.8,.5,1)}
+.bid small{font-family:var(--d);font-size:1.4rem;background:var(--cream);color:var(--ink);padding:0 12px}
+.bid.lead b{background:var(--or);transform:rotate(-4deg) scale(1.12)}
+.vs{font-family:var(--d);font-size:2rem;color:var(--ink)}
+.count{font-family:var(--d);font-size:2rem;background:var(--ink);color:var(--lime);padding:0 22px;transform:rotate(-2deg)}
+/* secret */
+.cards{display:flex;gap:clamp(20px,5vw,60px)}
+.card{width:clamp(160px,20vw,220px);aspect-ratio:.72;perspective:800px}
+.card div{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.6,-0.3,.3,1.4)}
+.card.open div{transform:rotateY(180deg)}
+.card p{margin:0;position:absolute;inset:0;backface-visibility:hidden;display:grid;place-items:center;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--ink)}
+.card .f{background:var(--ink);color:var(--cream);font-family:var(--d);font-size:4rem;background-image:repeating-linear-gradient(45deg,transparent 0 14px,rgba(255,255,255,.06) 14px 28px)}
+.card .bk{background:var(--cream);color:var(--ink);font-family:var(--m);font-size:3rem;transform:rotateY(180deg)}
+.card .bk small{position:absolute;top:10px;font-family:var(--d);font-size:1.3rem}
+.card .f small{position:absolute;bottom:12px;font-family:var(--m);font-size:.8rem;color:var(--lime)}
+.card.a .bk small{color:var(--a)}.card.b .bk small{color:var(--b)}
+@media(max-width:760px){.scr{aspect-ratio:auto;min-height:720px}.opts{grid-template-columns:1fr}.say{display:none}.timer{width:60px;height:60px;font-size:1.8rem}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div class="tabs" id="tabs"><button data-p="q" class="on">السؤال</button><button data-p="auc">مزايدة علنية</button><button data-p="sec">مزايدة سرية</button></div>
+<div class="scr" id="scr" data-p="q">
+ <div class="band one"><span>المزاد المزاد المزاد المزاد المزاد المزاد المزاد المزاد</span></div>
+ <div class="band two"><span>على كم؟ على كم؟ على كم؟ على كم؟ على كم؟ على كم؟ على كم؟</span></div>
+ <div class="ui">
+  <div class="top">
+   <div class="tm a"><small>الصقور</small><b>0800</b><em>ALL-IN ×1</em></div>
+   <div class="rd">R 02/12</div>
+   <div class="tm b"><small>النمور</small><b id="sb">1000</b><em>ALL-IN ×1</em></div>
+  </div>
+
+  <div class="stage on" id="q">
+   <div class="timer" id="t">18</div>
+   <div class="kick">تقنية · النمور راهنوا بـ 300</div>
+   <div class="q">أي شركة تصنع الآيفون؟</div>
+   <div class="opts" id="opts"><button class="opt"><i>A</i>سامسونج</button><button class="opt ok"><i>B</i>أبل</button><button class="opt"><i>C</i>هواوي</button><button class="opt"><i>D</i>سوني</button></div>
+   <div class="say" id="sq"><b>المعلّق</b>سؤال سهل… لا تفشّلونا يا النمور.</div>
+  </div>
+
+  <div class="stage" id="auc">
+   <div class="kick">رياضة · مزايدة علنية</div>
+   <div class="huge">على كم؟</div>
+   <div class="duel"><div class="bid a" id="ba"><b id="va">200</b><small>الصقور</small></div><div class="vs">ضد</div><div class="bid b lead" id="bb"><b id="vb">250</b><small>النمور</small></div></div>
+   <div class="count" id="cnt">٥</div>
+   <div class="say" id="sa"><b>المعلّق</b>الصقور يبون السؤال ولا يبون يطلعون أغنياء؟</div>
+  </div>
+
+  <div class="stage" id="sec">
+   <div class="kick">تاريخ · مزايدة سرية</div>
+   <div class="cards">
+    <div class="card a" id="ca"><div><p class="f">؟<small>LOCKED</small></p><p class="bk"><small>الصقور</small>450</p></div></div>
+    <div class="card b" id="cb"><div><p class="f">؟<small>LOCKED</small></p><p class="bk"><small>النمور</small>300</p></div></div>
+   </div>
+   <div class="say" id="ss"><b>المعلّق</b>أحد هنا يبلّف… نشوف مين.</div>
+  </div>
+ </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);let T=[];const later=(f,ms)=>T.push(setTimeout(f,ms));const clear=()=>{T.forEach(clearTimeout);T=[]};
+const AR=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+function go(p){clear();$("scr").dataset.p=p;document.querySelectorAll(".stage").forEach(s=>s.classList.toggle("on",s.id==p));document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.p==p));
+ document.querySelectorAll(".say").forEach(s=>s.classList.remove("on"));$("opts").classList.remove("done");$("sb").textContent=1000;
+ if(p=="q"){let n=18;$("t").textContent=n;for(let i=1;i<8;i++)later(()=>$("t").textContent=n-i,i*1000);later(()=>$("sq").classList.add("on"),1200)}
+ if(p=="auc")auc();
+ if(p=="sec"){$("ca").classList.remove("open");$("cb").classList.remove("open");later(()=>$("ss").classList.add("on"),800);later(()=>$("ca").classList.add("open"),2200);later(()=>$("cb").classList.add("open"),3000);later(()=>go("sec"),7000)}}
+function auc(){$("va").textContent=200;$("vb").textContent=250;$("ba").classList.remove("lead");$("bb").classList.add("lead");$("cnt").textContent=AR(5);
+ const bids=[["a",300],["b",350],["a",400]];
+ bids.forEach(([w,v],i)=>later(()=>{$("v"+w).textContent=v;$("ba").classList.toggle("lead",w=="a");$("bb").classList.toggle("lead",w=="b");$("cnt").textContent=AR(5)},1000+i*1300));
+ later(()=>$("sa").classList.add("on"),2600);
+ [4,3,2,1].forEach((n,i)=>later(()=>$("cnt").textContent=AR(n),4900+i*700));
+ later(()=>$("cnt").textContent="بيع! للصقور بـ 400",7700);later(auc,10500)}
+$("tabs").onclick=e=>{if(e.target.dataset.p)go(e.target.dataset.p)};
+$("opts").onclick=e=>{if(!e.target.closest(".opt"))return;$("opts").classList.add("done");$("sb").textContent=1300;$("sq").innerHTML="<b>المعلّق</b>طيب… هذي كانت متوقعة 👏"};
+go("q");
+</script></body></html>

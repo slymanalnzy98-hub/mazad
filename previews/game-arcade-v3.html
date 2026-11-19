@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المزاد أركيد ٣</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;800&family=Silkscreen:wght@400;700&display=swap">
+<style>
+:root{--k:#140a24;--y:#ffcc33;--y2:#ff9d1a;--pink:#ff3d8b;--cyan:#3de0ff;--green:#3ef08a;--a:#2d7cff;--a2:#1a4fbf;--b:#ff4a4a;--b2:#b81f3a;
+--ar:"Baloo Bhaijaan 2",Tahoma,sans-serif;--px:"Silkscreen",monospace}
+*{box-sizing:border-box}body{margin:0;background:#07040f;color:#fff;font-family:var(--ar);padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.tabs{display:flex;gap:8px}
+.tabs button{font-family:var(--ar);font-weight:800;font-size:1.05rem;color:#fff;background:#2a1850;border:3px solid var(--k);border-radius:10px;padding:4px 18px;cursor:pointer;box-shadow:inset 0 -4px 0 rgba(0,0,0,.35)}
+.tabs button.on{background:linear-gradient(var(--y),var(--y2));color:var(--k)}
+.scr{position:relative;width:min(1140px,100%);aspect-ratio:16/9;min-height:560px;overflow:hidden;border-radius:18px;border:4px solid var(--k);box-shadow:0 0 0 4px #3a2470,0 20px 50px rgba(0,0,0,.6);
+ background:linear-gradient(#1b0b3d 0%,#3b0f5c 38%,#a3245e 62%,#ff7a3d 74%,#2a0c3c 74.2%,#13061f)}
+canvas.bg{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.sun{position:absolute;left:50%;top:44%;width:24%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;
+ background:linear-gradient(#ffe35a,#ff7a3d 60%,#ff3d8b);-webkit-mask:repeating-linear-gradient(transparent 0 58%,#000 58%) ,linear-gradient(#000 55%,transparent 55%);
+ mask:linear-gradient(#000 52%,transparent 52%),repeating-linear-gradient(#000 0 7px,transparent 7px 11px);mask-composite:add;-webkit-mask-composite:source-over;filter:drop-shadow(0 0 40px #ff3d8b)}
+.floor{position:absolute;inset-inline:0;bottom:0;height:26%;background:linear-gradient(rgba(61,224,255,.6) 2px,transparent 2px) 0 0/100% 18px,linear-gradient(90deg,rgba(61,224,255,.6) 2px,transparent 2px) 0 0/48px 100%,linear-gradient(#2a0c3c,#0b0414);transform:perspective(240px) rotateX(55deg);transform-origin:bottom;animation:fl 1.2s linear infinite}
+@keyframes fl{to{background-position:0 18px,0 0,0 0}}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(8,2,20,.75));pointer-events:none}
+.ui{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:16px 3% 14px}
+/* premium game UI panel */
+.panel{position:relative;border:3px solid var(--k);border-radius:14px;background:linear-gradient(#ffffff26,#ffffff00 50%) ,var(--bg,#2a1850);box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -5px 0 rgba(0,0,0,.3),0 5px 0 var(--k),0 10px 20px rgba(0,0,0,.4)}
+.hud{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.team{--bg:linear-gradient(var(--c1),var(--c2));display:flex;align-items:center;gap:10px;padding:6px 14px 6px 8px;min-width:210px}
+.team.b{flex-direction:row-reverse;padding:6px 8px 6px 14px}
+.a{--c1:var(--a);--c2:var(--a2)}.b{--c1:var(--b);--c2:var(--b2)}
+.team canvas{width:56px;height:56px;image-rendering:pixelated;background:rgba(0,0,0,.25);border-radius:8px;border:2px solid var(--k)}
+.team .t{flex:1;display:flex;flex-direction:column;line-height:1}
+.team.b .t{align-items:flex-end}
+.team small{font-weight:800;font-size:1.35rem;text-shadow:0 2px 0 var(--k)}
+.team b{font-family:var(--px);font-weight:700;font-size:1.7rem;color:#fff;text-shadow:0 3px 0 var(--k);direction:ltr;margin-top:2px}
+.team .chg{font-family:var(--px);font-size:.8rem;color:var(--green)}
+.team.off{filter:saturate(.35) brightness(.7)}
+.round{--bg:#1a0e33;padding:6px 16px;text-align:center}
+.round span{font-family:var(--px);font-size:.75rem;color:var(--cyan);display:block}
+.round b{font-family:var(--px);font-size:1.4rem}
+.stage{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+.stage.on{display:flex}
+.ribbon{font-weight:800;font-size:1.25rem;color:var(--k);padding:2px 26px;background:linear-gradient(var(--y),var(--y2));border:3px solid var(--k);border-radius:8px;box-shadow:0 4px 0 var(--k);position:relative}
+.ribbon::before,.ribbon::after{content:"";position:absolute;top:8px;width:18px;height:100%;background:var(--y2);border:3px solid var(--k);z-index:-1}
+.ribbon::before{right:-14px;clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%)}.ribbon::after{left:-14px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%)}
+.q{--bg:linear-gradient(#fffaf0,#ffe9c4);color:var(--k);font-weight:800;font-size:clamp(1.6rem,3.4vw,2.6rem);line-height:1.35;padding:14px 40px 18px;max-width:860px}
+.q .who{position:absolute;top:-16px;right:24px;font-size:1rem;font-weight:800;color:#fff;background:var(--b);border:3px solid var(--k);border-radius:20px;padding:0 14px;line-height:1.6}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;width:min(860px,100%);margin-top:6px}
+.opt{--bg:linear-gradient(var(--c1),var(--c2));display:flex;align-items:center;gap:12px;padding:8px 10px;font-family:var(--ar);font-weight:800;font-size:clamp(1.25rem,2.4vw,1.7rem);color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.45);cursor:pointer;text-align:start;transition:transform .12s}
+.opt:hover{transform:translateY(-3px)}
+.opt i{font-style:normal;font-family:var(--px);font-weight:700;width:40px;height:40px;display:grid;place-items:center;background:var(--k);color:var(--c1);border-radius:8px;font-size:1.1rem;text-shadow:none}
+.o1{--c1:#ffb020;--c2:#e0640a}.o2{--c1:#3d8bff;--c2:#2148c9}.o3{--c1:#ff4f8b;--c2:#c81e5a}.o4{--c1:#26d07c;--c2:#0f8f4f}
+.opts.done .opt{opacity:.3}.opts.done .opt.ok{opacity:1;--c1:#5dff9e;--c2:#18b45e;transform:scale(1.04);box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 5px 0 var(--k),0 0 0 4px #fff,0 0 30px #5dff9e}
+.bar{display:flex;align-items:center;gap:12px;margin-top:4px}
+.stakes{display:flex;gap:8px;font-family:var(--px);font-size:.85rem}
+.stakes span{padding:2px 10px;border-radius:6px;border:2px solid var(--k)}
+.timer{--bg:#1a0e33;width:300px;height:30px;padding:4px;border-radius:20px}
+.timer i{display:block;height:100%;border-radius:12px;background:linear-gradient(var(--y),var(--y2));box-shadow:inset 0 2px 0 rgba(255,255,255,.5);width:70%;animation:tm 20s linear forwards}
+@keyframes tm{to{width:0}}
+.tnum{font-family:var(--px);font-weight:700;font-size:1.6rem;color:var(--y);text-shadow:0 3px 0 var(--k)}
+/* auction */
+.scene{display:flex;align-items:flex-end;justify-content:center;gap:clamp(10px,4vw,50px);width:100%}
+.sprite{image-rendering:pixelated;width:clamp(100px,14vw,150px)}
+.bigbid{display:flex;flex-direction:column;align-items:center;gap:4px}
+.sign{--bg:linear-gradient(var(--c1),var(--c2));font-family:var(--px);font-weight:700;font-size:clamp(1.6rem,3.4vw,2.6rem);padding:8px 22px;min-width:150px;transition:transform .15s}
+.lead .sign{transform:translateY(-12px) rotate(-3deg)}
+.lead .sign::after{content:"▲ LEAD";position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-size:.7rem;color:var(--y);white-space:nowrap}
+.title{font-weight:800;font-size:clamp(2.6rem,6vw,4.4rem);line-height:1;color:var(--y);-webkit-text-stroke:6px var(--k);paint-order:stroke fill;text-shadow:0 6px 0 var(--k)}
+.going{--bg:linear-gradient(var(--pink),#a81a5a);font-weight:800;font-size:1.5rem;padding:2px 24px}
+.feed{display:flex;gap:6px;font-family:var(--px);font-size:.8rem;min-height:26px}
+.feed span{padding:2px 8px;border-radius:6px;border:2px solid var(--k);background:var(--c2)}
+@media(max-width:760px){.scr{aspect-ratio:auto;min-height:720px}.opts{grid-template-columns:1fr}.team{min-width:0}.team canvas,.round{display:none}.timer{width:160px}.sprite.mid{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div class="tabs" id="tabs"><button data-p="q" class="on">السؤال</button><button data-p="auc">المزايدة العلنية</button></div>
+<div class="scr" id="scr">
+ <canvas class="bg" id="bg" width="320" height="180"></canvas><div class="sun"></div><div class="floor"></div><div class="vig"></div>
+ <div class="ui">
+  <div class="hud">
+   <div class="team panel a off"><canvas id="ava" width="16" height="16"></canvas><div class="t"><small>الصقور</small><b>800</b></div></div>
+   <div class="round panel"><span>ROUND</span><b>2/12</b></div>
+   <div class="team panel b"><canvas id="avb" width="16" height="16"></canvas><div class="t"><small>النمور</small><b id="sb">1000</b><span class="chg" id="chg"></span></div></div>
+  </div>
+
+  <div class="stage on" id="q">
+   <div class="ribbon">تقنية</div>
+   <div class="q panel"><span class="who">دور النمور</span>أي شركة تصنع الآيفون؟</div>
+   <div class="opts" id="opts">
+    <button class="opt panel o1"><i>A</i>سامسونج</button><button class="opt panel o2 ok"><i>B</i>أبل</button>
+    <button class="opt panel o3"><i>C</i>هواوي</button><button class="opt panel o4"><i>D</i>سوني</button></div>
+   <div class="bar"><div class="stakes"><span style="background:#18b45e">+300</span><span style="background:#c81e5a">-300</span></div><div class="timer panel"><i></i></div><span class="tnum">18</span></div>
+  </div>
+
+  <div class="stage" id="auc">
+   <div class="ribbon">رياضة · مزايدة علنية</div>
+   <div class="title">على كم؟</div>
+   <div class="scene">
+    <div class="bigbid a" id="ba"><div class="sign panel a" id="va">200</div><canvas class="sprite" id="sa" width="16" height="20"></canvas></div>
+    <canvas class="sprite mid" id="auct" width="20" height="24" style="width:clamp(130px,17vw,180px)"></canvas>
+    <div class="bigbid b" id="bb"><div class="sign panel b" id="vb">250</div><canvas class="sprite" id="sbb" width="16" height="20"></canvas></div>
+   </div>
+   <div class="feed" id="feed"></div>
+   <div class="going panel" id="going">ارفع لوحتك!</div>
+  </div>
+ </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+/* pixel sprite painter */
+function paint(id,rows,pal){const c=$(id).getContext("2d");rows.forEach((r,y)=>[...r].forEach((ch,x)=>{if(pal[ch]){c.fillStyle=pal[ch];c.fillRect(x,y,1,1)}}))}
+const face=["................","....kkkkkkkk....","...kGGGGGGGGk...","..kGGGGGGGGGGk..","..kGkkkkkkkkGk..","..kkssssssssk...","..kssssssssssk..","..kswksssswksk..","..kskksssskksk..","..kssssssssssk..","..kssskkkksssk..","...ksssssssk....","..kkkkkkkkkkkk..",".kTTTTTTTTTTTTk.",".kTTTTTTTTTTTTk.","kkkkkkkkkkkkkkkk"];
+paint("ava",face,{k:"#140a24",G:"#fff",s:"#d9a06b",w:"#fff",T:"#2d7cff"});
+paint("avb",face,{k:"#140a24",G:"#ff4a4a",s:"#c98a55",w:"#fff",T:"#ff4a4a"});
+const bidder=["....kkkkkkkk....","...kGGGGGGGGk...","..kGGGGGGGGGGk..","..kkkkkkkkkkkk..","..kssssssssssk..","..kswksssswksk..","..kssssssssssk..","..ksssskksssssk.","...kssssssssk...","..kkTTTTTTTTkk..",".kTTTTTTTTTTTTk.",".kTTkTTTTTTkTTk.",".kTTkTTTTTTkTTk.",".kssk.TTTT.kssk.","..kk.kTTTTk.kk..","....kTTkTTk.....","....kTTkTTk.....","....kTTkTTk.....","...kkkk.kkkk....","...kkkk.kkkk...."];
+paint("sa",bidder,{k:"#140a24",G:"#fff",s:"#d9a06b",w:"#fff",T:"#2d7cff"});
+paint("sbb",bidder,{k:"#140a24",G:"#ff4a4a",s:"#c98a55",w:"#fff",T:"#b81f3a"});
+paint("auct",["......kkkkkk........",".....kBBBBBBk.......","....kBBBBBBBBk......","...kkkkkkkkkkkk.....","....kssssssssk......","....kswsssswsk......","....kssssssssk......","....kskkkkkksk......","....kssssssssk......","...kkWWkkkkWWkk.....","..kWWWWkRRkWWWWk.YY.","..kWWWWWkkWWWWWkYYYY","..kWWWWWWWWWWWWkkYY.","..kssWWWWWWWWWWk.k..","..ksskWWWWWWWWk.k...","...kk.kWWWWWWk......","kkkkkkkkkkkkkkkkkkkk","kLLLLLLLLLLLLLLLLLLk","kLDDDDDDDDDDDDDDDDLk","kLDYYYYYYYYYYYYYYDLk","kLDDDDDDDDDDDDDDDDLk","kLLLLLLLLLLLLLLLLLLk","kLLLLLLLLLLLLLLLLLLk","kkkkkkkkkkkkkkkkkkkk"],{k:"#140a24",B:"#2a1850",s:"#d9a06b",w:"#fff",W:"#f4f0ff",R:"#ff3d8b",Y:"#ffcc33",L:"#7a3e1d",D:"#5a2a12"});
+/* pixel city skyline + stars */
+(function(){const c=$("bg").getContext("2d");for(let i=0;i<70;i++){c.fillStyle=Math.random()<.2?"#ffcc33":"#fff";c.globalAlpha=.4+Math.random()*.6;c.fillRect(Math.random()*320|0,Math.random()*90|0,1,1)}c.globalAlpha=1;
+ let x=0;while(x<320){const w=10+Math.random()*18|0,h=18+Math.random()*44|0;const far=x%3==0;c.fillStyle=far?"#2a0c48":"#1a0730";c.fillRect(x,133-h,w,h);
+  for(let yy=133-h+3;yy<130;yy+=4)for(let xx=x+2;xx<x+w-2;xx+=3)if(Math.random()<.35){c.fillStyle=Math.random()<.5?"#ffcc33":"#3de0ff";c.fillRect(xx,yy,1,1)}x+=w+1}})();
+let T=[];const later=(f,ms)=>T.push(setTimeout(f,ms));const clear=()=>{T.forEach(clearTimeout);T=[]};
+function auc(){$("va").textContent=200;$("vb").textContent=250;$("feed").innerHTML="";$("going").textContent="ارفع لوحتك!";$("bb").classList.add("lead");$("ba").classList.remove("lead");
+ [["a",300],["b",350],["a",400]].forEach(([w,v],i)=>later(()=>{$("v"+w).textContent=v;$("ba").classList.toggle("lead",w=="a");$("bb").classList.toggle("lead",w=="b");
+  const s=document.createElement("span");s.className=w;s.textContent=(w=="a"?"الصقور ":"النمور ")+v;s.style.fontFamily="var(--ar)";s.style.fontWeight=800;$("feed").appendChild(s)},900+i*1100));
+ ["بيع… مرة!","بيع… مرتين!","بيع! للصقور بـ 400 🔨"].forEach((t,i)=>later(()=>$("going").textContent=t,4400+i*900));later(auc,8600)}
+function go(p){clear();document.querySelectorAll(".stage").forEach(s=>s.classList.toggle("on",s.id==p));document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.p==p));
+ $("opts").classList.remove("done");$("sb").textContent=1000;$("chg").textContent="";if(p=="auc")auc()}
+$("tabs").onclick=e=>{if(e.target.dataset.p)go(e.target.dataset.p)};
+$("opts").onclick=e=>{if(!e.target.closest(".opt"))return;$("opts").classList.add("done");$("sb").textContent=1300;$("chg").textContent="+300"};
+</script></body></html>

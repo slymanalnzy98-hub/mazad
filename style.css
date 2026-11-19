@@ -1,7 +1,7 @@
-/* Layout: one CRT "screen" that fills the page, built for a TV or laptop the whole majlis watches; stacks for phones. 80s arcade: pixel blocks, hard black shadows, Atari palette, scanlines. Single dark look by choice. */
+/* Layout: one CRT "screen" that fills the page, built for a TV or laptop the whole majlis watches; stacks for phones. 80s arcade: pixel blocks, hard black shadows, Atari palette. No scanlines over text: effects stay in the background (stars, moving neon floor). Single dark look by choice. */
 :root{
-  --room:#0d0d1f; --screen:#1b1b3a; --ink:#ffffff; --mute:#a9a9d6; --black:#000000; --off:#3b3b66;
-  --blue:#2f80ed; --red:#eb5757; --yellow:#f2c94c; --green:#6fcf97; --green2:#27ae60; --purple:#9b51e0;
+  --room:#0b0b1a; --screen:#16163a; --ink:#ffffff; --mute:#b4b4e0; --black:#000000; --off:#34345e; --pink:#ff4fa3;
+  --blue:#2f80ed; --red:#eb5757; --yellow:#ffd23f; --green:#4ef08a; --green2:#27ae60; --purple:#a45cff;
   --display:"Lalezar","IBM Plex Sans Arabic",Tahoma,sans-serif;
   --pixel:"Press Start 2P",ui-monospace,monospace;
   --body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
@@ -16,15 +16,16 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-size:1
 #app{flex:1;min-height:520px;background:radial-gradient(120% 120% at 50% 50%,#24244c,var(--screen) 60%,#101026);position:relative;overflow:hidden;display:flex;flex-direction:column;padding:clamp(14px,3vw,32px);box-sizing:border-box;border-radius:18px/24px;gap:16px}
 #app::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
   background:
-    repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 2px,transparent 2px 4px),
     radial-gradient(2px 2px at 12% 18%,#fff 98%,transparent),radial-gradient(2px 2px at 82% 12%,var(--yellow) 98%,transparent),
     radial-gradient(2px 2px at 68% 78%,#fff 98%,transparent),radial-gradient(2px 2px at 24% 70%,var(--green) 98%,transparent),
     radial-gradient(2px 2px at 92% 56%,#fff 98%,transparent),radial-gradient(2px 2px at 6% 48%,var(--red) 98%,transparent),
-    radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.5))}
-#app::after{content:"";position:absolute;inset-inline:0;bottom:0;height:22%;pointer-events:none;z-index:0;
-  background:linear-gradient(rgba(155,81,224,.45) 2px,transparent 2px) 0 0/100% 18px,linear-gradient(90deg,rgba(155,81,224,.45) 2px,transparent 2px) 0 0/40px 100%;
+    radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.55));animation:twinkle 1.2s steps(2) infinite}
+@keyframes twinkle{50%{opacity:.6}}
+#app::after{content:"";position:absolute;inset-inline:0;bottom:0;height:26%;animation:floor 1s linear infinite;pointer-events:none;z-index:0;
+  background:linear-gradient(rgba(255,79,163,.55) 2px,transparent 2px) 0 0/100% 20px,linear-gradient(90deg,rgba(255,79,163,.55) 2px,transparent 2px) 0 0/44px 100%;
   transform:perspective(200px) rotateX(55deg);transform-origin:bottom;-webkit-mask-image:linear-gradient(transparent,#000);mask-image:linear-gradient(transparent,#000)}
-.logo{text-shadow:7px 7px 0 var(--black),-4px -4px 0 var(--green2),0 0 40px rgba(111,207,151,.35)!important}
+@keyframes floor{to{background-position:0 20px,0 0}}
+.logo{color:var(--yellow)!important;text-shadow:5px 5px 0 var(--pink),10px 10px 0 var(--black)!important}
 #app>*:not(.pix){position:relative;z-index:1}
 .knobs{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-inline:6px}
 .knobs i{display:block;width:14px;height:14px;background:var(--black);border:3px solid #6c6c7a}
@@ -88,8 +89,9 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--purple);outline
 .opt{display:flex;align-items:center;gap:12px;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--black);padding:10px 14px;font-family:var(--display);font-size:clamp(1.2rem,2.6vw,1.7rem);text-align:start;color:var(--black);cursor:pointer;font-weight:400}
 .opt i{font-style:normal;font-family:var(--pixel);font-size:.8rem;background:var(--black);color:var(--ink);width:36px;height:36px;display:grid;place-items:center;flex:0 0 auto}
 .opt:disabled{cursor:default}
-.opt.gone{opacity:.15}
-.opt.right{outline:6px solid var(--green);outline-offset:4px}
+.opt.gone{opacity:.2}
+.opt.right{outline:6px solid var(--ink);outline-offset:4px;background:var(--green)!important;color:var(--black)!important;animation:hit .4s steps(1) 4}
+@keyframes hit{50%{outline-color:transparent}}
 .opt.wrong{outline:6px solid var(--red);outline-offset:4px;opacity:.5}
 .tm{display:flex;align-items:center;gap:10px}
 .tm b{font-family:var(--pixel);font-weight:400;font-size:1.1rem;background:var(--yellow);color:var(--black);padding:8px 10px;box-shadow:5px 5px 0 var(--black);min-width:2.4em;text-align:center}
@@ -113,4 +115,30 @@ button:focus-visible,input:focus-visible{outline:4px solid var(--purple);outline
 .pop{animation:land .3s steps(3)}
 .pix{position:absolute;width:12px;height:12px;z-index:3;pointer-events:none;animation:fallpx linear forwards}
 @keyframes fallpx{to{transform:translateY(110vh) rotate(180deg)}}
-@media (prefers-reduced-motion:reduce){.blink,.paddle.win .p,.count,.land,.shake,.pop,.pix{animation:none}.pix{display:none}}
+
+/* Polish (previews/game-arcade-polish.html): round how-to, short timers, player picks, result reveal. New classes; tv.js must emit them. */
+.howto{background:var(--black);border:4px solid var(--ink);box-shadow:8px 8px 0 var(--purple);padding:16px 22px;width:min(780px,100%);box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
+.howto h2{color:var(--yellow);font-size:2rem}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.step{border:3px solid var(--c,var(--blue));padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:1.05rem;opacity:0;animation:stepin .3s steps(3) forwards}
+.step:nth-child(2){animation-delay:.6s}.step:nth-child(3){animation-delay:1.2s}
+.step b{font-family:var(--pixel);font-weight:400;font-size:1.4rem;color:var(--c,var(--blue))}
+@keyframes stepin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.skip{display:flex;align-items:center;gap:10px;font-family:var(--pixel);font-size:.55rem;color:var(--mute);align-self:center}
+.hold{position:relative;width:170px;height:18px;border:3px solid var(--ink);background:#222}
+.hold i{position:absolute;inset:0;width:var(--p,0%);background:var(--green)}
+.skip .auto{color:var(--yellow)}
+.tm.low b{background:var(--pink);color:var(--ink);animation:blink .3s steps(1) infinite}
+.picks{display:flex;gap:4px;margin-inline-start:auto}
+.picks span{font-family:var(--body);font-size:.85rem;font-weight:700;background:var(--black);color:var(--ink);padding:0 6px;animation:land .2s steps(2)}
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(780px,100%)}
+.res .pl{background:var(--black);border:3px solid var(--green);padding:8px 12px;display:flex;flex-direction:column;gap:6px;text-align:start;opacity:0;animation:stepin .25s steps(3) forwards}
+.res .pl.bad{border-color:var(--pink)}
+.res .pl small{font-family:var(--display);font-size:1.3rem;display:flex;justify-content:space-between;align-items:center}
+.res .pl b{font-family:var(--pixel);font-weight:400;font-size:.6rem;color:var(--green)}.res .pl.bad b{color:var(--pink)}
+.res .pl em{font-style:normal;font-family:var(--pixel);font-size:.5rem;color:var(--mute)}
+.mvp{font-family:var(--pixel);font-size:.5rem;background:var(--yellow);color:var(--black);padding:4px 6px}
+.tally{display:flex;align-items:center;gap:16px;font-family:var(--pixel);direction:ltr}
+.tally .from{font-size:1.1rem;color:var(--mute)}.tally .arrow{color:var(--yellow)}.tally .to{font-size:clamp(1.8rem,5vw,2.6rem);color:var(--green);text-shadow:4px 4px 0 var(--black)}
+@media (max-width:560px){.steps,.res{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.step,.res .pl,.tm.low b,.picks span{animation:none;opacity:1}#app::before,#app::after,.opt.right,.blink,.paddle.win .p,.count,.land,.shake,.pop,.pix{animation:none}.pix{display:none}}

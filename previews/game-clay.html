@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أجل كم: طين</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;800&display=swap">
+<style>
+:root{--bg:#f2a65a;--bg2:#e0864a;--cream:#fff4e0;--ink:#3a2418;--a:#4f8dff;--b:#ff5f6d;--y:#ffd04a;--g:#5fd38a;--p:#a77bff;--f:"Baloo Bhaijaan 2",Tahoma,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#2a1a12;color:var(--ink);font-family:var(--f);padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.tabs{display:flex;gap:10px}
+.tabs button{font-family:var(--f);font-weight:800;font-size:1.1rem;color:var(--ink);background:var(--cream);border:0;border-radius:999px;padding:6px 20px;cursor:pointer;box-shadow:inset 0 -5px 0 rgba(0,0,0,.15)}
+.tabs button.on{background:var(--y)}
+/* clay = soft shading + grain via SVG filter */
+.clay{filter:url(#grain);box-shadow:inset 0 6px 8px rgba(255,255,255,.45),inset 0 -10px 14px rgba(0,0,0,.22),0 10px 0 rgba(0,0,0,.18),0 18px 26px rgba(0,0,0,.25)}
+.scr{position:relative;width:min(1140px,100%);aspect-ratio:16/9;min-height:580px;overflow:hidden;border-radius:28px;background:radial-gradient(80% 70% at 50% 40%,var(--bg),var(--bg2))}
+.blob{position:absolute;border-radius:42% 58% 63% 37%/45% 41% 59% 55%;animation:morph 9s ease-in-out infinite alternate;opacity:.9}
+@keyframes morph{50%{border-radius:61% 39% 38% 62%/57% 62% 38% 43%;transform:rotate(12deg) scale(1.05)}}
+.ui{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:18px 4%}
+.hud{display:flex;justify-content:space-between;align-items:flex-start}
+.team{display:flex;align-items:center;gap:12px}
+.team.b{flex-direction:row-reverse}
+.guy{position:relative;width:78px;height:86px;background:var(--c);border-radius:50% 50% 44% 44%/60% 60% 40% 40%;animation:wob 1.8s ease-in-out infinite}
+@keyframes wob{50%{transform:scaleY(.94) scaleX(1.05) translateY(3px)}}
+.guy::before,.guy::after{content:"";position:absolute;top:26px;width:18px;height:22px;background:#fff;border-radius:50%;box-shadow:inset -5px 0 0 6px var(--ink)}
+.guy::before{right:18px}.guy::after{left:18px}
+.guy i{position:absolute;bottom:18px;left:50%;width:22px;height:10px;transform:translateX(-50%);border-bottom:5px solid var(--ink);border-radius:0 0 20px 20px}
+.guy.sad i{border-bottom:0;border-top:5px solid var(--ink);border-radius:20px 20px 0 0;bottom:12px}
+.score{background:var(--cream);border-radius:20px;padding:4px 18px;text-align:center}
+.score small{display:block;font-weight:800;font-size:1.3rem;line-height:1.2;color:var(--c)}
+.score b{font-weight:800;font-size:2rem;line-height:1}
+.team.off{opacity:.55}
+.logo{font-weight:800;font-size:2.4rem;line-height:1;color:var(--cream);text-shadow:0 4px 0 #b85f2a,0 8px 12px rgba(0,0,0,.25);transform:rotate(-3deg);text-align:center}
+.logo span{display:block;font-size:1rem;color:var(--ink);text-shadow:none}
+.st{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+.st.on{display:flex}
+.chip{background:var(--p);color:#fff;font-weight:800;font-size:1.15rem;padding:2px 20px;border-radius:999px;transform:rotate(2deg)}
+.q{background:var(--cream);font-weight:800;font-size:clamp(1.7rem,3.6vw,2.7rem);line-height:1.35;padding:18px 40px;border-radius:38px 46px 40px 50px/46px 38px 50px 40px;max-width:860px;transform:rotate(-1deg)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;width:min(860px,100%)}
+.opt{display:flex;align-items:center;gap:12px;border:0;background:var(--c);color:var(--ink);font-family:var(--f);font-weight:800;font-size:clamp(1.3rem,2.6vw,1.8rem);padding:10px 16px;border-radius:30px 36px 32px 38px/36px 30px 38px 32px;cursor:pointer;text-align:start;transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
+.opt:nth-child(2){transform:rotate(1.5deg)}.opt:nth-child(3){transform:rotate(-1.5deg)}
+.opt:hover{transform:scale(1.05) rotate(-1deg)}
+.opt i{font-style:normal;width:44px;height:44px;border-radius:50%;background:var(--cream);display:grid;place-items:center;font-size:1.3rem;flex:0 0 auto}
+.done .opt{opacity:.35;transform:scale(.95)}
+.done .opt.ok{opacity:1;background:var(--g);transform:scale(1.08) rotate(-2deg);animation:squish .5s cubic-bezier(.3,1.8,.5,1)}
+@keyframes squish{0%{transform:scale(.8,1.2)}60%{transform:scale(1.15,.9)}}
+.tmr{display:flex;align-items:center;gap:12px;font-weight:800;font-size:1.3rem}
+.tmr .bar{width:min(380px,50vw);height:22px;border-radius:999px;background:rgba(0,0,0,.18);overflow:hidden}
+.tmr .bar i{display:block;height:100%;width:70%;background:var(--y);border-radius:999px;animation:t 18s linear forwards}
+@keyframes t{to{width:0}}
+.say{position:absolute;bottom:22px;left:4%;background:var(--cream);border-radius:22px 22px 22px 4px;padding:8px 16px;font-weight:800;font-size:1.05rem;max-width:280px;text-align:start;transform:rotate(2deg)}
+/* auction */
+.big{font-weight:800;font-size:clamp(3.4rem,9vw,6.4rem);line-height:1;color:var(--cream);text-shadow:0 6px 0 #b85f2a,0 12px 18px rgba(0,0,0,.25);transform:rotate(-3deg)}
+.duel{display:flex;align-items:flex-end;gap:clamp(30px,8vw,110px)}
+.bidder{display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .35s cubic-bezier(.3,1.8,.5,1)}
+.paddle{width:clamp(120px,15vw,160px);aspect-ratio:1;border-radius:50%;background:var(--cream);display:grid;place-items:center;font-weight:800;font-size:clamp(2rem,4.4vw,3rem);color:var(--c)}
+.stick{width:18px;height:54px;background:#9a5a2c;border-radius:0 0 10px 10px;margin-top:-6px}
+.bidder .guy{width:70px;height:76px;margin-top:-20px}
+.bidder.lead{transform:translateY(-22px) rotate(-3deg)}
+.bidder.lead .paddle{background:var(--y);color:var(--ink)}
+.vs{font-weight:800;font-size:2.4rem;color:var(--cream);text-shadow:0 4px 0 #b85f2a}
+.sold{background:var(--b);color:#fff;font-weight:800;font-size:1.6rem;padding:4px 26px;border-radius:999px}
+.pop{animation:squish .45s cubic-bezier(.3,1.8,.5,1)}
+@media(max-width:720px){.scr{aspect-ratio:auto;min-height:720px}.opts{grid-template-columns:1fr}.say{display:none}.guy{width:56px;height:62px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute"><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="saturate" values="0" result="g"/><feComponentTransfer in="g" result="g2"><feFuncA type="table" tableValues="0 .09"/></feComponentTransfer><feComposite in="g2" in2="SourceGraphic" operator="in" result="m"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="m"/></feMerge></filter></svg>
+<div class="tabs" id="tabs"><button data-p="q" class="on">السؤال</button><button data-p="auc">المزايدة العلنية</button></div>
+<div class="scr">
+ <div class="blob clay" style="width:340px;height:300px;background:#f7b874;top:-90px;right:-60px"></div>
+ <div class="blob clay" style="width:260px;height:240px;background:#d9733c;bottom:-80px;left:-50px;animation-delay:-3s"></div>
+ <div class="blob clay" style="width:120px;height:110px;background:var(--p);top:40%;left:3%;animation-delay:-5s"></div>
+ <div class="blob clay" style="width:90px;height:80px;background:var(--g);bottom:12%;right:5%;animation-delay:-2s"></div>
+ <div class="ui">
+  <div class="hud">
+   <div class="team a off" style="--c:var(--a)"><div class="guy clay sad"><i></i></div><div class="score clay"><small>الصقور</small><b>800</b></div></div>
+   <div class="logo">أجل كم؟<span>الجولة ٢ من ١٢</span></div>
+   <div class="team b" style="--c:var(--b)"><div class="guy clay"><i></i></div><div class="score clay"><small>النمور</small><b id="sb">1000</b></div></div>
+  </div>
+  <div class="st on" id="q">
+   <div class="chip clay">تقنية · النمور راهنوا بـ ٣٠٠</div>
+   <div class="q clay">أي شركة تصنع الآيفون؟</div>
+   <div class="opts" id="opts">
+    <button class="opt clay" style="--c:var(--y)"><i>أ</i>سامسونج</button><button class="opt clay ok" style="--c:#7fb6ff"><i>ب</i>أبل</button>
+    <button class="opt clay" style="--c:#ff8a95"><i>ج</i>هواوي</button><button class="opt clay" style="--c:#c3a6ff"><i>د</i>سوني</button></div>
+   <div class="tmr"><div class="bar clay"><i></i></div><span>١٨</span></div>
+   <div class="say clay" id="say">الصقور يدعون عليكم الحين 😬</div>
+  </div>
+  <div class="st" id="auc">
+   <div class="chip clay">رياضة · مزايدة علنية</div>
+   <div class="big">أجل كم؟</div>
+   <div class="duel">
+    <div class="bidder" id="ba" style="--c:var(--a)"><div class="paddle clay" id="va">200</div><div class="stick"></div><div class="guy clay"><i></i></div></div>
+    <div class="vs">ضد</div>
+    <div class="bidder lead" id="bb" style="--c:var(--b)"><div class="paddle clay" id="vb">250</div><div class="stick"></div><div class="guy clay"><i></i></div></div>
+   </div>
+   <div class="sold clay" id="sold">ارفعوا لوحاتكم!</div>
+  </div>
+ </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);let T=[];const later=(f,ms)=>T.push(setTimeout(f,ms));const clear=()=>{T.forEach(clearTimeout);T=[]};
+const pop=el=>{el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")};
+function auc(){$("va").textContent=200;$("vb").textContent=250;$("sold").textContent="ارفعوا لوحاتكم!";$("ba").classList.remove("lead");$("bb").classList.add("lead");
+ [["a",300],["b",350],["a",400]].forEach(([w,v],i)=>later(()=>{$("v"+w).textContent=v;pop($("v"+w));$("ba").classList.toggle("lead",w=="a");$("bb").classList.toggle("lead",w=="b")},900+i*1100));
+ ["بيع… مرة!","بيع… مرتين!","بيع! للصقور بـ ٤٠٠ 🔨"].forEach((t,i)=>later(()=>{$("sold").textContent=t;pop($("sold"))},4300+i*900));later(auc,8600)}
+function go(p){clear();document.querySelectorAll(".st").forEach(s=>s.classList.toggle("on",s.id==p));document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.p==p));$("opts").classList.remove("done");$("sb").textContent=1000;$("say").textContent="الصقور يدعون عليكم الحين 😬";if(p=="auc")auc()}
+$("tabs").onclick=e=>{if(e.target.dataset.p)go(e.target.dataset.p)};
+$("opts").onclick=e=>{if(!e.target.closest(".opt"))return;$("opts").classList.add("done");$("sb").textContent=1300;$("say").textContent="صح! الصقور زعلوا 😂"};
+</script></body></html>
