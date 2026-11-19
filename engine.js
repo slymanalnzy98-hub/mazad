@@ -5,7 +5,7 @@
   if (typeof module === 'object' && module.exports) module.exports = E;
   else root.Engine = E;
 })(typeof self !== 'undefined' ? self : this, function () {
-  const DEFAULTS = { rounds: 12, start: 1000, minBet: 50, answerS: 20, stealS: 10, rescue: 100, teams: 2 };
+  const DEFAULTS = { rounds: 12, start: 1000, minBet: 50, answerS: 10, stealS: 8, rescue: 100, teams: 2 };
 
   // مولّد أرقام عشوائية ثابت من بذرة، عشان الاختبارات تتكرر بنفس النتيجة
   function rng(seed) {
@@ -39,7 +39,7 @@
       teams: names.map(n => ({ name: String(n), coins: config.start, allinUsed: false })),
       deck: [], cur: null, lastCat: null, bids: names.map(() => null), allin: names.map(() => false),
       winner: null, tie: false, answering: null, steal: false, stake: 0, gone: null, deadline: null,
-      last: null, final: null, rescued: []
+      last: null, final: null, rescued: [], attempts: [], openedAt: null
     };
   }
 
@@ -56,6 +56,7 @@
     s.teams.forEach((t, k) => { if (t.coins <= 0) { t.coins = s.config.rescue; s.rescued.push(k); } });
     s.bids = s.teams.map(() => null); s.allin = s.teams.map(() => false);
     s.winner = null; s.tie = false; s.answering = null; s.steal = false; s.stake = 0; s.gone = null; s.deadline = null; s.last = null;
+    s.attempts = []; s.openedAt = null;
     s.phase = 'bet';
     return s;
   }
@@ -80,6 +81,7 @@
   function toQuestion(s, team, steal, now) {
     s.answering = team; s.steal = steal;
     if (!steal) s.stake = s.allin[team] ? s.bids[team] * 2 : s.bids[team];
+    s.openedAt = now || 0;
     s.deadline = (now || 0) + (steal ? s.config.stealS : s.config.answerS) * 1000;
     s.phase = 'question';
     return s;
@@ -135,7 +137,10 @@
         if (ok) t.coins += s.stake;
         else if (!s.steal) t.coins = Math.max(0, t.coins - s.stake);
         const canSteal = !ok && !s.steal && s.teams.length === 2;
-        s.last = { team, ok, steal: s.steal, picked: k, delta: t.coins - before, timeout: k === -1 };
+        const ms = Number.isFinite(a.at) && s.openedAt !== null ? Math.max(0, a.at - s.openedAt) : null;
+        const by = typeof a.by === 'string' ? a.by.slice(0, 14) : null;
+        s.last = { team, ok, steal: s.steal, picked: k, delta: t.coins - before, timeout: k === -1, by, ms };
+        s.attempts.push({ team, by, picked: k, ok, ms, delta: t.coins - before, steal: s.steal });
         s.deadline = null;
         if (canSteal) { s.gone = k >= 0 ? k : null; s.phase = 'stealOffer'; }
         else { s.last.answer = s.cur.opts[s.cur.a]; s.phase = 'result'; }
@@ -164,7 +169,7 @@
     const v = { phase: s.phase, round: s.round, rounds: s.config.rounds,
       teams: s.teams.map(t => ({ name: t.name, coins: t.coins, allinUsed: t.allinUsed })),
       bidIn: s.bids.map(b => b !== null), answering: s.answering, steal: s.steal, deadline: s.deadline,
-      last: s.last, rescued: s.rescued, minBet: s.config.minBet };
+      last: s.last, rescued: s.rescued, minBet: s.config.minBet, attempts: s.attempts };
     if (s.cur && s.phase !== 'lobby' && s.phase !== 'over') v.cat = s.cur.cat;
     if (s.phase === 'reveal') { v.bids = s.bids; v.allin = s.allin; v.winner = s.winner; v.tie = s.tie; }
     if (s.phase === 'question') { v.q = s.cur.q; v.opts = s.cur.opts; v.gone = s.gone; v.stake = s.stake; }

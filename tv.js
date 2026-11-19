@@ -83,7 +83,7 @@ async function onAct(m) {
   if (b.type === 'bid' && S.phase === 'bet') {
     if (S.bids[p.team] === null) dispatch({ type: 'bid', team: p.team, amount: b.amount, allin: !!b.allin });
   } else if (b.type === 'answer' && S.phase === 'question' && p.team === S.answering) {
-    dispatch({ type: 'answer', k: b.k });
+    answer(Number.isInteger(b.k) ? b.k : -1, p.name);
   } else if (b.type === 'steal' && S.phase === 'stealOffer' && p.team === 1 - S.answering) {
     dispatch({ type: 'steal', yes: !!b.yes, now: Date.now() });
   } else send();
@@ -113,7 +113,7 @@ function render(prev, opts) {
 function lobby() {
   const url = new URL('play.html?room=' + ROOM, location.href).href;
   app.innerHTML = `<div class="stage">
-    <h1 class="cat logo">المزاد</h1>
+    <h1 class="cat logo">أجل كم</h1>
     <div class="lobby">
       <div class="qr" id="qr"></div>
       <div style="display:flex;flex-direction:column;gap:10px;text-align:start">
@@ -146,8 +146,31 @@ function roll() {
   const el = $('cat'), cats = Object.keys(BANK); let n = 0;
   T = setInterval(() => {
     el.textContent = cats[n++ % cats.length]; beep(300 + (n % 5) * 80, .04, 'square', .03);
-    if (n >= 14) { clearInterval(T); T = null; el.textContent = S.cur.cat; el.classList.remove('roll'); el.classList.add('land'); SFX.reveal(); auto = setTimeout(betPhase, 900); }
+    if (n >= 14) { clearInterval(T); T = null; el.textContent = S.cur.cat; el.classList.remove('roll'); el.classList.add('land'); SFX.reveal(); auto = setTimeout(S.round === 1 ? howto : betPhase, 900); }
   }, 90);
+}
+
+// شرح سريع قبل أول جولة: يمشي لحاله بعد 6 ثواني، أو اضغط مطولاً للتخطي
+function howto() {
+  const AUTO = 6, HOLD_MS = 900;
+  app.innerHTML = `${header()}<div class="stage"><div class="howto">
+    <h2>كيف تلعبون؟</h2>
+    <div class="steps">
+      <div class="step" style="--c:var(--blue)"><b>1</b>تطلع الفئة بس، بدون السؤال</div>
+      <div class="step" style="--c:var(--yellow)"><b>2</b>كل فريق يراهن بالسر من جواله</div>
+      <div class="step" style="--c:var(--pink)"><b>3</b>الأعلى يجاوب: صح يكسب، وغلط يخسر والخصم يسرق</div>
+    </div>
+    <div class="skip" id="skip" role="button" tabindex="0" aria-label="اضغط مطولاً للتخطي">HOLD TO SKIP<span class="hold" id="hold" style="--p:0%"><i></i></span><span class="auto" id="auto">AUTO ${AUTO}</span></div>
+  </div></div>`;
+  let left = AUTO, held = null, raf = null;
+  const go = () => { stopTimers(); cancelAnimationFrame(raf); if (S.phase === 'bet') betPhase(); };
+  T = setInterval(() => { left--; const a = $('auto'); if (a) a.textContent = 'AUTO ' + left; if (left <= 0) go(); }, 1000);
+  const fill = () => { const p = Math.min(1, (performance.now() - held) / HOLD_MS); $('hold').style.setProperty('--p', p * 100 + '%'); if (p >= 1) return go(); raf = requestAnimationFrame(fill); };
+  const down = e => { e.preventDefault(); held = performance.now(); fill(); };
+  const up = () => { cancelAnimationFrame(raf); held = null; const h = $('hold'); if (h) h.style.setProperty('--p', '0%'); };
+  const sk = $('skip');
+  sk.addEventListener('pointerdown', down); sk.addEventListener('pointerup', up); sk.addEventListener('pointerleave', up);
+  sk.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(); });
 }
 
 function betPhase() {
@@ -215,24 +238,27 @@ function question() {
       lastLeft = left;
       const on = Math.ceil(left / total * 10);
       $('bars').innerHTML = Array.from({ length: 10 }, (_, k) => `<i class="${k < on ? '' : 'off'}"></i>`).join('');
-      const s = $('sec'); s.textContent = left; s.classList.toggle('alarm', left <= 5);
-      if (left <= 5 && left > 0) SFX.tick();
+      const s = $('sec'); s.textContent = left; s.parentElement.classList.toggle('low', left <= 3);
+      if (left <= 3 && left > 0) SFX.tick();
       send();
     }
     if (left <= 0) { clearInterval(T); T = null; answer(-1); }
   };
   tick(); T = setInterval(tick, 250);
-  $('ops').onclick = e => { const b = e.target.closest('.opt'); if (b && !b.disabled) answer(+b.dataset.k); };
+  $('ops').onclick = e => { const b = e.target.closest('.opt'); if (b && !b.disabled) answer(+b.dataset.k, 'الشاشة'); };
 }
-function answer(k) {
-  if (S.phase !== 'question') return;
-  stopTimers();
-  const right = S.cur.a;
-  document.querySelectorAll('.opt').forEach((b, j) => { b.disabled = true; if (j === right && S.phase === 'question') b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
-  // نخفي الجواب الصح لو فيه سرقة جاية
+let answering = false;
+function answer(k, by) {
+  if (S.phase !== 'question' || answering) return;
+  answering = true; stopTimers();
+  const at = Date.now(), right = S.cur.a;
   const willSteal = k !== right && !S.steal;
-  if (willSteal) document.querySelectorAll('.opt.right').forEach(b => b.classList.remove('right'));
-  setTimeout(() => dispatch({ type: 'answer', k }), 1100);
+  document.querySelectorAll('.opt').forEach((b, j) => {
+    b.disabled = true;
+    if (j === right && !willSteal) b.classList.add('right'); else if (j === k) b.classList.add('wrong');
+    if (j === k && by) b.insertAdjacentHTML('beforeend', `<span class="picks"><span>${esc(by)}</span></span>`);
+  });
+  setTimeout(() => { answering = false; dispatch({ type: 'answer', k, by: by || null, at }); }, 1100);
 }
 
 function countUp(i, from, to) {
@@ -255,12 +281,24 @@ function result(prev, opts) {
   const line = L.ok ? (L.steal ? `${esc(t.name)} سرقوها!` : `صح! ${esc(t.name)} كسبوا`)
     : L.steal ? `ولا ${esc(t.name)} عرفوها` : L.timeout ? `خلص الوقت! ${esc(t.name)} خسروا` : `غلط! ${esc(t.name)} خسروا`;
   const startCoins = S.teams.map(x => x.coins); startCoins[L.team] -= L.delta;
+  // بطاقة لكل محاولة في الجولة، والأسرع اللي جاوب صح هو MVP
+  const tries = S.attempts || [];
+  const fastest = tries.filter(x => x.ok && x.ms !== null).sort((a, b) => a.ms - b.ms)[0];
+  const cards = tries.map((x, i) => `<div class="pl ${x.ok ? '' : 'bad'}" style="animation-delay:${.3 + i * .35}s">
+      <small>${esc(x.by || S.teams[x.team].name)} ${x === fastest ? '<span class="mvp">MVP</span>' : ''}</small>
+      <b>${x.ok ? '✔' : '✘'} ${x.picked >= 0 ? LET[x.picked] : 'TIME'} · ${x.delta > 0 ? '+' + x.delta : x.delta}</b>
+      <em>${x.ms !== null ? '⏱ ' + (x.ms / 1000).toFixed(1) + 's' : ''}${x.steal ? ' · STEAL' : ''}</em></div>`).join('');
+  const pad = n => String(n).padStart(4, '0');
   app.innerHTML = `${header(null, opts.restore ? null : startCoins)}<div class="stage">
     <p class="big" style="color:${color}">${amount}</p><p class="k">${line}</p>
+    ${cards ? `<div class="res">${cards}</div>` : ''}
+    ${L.delta ? `<div class="tally"><span class="from">${pad(startCoins[L.team])}</span><span class="arrow">▶</span><span class="to" id="tallyTo">${pad(opts.restore ? t.coins : startCoins[L.team])}</span></div>` : ''}
     ${!canSteal ? `<p class="mute">الجواب: <b style="color:var(--ink)">${esc(L.answer)}</b></p>` : `<p class="k">${esc(o.name)}، تبون تسرقون السؤال؟ قرروا من جوالكم أو من هنا</p>`}
     <div class="row">${canSteal ? `<button class="px r" id="st">${esc(o.name)} يسرقون</button><button class="px d" id="skip">لا، التالي</button>` : `<button class="px g" id="nx">${S.round >= S.config.rounds ? 'النتيجة النهائية' : 'السؤال الجاي'}</button>`}</div></div>`;
   if (!opts.restore) {
     countUp(L.team, startCoins[L.team], t.coins);
+    const to = $('tallyTo');
+    if (to) { const from = startCoins[L.team], steps = 20; let k = 0; const id = setInterval(() => { k++; to.textContent = pad(Math.round(from + (t.coins - from) * k / steps)); if (k >= steps) clearInterval(id); }, 50); }
     if (L.ok) { fx('flash'); SFX.win(); if (L.delta >= 400) burst(); } else { fx('shake'); SFX.lose(); }
   }
   if (canSteal) { $('st').onclick = () => dispatch({ type: 'steal', yes: true, now: Date.now() }); $('skip').onclick = () => dispatch({ type: 'steal', yes: false }); }

@@ -54,7 +54,7 @@ test('الرهان الأعلى ياخذ السؤال، وصح يكسب قد ا�
   s = step(s, { type: 'bid', team: 1, amount: 200 });
   assert.equal(s.phase, 'reveal'); assert.equal(s.winner, 0); assert.equal(s.tie, false);
   s = step(s, { type: 'toQuestion', now: 1000 });
-  assert.equal(s.answering, 0); assert.equal(s.stake, 300); assert.equal(s.deadline, 1000 + 20000);
+  assert.equal(s.answering, 0); assert.equal(s.stake, 300); assert.equal(s.deadline, 1000 + 10000);
   s = step(s, { type: 'answer', k: rightOf(s) });
   assert.equal(s.phase, 'result'); assert.equal(s.teams[0].coins, 1300); assert.equal(s.teams[1].coins, 1000);
   assert.equal(s.last.delta, 300);
@@ -68,7 +68,7 @@ test('غلط يخسر الرهان، والخصم يسرق ويكسب نفس ا�
   s = step(s, { type: 'answer', k: wrong });
   assert.equal(s.phase, 'stealOffer'); assert.equal(s.teams[1].coins, 600); assert.equal(s.gone, wrong);
   s = step(s, { type: 'steal', yes: true, now: 0 });
-  assert.equal(s.answering, 0); assert.equal(s.steal, true); assert.equal(s.stake, 400); assert.equal(s.deadline, 10000);
+  assert.equal(s.answering, 0); assert.equal(s.steal, true); assert.equal(s.stake, 400); assert.equal(s.deadline, 8000);
   assert.equal(E.reduce(s, { type: 'answer', k: wrong }).ok, false, 'الخيار المحذوف ممنوع');
   s = step(s, { type: 'answer', k: rightOf(s) });
   assert.equal(s.phase, 'result'); assert.equal(s.teams[0].coins, 1400);
@@ -178,4 +178,15 @@ test('المعروض للجوالات ما فيه الجواب الصح ولا �
   const v = E.publicView(s), text = JSON.stringify(v);
   assert.equal(v.opts.length, 4); assert.ok(!('a' in v)); assert.ok(!('deck' in v)); assert.ok(!('cur' in v));
   assert.ok(!text.includes(s.deck[0].q), 'ما يطلع سؤال جاي');
+});
+
+test('الجواب يسجّل مين جاوب وكم أخذ وقت', () => {
+  let s = started();
+  s = step(s, { type: 'bid', team: 0, amount: 100 }); s = step(s, { type: 'bid', team: 1, amount: 50 });
+  s = step(s, { type: 'toQuestion', now: 5000 });
+  s = step(s, { type: 'answer', k: rightOf(s), by: 'فهد', at: 7100 });
+  assert.equal(s.last.by, 'فهد'); assert.equal(s.last.ms, 2100);
+  assert.equal(s.attempts.length, 1); assert.equal(s.attempts[0].ok, true);
+  s = step(s, { type: 'next' });
+  assert.deepEqual(s.attempts, [], 'المحاولات تنمسح كل جولة');
 });

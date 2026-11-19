@@ -37,7 +37,7 @@ function joinScreen(err) {
   const room = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
   let team = ME.team;
   app.innerHTML = `<div class="stage" style="gap:16px">
-    <h1 class="cat" style="font-size:3.4rem">المزاد</h1>
+    <h1 class="cat" style="font-size:3.4rem">أجل كم</h1>
     <label class="field"><span>ROOM CODE</span><input id="code" maxlength="5" value="${esc(room)}" autocomplete="off" autocapitalize="characters" placeholder="K7Q2X"></label>
     <label class="field"><span>اسمك</span><input id="nm" maxlength="14" value="${esc(ME.name)}" autocomplete="off" placeholder="مثلاً: فهد"></label>
     <div class="pick" id="pk"><button class="a" data-t="0">الفريق ١</button><button class="b" data-t="1">الفريق ٢</button></div>
