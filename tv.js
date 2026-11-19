@@ -205,11 +205,12 @@ function howto() {
 // الشاشة ما تتحكم إلا بالفريق اللي ما عنده جوال
 const phonesOf = i => Object.values(P).filter(p => p.team === i).length;
 const BET_S = 30, DECIDE_S = 10;
-let betEnds = 0;
+let betEnds = 0, betRound = 0;
 
 function betPhase() {
   shownRound = S.round;
-  if (!betEnds || betEnds < Date.now() - 60000) betEnds = Date.now() + BET_S * 1000;
+  // مؤقت جديد لكل جولة، ونفس المؤقت لو انرسمت الشاشة من جديد في نفس الجولة
+  if (betRound !== S.round || !betEnds) { betRound = S.round; betEnds = Date.now() + BET_S * 1000; }
   const box = i => { const t = S.teams[i], done = S.bids[i] !== null, phones = phonesOf(i);
     return `<div class="box ${i ? 'b' : 'a'}"><b>${esc(t.name)}</b><span class="st ${done ? '' : 'blink'}">${done ? 'BET ✓' : 'WAITING…'}</span>
       ${done ? '' : phones ? `<span class="hostnote">📱 من الجوال</span>` : `<button class="px d mini" data-t="${i}">راهن هنا</button>`}</div>`; };
