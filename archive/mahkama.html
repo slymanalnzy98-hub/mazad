@@ -1,0 +1,239 @@
+<title>المحكمة الرمضانية</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column like a phone passed around the majlis; walnut courtroom wood + brass gavel accent. Single dark look by choice. */
+:root{
+  --wood:#1b130e; --panel:#2a1e16; --line:#47352a; --ink:#f4ead8; --mute:#b7a58f;
+  --brass:#e0ac4c; --mint:#6cc9a0; --rose:#e0675a;
+  --display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--wood);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.015) 0 2px,transparent 2px 46px);}
+#app{max-width:560px;margin:0 auto;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.25}
+h1{font-size:2.4rem;color:var(--brass)}
+h2{font-size:1.5rem}
+p{margin:0}
+.mute{color:var(--mute)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:14px 18px;cursor:pointer;background:var(--brass);color:#1d1306}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.mint{background:var(--mint);color:#06281d}
+button.rose{background:var(--rose);color:#2a0905}
+button:focus-visible,input:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>button{flex:1 1 140px}
+input{font:inherit;background:var(--wood);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--wood);border:1px solid var(--line);border-radius:999px;padding:6px 12px;display:inline-flex;gap:8px;align-items:center}
+.chip b{cursor:pointer;color:var(--rose)}
+.center{text-align:center;align-items:center;justify-content:center;min-height:170px}
+.big{font-family:var(--display);font-size:2rem;color:var(--brass);line-height:1.3}
+.charge{font-family:var(--display);font-size:1.7rem;line-height:1.4;text-align:center}
+.label{font-size:.85rem;letter-spacing:.04em;color:var(--mint)}
+.cast{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cast div{background:var(--wood);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;min-width:0}
+.cast span{display:block;font-size:.8rem;color:var(--mute)}
+.cast b{display:block;overflow-wrap:anywhere}
+.timer{font-family:var(--display);font-size:3.4rem;text-align:center;font-variant-numeric:tabular-nums;color:var(--brass)}
+.steps{display:flex;gap:6px}
+.steps i{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.steps i.on{background:var(--brass)}
+.list{display:flex;flex-direction:column;gap:4px}
+.list div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0}
+.list b{font-variant-numeric:tabular-nums}
+.paper{background:#f1e6cf;color:#2b1d10;border-radius:10px;padding:14px;font-size:1.1rem}
+@media (prefers-reduced-motion:no-preference){.card{animation:in .25s ease}@keyframes in{from{transform:translateY(6px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+
+<div id="app" dir="rtl"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pickOne=a=>a[Math.floor(Math.random()*a.length)];
+
+const CHARGES=[
+ "أكل آخر سمبوسة في الصحن بدون ما يستأذن",
+ "نام عن السحور وصحّى الكل وهو يتحلطم",
+ "شرب ماي بعد أذان الفجر بدقيقة",
+ "خبّى علبة القطايف في غرفته",
+ "قال إنه بيجي التراويح وما جاء",
+ "أكل التمر وحط النوى في صحن غيره",
+ "سرق الريموت وقت المسلسل",
+ "قال «أنا شبعان» وبعدها أكل صحنين",
+ "غاب وقت غسيل الصحون بعذر غريب",
+ "صوّر السفرة ونشرها قبل لا أحد ياكل",
+ "أكل اللقيمات وهي تتقلّى قبل الأذان",
+ "حط سكر بدال الملح في الشوربة",
+ "طلب مطعم وما عزم أحد",
+ "سولف في الجوال وقت الدعاء",
+ "شرب آخر كاسة فيمتو",
+ "نسي يجيب الخبز من البقالة",
+ "قال «بس دقيقة» ونام ساعتين بعد الفطور",
+ "خلّص بطاقة الشحن حق أخوه",
+ "أكل حبة الكبة الأخيرة وقال ما أدري مين أكلها",
+ "فتح الثلاجة عشرين مرة قبل الأذان"
+];
+const EVIDENCE=[
+ "شاهد يقول إنه شافه يمسح فمه بسرعة",
+ "فيه فتات على ثوبه",
+ "جواله فيه صورة للصحن قبل لا يختفي",
+ "كان آخر واحد في المطبخ",
+ "ريحته هيل وزعفران",
+ "رسالة منه في القروب: «لا تسألوني»",
+ "سمعوه يقول «ما أحد بيدري»",
+ "يده لزقة من الشيرة",
+ "ما رد على أي اتصال وقتها",
+ "ابتسامته مريبة من أول السهرة"
+];
+const ALIBIS=[
+ "كان يصلي في المسجد وفيه شهود",
+ "جواله يثبت إنه كان في مكالمة",
+ "ما يحب هالأكل أصلاً",
+ "كان يساعد أمه في المطبخ",
+ "كان نايم، وفيه صورة تثبت",
+ "الكاميرا تثبت إنه كان برا البيت",
+ "عنده حساسية من السكر",
+ "واحد ثاني اعترف له بالسر",
+ "كان مشغول يرتّب السفرة",
+ "التوقيت ما يركب، كان في السيارة"
+];
+
+let players=["سليمان","أحمد","نورة","فهد","سارة"];
+let pts={}, round=0;
+
+function home(){
+  app.innerHTML=`
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>المحكمة الرمضانية</h1>
+    <p class="mute">نسخة تجريبية. جوال واحد يتمرر بين اللاعبين.</p>
+  </header>
+  <div class="card">
+    <h2>طريقة اللعب</h2>
+    <div class="list">
+      <div><span>متّهم</span><span class="mute">يعرف بالسر إذا هو بريء أو مذنب</span></div>
+      <div><span>مدّعي</span><span class="mute">عنده دليل سري، يبي يثبت التهمة</span></div>
+      <div><span>محامي</span><span class="mute">عنده حجة سرية، يبي البراءة</span></div>
+      <div><span>محلّفين</span><span class="mute">يسمعون ويصوّتون بالسر</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>اللاعبين</h2>
+    <form id="addf" class="row"><input id="pname" placeholder="اكتب اسم لاعب" autocomplete="off"><button style="flex:0 0 auto">إضافة</button></form>
+    <div class="chips" id="chips"></div>
+    <p class="mute" id="hint"></p>
+  </div>
+  <button id="start">افتح الجلسة</button>`;
+  const draw=()=>{
+    $('#chips').innerHTML=players.map((p,i)=>`<span class="chip">${esc(p)} <b data-i="${i}" role="button" aria-label="حذف ${esc(p)}">×</b></span>`).join('');
+    $('#hint').textContent=players.length<4?'تحتاجون 4 لاعبين على الأقل.':`${players.length} لاعبين · ${players.length-3} محلّفين`;
+    $('#start').disabled=players.length<4;
+  };
+  $('#addf').onsubmit=e=>{e.preventDefault();const v=$('#pname').value.trim();if(v&&!players.includes(v)){players.push(v);$('#pname').value='';draw()}$('#pname').focus()};
+  $('#chips').onclick=e=>{if(e.target.dataset.i!==undefined){players.splice(+e.target.dataset.i,1);draw()}};
+  $('#start').onclick=()=>{pts=Object.fromEntries(players.map(p=>[p,0]));round=0;newCase()};
+  draw();
+}
+
+function reveal(list,done,i=0){
+  if(i>=list.length)return done();
+  const [name,html]=list[i];
+  app.innerHTML=`<div class="card center"><p class="mute">عطوا الجوال لـ</p><p class="big">${esc(name)}</p><button id="sh">اضغط وشوف سرّك</button></div>`;
+  $('#sh').onclick=()=>{
+    app.innerHTML=`<div class="card center">${html}<button id="hd">خبّيته، مرر الجوال</button></div>`;
+    $('#hd').onclick=()=>reveal(list,done,i+1);
+  };
+}
+
+function newCase(){
+  round++;
+  // المتهم يدور على الكل بالترتيب، والباقي عشوائي
+  const accused=players[(round-1)%players.length];
+  const rest=shuffle(players.filter(p=>p!==accused));
+  const C={accused,prosecutor:rest[0],defender:rest[1],jury:rest.slice(2),
+    charge:pickOne(CHARGES),guilty:Math.random()<.5,evidence:pickOne(EVIDENCE),alibi:pickOne(ALIBIS),votes:{}};
+  app.innerHTML=`<div class="card"><p class="label">القضية رقم ${round}</p>
+    <p class="mute">المتّهم</p><p class="big">${esc(C.accused)}</p>
+    <p class="mute">التهمة</p><p class="charge">${esc(C.charge)}</p>
+    <div class="cast"><div><span>المدّعي</span><b>${esc(C.prosecutor)}</b></div><div><span>المحامي</span><b>${esc(C.defender)}</b></div><div><span>المحلّفين</span><b>${C.jury.length}</b></div></div>
+    <p class="mute">الحين يتمرر الجوال على الأربعة الأساسيين عشان كل واحد يشوف سرّه.</p>
+    <button id="go">وزّع الأسرار</button></div>`;
+  const secrets=[
+    [C.accused, C.guilty
+      ?`<p class="big" style="color:var(--rose)">أنت مذنب 😬</p><p>سويتها فعلاً. أنكر واقنعهم إنك بريء.</p>`
+      :`<p class="big" style="color:var(--mint)">أنت بريء</p><p>ما سويتها. دافع عن نفسك.</p>`],
+    [C.prosecutor,`<p class="mute">أنت المدّعي. دليلك السري:</p><div class="paper">${esc(C.evidence)}</div><p class="mute">استخدمه وقت ما تبي، وتقدر تبالغ فيه.</p>`],
+    [C.defender,`<p class="mute">أنت المحامي. حجتك السرية:</p><div class="paper">${esc(C.alibi)}</div><p class="mute">استخدمها لصالح موكلك.</p>`]
+  ];
+  $('#go').onclick=()=>reveal(secrets,()=>hearing(C,0));
+}
+
+const PHASES=[
+  ["المدّعي يتكلم","prosecutor",60],
+  ["المحامي يرد","defender",60],
+  ["المتّهم يدافع عن نفسه","accused",45],
+  ["أسئلة المحلّفين","jury",60]
+];
+function hearing(C,k){
+  clearInterval(C.t);
+  if(k>=PHASES.length)return voting(C,0);
+  const [title,who,sec]=PHASES[k];
+  const name=who==='jury'?'كل المحلّفين':C[who];
+  let end=Date.now()+sec*1000;
+  app.innerHTML=`<div class="card"><div class="steps">${PHASES.map((_,i)=>`<i class="${i<=k?'on':''}"></i>`).join('')}</div>
+    <p class="label">${esc(C.charge)}</p>
+    <h2>${title}</h2><p class="big" style="font-size:1.6rem">${esc(name)}</p>
+    <div class="timer" id="tm"></div>
+    <div class="row"><button id="nx">التالي</button><button class="ghost" id="ad">+30 ثانية</button></div></div>`;
+  const tick=()=>{const r=Math.max(0,end-Date.now());const el=$('#tm');if(!el)return;
+    el.textContent=`${Math.floor(r/60000)}:${String(Math.floor(r%60000/1000)).padStart(2,'0')}`;
+    el.style.color=r<10000?'var(--rose)':'var(--brass)'};
+  tick();C.t=setInterval(tick,250);
+  $('#nx').onclick=()=>hearing(C,k+1);
+  $('#ad').onclick=()=>{end=Math.max(end,Date.now())+30000;tick()};
+}
+
+function voting(C,i){
+  if(i>=C.jury.length)return verdict(C);
+  const j=C.jury[i];
+  app.innerHTML=`<div class="card center"><p class="label">التصويت السري · ${i+1} من ${C.jury.length}</p><p class="mute">عطوا الجوال للمحلّف</p><p class="big">${esc(j)}</p><button id="sh">أنا ${esc(j)}، خلني أصوّت</button></div>`;
+  $('#sh').onclick=()=>{
+    app.innerHTML=`<div class="card center"><p class="charge">${esc(C.accused)}: ${esc(C.charge)}</p><p>حكمك؟</p>
+      <div class="row" style="width:100%"><button class="rose" data-v="1">مذنب</button><button class="mint" data-v="0">بريء</button></div></div>`;
+    app.querySelector('.row').onclick=e=>{const v=e.target.dataset.v;if(v===undefined)return;C.votes[j]=v==='1';voting(C,i+1)};
+  };
+}
+
+function verdict(C){
+  const g=Object.values(C.votes).filter(Boolean).length, n=C.jury.length;
+  const convicted=g>n-g; // التعادل = براءة
+  const lines=[];
+  const add=(p,v,why)=>{pts[p]+=v;lines.push(`<div><span>${esc(p)} <span class="mute">· ${why}</span></span><b>+${v}</b></div>`)};
+  if(convicted)add(C.prosecutor,2,'كسب القضية'); else add(C.defender,2,'كسب القضية');
+  if(!convicted)add(C.accused,C.guilty?3:1,C.guilty?'مذنب وطلع براءة!':'بريء وطلع براءة');
+  C.jury.forEach(j=>{if(C.votes[j]===C.guilty)add(j,1,'صوّت صح')});
+  app.innerHTML=`<div class="card center"><p class="mute">${g} مذنب · ${n-g} بريء</p>
+    <p class="big" id="vd" style="font-size:2.6rem;color:${convicted?'var(--rose)':'var(--mint)'}">${convicted?'مذنب!':'براءة!'}</p>
+    <button class="ghost" id="tr">اكشف الحقيقة</button></div>`;
+  $('#tr').onclick=()=>{
+    app.innerHTML=`<div class="card center"><p class="mute">المحكمة حكمت: ${convicted?'مذنب':'براءة'}</p>
+      <p class="mute">والحقيقة إن ${esc(C.accused)}</p>
+      <p class="big" style="color:${C.guilty?'var(--rose)':'var(--mint)'}">${C.guilty?'سواها فعلاً 😂':'بريء فعلاً'}</p></div>
+      <div class="card"><h2>نقاط القضية</h2><div class="list">${lines.join('')||'<div><span class="mute">ما أحد كسب نقاط</span></div>'}</div></div>
+      <div class="card"><h2>الترتيب</h2><div class="list">${Object.entries(pts).sort((a,b)=>b[1]-a[1]).map(([p,v])=>`<div><span>${esc(p)}</span><b>${v}</b></div>`).join('')}</div>
+      <div class="row"><button id="nc">القضية التالية</button><button class="ghost" id="hm">إنهاء</button></div></div>`;
+    $('#nc').onclick=newCase;$('#hm').onclick=home;
+  };
+}
+
+home();
+</script>

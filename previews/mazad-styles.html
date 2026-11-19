@@ -1,0 +1,152 @@
+<title>المزاد: اختر الأسلوب</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Reem+Kufi:wght@500;700&family=Baloo+Bhaijaan+2:wght@600;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=Press+Start+2P&family=Aref+Ruqaa:wght@700&family=Tajawal:wght@400;700;900&display=swap">
+<style>
+/* Layout: a neutral gallery wall; six numbered frames of the same bet screen, two per row on desktop, one on phones. The wall stays quiet so the styles compare fairly. Single light look by choice. */
+:root{
+  --wall:#ecebe7; --ink:#1c1c1f; --mute:#6b6a70; --card:#ffffff; --pick:#1c1c1f;
+  --ui:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+body{background:var(--wall);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1240px;margin:0 auto;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+header h1{margin:0;font-size:2rem;font-weight:700}
+header p{margin:4px 0 0;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+figcaption{display:flex;gap:10px;align-items:baseline}
+figcaption b{font-size:1.25rem}
+figcaption .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--wall);font-weight:700;font-size:.95rem;flex:0 0 auto}
+figcaption span{color:var(--mute);font-size:.9rem}
+
+/* Shared skeleton for every variant */
+.s{aspect-ratio:16/9;max-width:100%;border-radius:14px;overflow:hidden;position:relative;container-type:inline-size;display:flex;flex-direction:column;padding:3.5%;box-sizing:border-box;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.s .bar{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
+.s .t{display:flex;flex-direction:column;line-height:1.15}
+.s .t small{font-size:1.6cqw}
+.s .t b{font-size:3.6cqw;font-variant-numeric:tabular-nums}
+.s .rd{font-size:1.6cqw}
+.s .mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6cqw;text-align:center;position:relative;z-index:2}
+.s .k{font-size:1.9cqw}
+.s .cat{font-size:9cqw;line-height:1.05}
+.s .tm{width:9cqw;height:9cqw;display:grid;place-items:center;font-size:3.8cqw}
+.s .st{display:flex;gap:2cqw;font-size:1.8cqw}
+
+/* 1. Game-show studio: spotlights, gold, deep blue */
+.v1{background:radial-gradient(60% 90% at 50% -10%,rgba(255,255,255,.35),transparent 60%),radial-gradient(120% 100% at 50% 120%,#1546c8,#0a1a4f 60%,#050b26);color:#fff;font-family:"Tajawal",sans-serif}
+.v1::before{content:"";position:absolute;inset:-20% 0 auto;height:120%;background:conic-gradient(from 160deg at 20% -10%,transparent 0 10deg,rgba(255,255,255,.12) 14deg,transparent 22deg),conic-gradient(from 180deg at 80% -10%,transparent 0 6deg,rgba(255,255,255,.12) 10deg,transparent 18deg)}
+.v1 .t{background:linear-gradient(#f9d976,#c8901e);color:#1b1206;padding:.6cqw 2cqw;border-radius:.8cqw;border:.3cqw solid #fff3c4}
+.v1 .t small{font-weight:700}
+.v1 .t b{font-weight:900}
+.v1 .rd{opacity:.8}
+.v1 .cat{font-weight:900;background:linear-gradient(#fff6d0,#f2c14e 55%,#b9790f);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .4cqw 0 #3a2400)}
+.v1 .k{letter-spacing:.3em;opacity:.8}
+.v1 .tm{border-radius:50%;border:.5cqw solid #f2c14e;font-weight:900;box-shadow:0 0 2cqw rgba(242,193,78,.6)}
+.v1 .st span{background:rgba(255,255,255,.12);padding:.4cqw 1.6cqw;border-radius:999px}
+
+/* 2. Clean modern: white, one strong color, big type */
+.v2{background:#fafafa;color:#111;font-family:"Tajawal",sans-serif}
+.v2 .t small{color:#888;font-weight:700}
+.v2 .t b{font-weight:900}
+.v2 .t.a b{color:#0a7cff}
+.v2 .t.b b{color:#ff5a1f}
+.v2 .rd{color:#888}
+.v2 .k{color:#888;font-weight:700}
+.v2 .cat{font-weight:900;letter-spacing:-.02em}
+.v2 .tm{border-radius:50%;background:#111;color:#fff;font-weight:900}
+.v2 .st span{color:#888}
+.v2 .st span:first-child{color:#0a7cff;font-weight:700}
+.v2::after{content:"";position:absolute;inset-inline:3.5%;bottom:0;height:1.2cqw;background:linear-gradient(90deg,#ff5a1f 40%,#e8e8e8 40%);border-radius:1cqw 1cqw 0 0}
+
+/* 3. Saudi modern: sadu bands, desert warm */
+.v3{background:#f3e6cf;color:#3b1f12;font-family:"Reem Kufi",sans-serif}
+.v3::before,.v3::after{content:"";position:absolute;inset-inline:0;height:4cqw;background:
+  linear-gradient(135deg,#9b2c1f 25%,transparent 25%) 0 0/4cqw 4cqw,linear-gradient(225deg,#9b2c1f 25%,transparent 25%) 0 0/4cqw 4cqw,
+  linear-gradient(315deg,#1f3b2f 25%,transparent 25%) 0 0/4cqw 4cqw,linear-gradient(45deg,#1f3b2f 25%,#e9c36b 25%) 0 0/4cqw 4cqw}
+.v3::before{top:0}.v3::after{bottom:0}
+.v3{padding-block:6.5%}
+.v3 .t small{color:#7a5a3a}
+.v3 .t b{font-weight:700}
+.v3 .t.a b{color:#1f3b2f}.v3 .t.b b{color:#9b2c1f}
+.v3 .cat{font-weight:700;color:#9b2c1f}
+.v3 .k{color:#7a5a3a}
+.v3 .tm{background:#1f3b2f;color:#f3e6cf;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);font-weight:700}
+.v3 .st span{border-bottom:.3cqw solid #e9c36b}
+
+/* 4. Retro arcade: pixels, CRT, chunky blocks */
+.v4{background:#1b1b3a;color:#fff;font-family:"Lalezar",sans-serif;image-rendering:pixelated}
+.v4::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 2px,transparent 2px 4px);z-index:3;pointer-events:none}
+.v4 .t{border:.5cqw solid #fff;padding:.4cqw 1.4cqw;box-shadow:.6cqw .6cqw 0 #000}
+.v4 .t.a{background:#2f80ed}.v4 .t.b{background:#eb5757}
+.v4 .t b{font-family:"Press Start 2P",monospace;font-size:2.4cqw;margin-top:.6cqw}
+.v4 .rd{font-family:"Press Start 2P",monospace;font-size:1.2cqw;color:#f2c94c}
+.v4 .k{color:#f2c94c}
+.v4 .cat{color:#6fcf97;text-shadow:.6cqw .6cqw 0 #000,-.3cqw -.3cqw 0 #27ae60}
+.v4 .tm{background:#f2c94c;color:#000;font-family:"Press Start 2P",monospace;font-size:2.6cqw;box-shadow:.6cqw .6cqw 0 #000}
+.v4 .st span{background:#000;padding:.3cqw 1.2cqw}
+
+/* 5. Mobile-game gloss: candy gradients, glossy 3D buttons */
+.v5{background:linear-gradient(160deg,#ff9a3c,#ff4f81 45%,#7b3cff);color:#fff;font-family:"Baloo Bhaijaan 2",sans-serif}
+.v5::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,rgba(255,255,255,.35),transparent 30%),radial-gradient(circle at 85% 80%,rgba(255,255,255,.2),transparent 30%)}
+.v5 .t{background:linear-gradient(#ffffff,#e8e2ff);color:#4b2a9e;padding:.5cqw 2cqw;border-radius:2cqw;box-shadow:0 .6cqw 0 #4b2a9e}
+.v5 .t small{font-weight:600}
+.v5 .t b{font-weight:800}
+.v5 .k{font-weight:600}
+.v5 .cat{font-weight:800;color:#ffe14d;-webkit-text-stroke:.5cqw #7a2a00;paint-order:stroke fill;filter:drop-shadow(0 .8cqw 0 #7a2a00)}
+.v5 .tm{border-radius:50%;background:linear-gradient(#7dff8a,#1fbf4a);color:#fff;font-weight:800;box-shadow:0 .6cqw 0 #0e7a2c,inset 0 .6cqw 0 rgba(255,255,255,.45);-webkit-text-stroke:.25cqw #0e7a2c;paint-order:stroke fill}
+.v5 .st span{background:rgba(0,0,0,.18);padding:.3cqw 1.6cqw;border-radius:999px;font-weight:600}
+
+/* 6. Hand-drawn notebook: paper, marker, stickers */
+.v6{background:#fffdf6;color:#23305c;font-family:"Aref Ruqaa",serif;background-image:linear-gradient(#cfe0ff 1px,transparent 1px);background-size:100% 4.2cqw}
+.v6::before{content:"";position:absolute;inset-block:0;inset-inline-start:7cqw;width:.25cqw;background:#ff8a8a}
+.v6 .t{background:#fff;padding:.4cqw 1.6cqw;border:.3cqw solid #23305c;border-radius:1.2cqw .6cqw 1.4cqw .5cqw;transform:rotate(-2deg)}
+.v6 .t.b{transform:rotate(2deg)}
+.v6 .t.a b{color:#2463eb}.v6 .t.b b{color:#e0457b}
+.v6 .t b,.v6 .t small{font-family:"Tajawal",sans-serif;font-weight:900}
+.v6 .k{font-family:"Tajawal",sans-serif;color:#6a73a0}
+.v6 .cat{font-weight:700;background:linear-gradient(transparent 60%,#ffe66d 60% 90%,transparent 90%)}
+.v6 .tm{border:.35cqw solid #23305c;border-radius:48% 52% 45% 55%;font-family:"Tajawal",sans-serif;font-weight:900}
+.v6 .st{font-family:"Tajawal",sans-serif}
+.v6 .st span{border:.25cqw dashed #23305c;padding:.2cqw 1.4cqw;border-radius:999px}
+</style>
+
+<main dir="rtl">
+<header>
+  <h1>اختر أسلوب «المزاد»</h1>
+  <p>نفس شاشة الرهان بـ6 أساليب. قل لي الرقم اللي يعجبك، أو رقمين نمزج بينهم.</p>
+</header>
+
+<div class="grid">
+  <figure><figcaption><span class="n">١</span><b>استوديو برنامج مسابقات</b><span>أضواء وذهبي وأزرق، مثل برامج التلفزيون الكبيرة</span></figcaption>
+    <div class="s v1"><div class="bar"><div class="t a"><small>الصقور</small><b>1,000</b></div><span class="rd">سؤال ٣ من ١٢</span><div class="t b"><small>النمور</small><b>1,000</b></div></div>
+      <div class="mid"><p class="k">الفئة الجاية</p><p class="cat">كورة سعودية</p><div class="tm">١٢</div><div class="st"><span>الصقور راهنوا ✓</span><span>النمور يفكرون…</span></div></div></div>
+  </figure>
+
+  <figure><figcaption><span class="n">٢</span><b>عصري ونظيف</b><span>أبيض، وخط عريض، ولون لكل فريق</span></figcaption>
+    <div class="s v2"><div class="bar"><div class="t a"><small>الصقور</small><b>1,000</b></div><span class="rd">سؤال ٣ من ١٢</span><div class="t b"><small>النمور</small><b>1,000</b></div></div>
+      <div class="mid"><p class="k">الفئة الجاية</p><p class="cat">كورة سعودية</p><div class="tm">١٢</div><div class="st"><span>الصقور راهنوا ✓</span><span>النمور يفكرون…</span></div></div></div>
+  </figure>
+
+  <figure><figcaption><span class="n">٣</span><b>سعودي حديث</b><span>نقش السدو، وألوان الصحرا، وخط كوفي</span></figcaption>
+    <div class="s v3"><div class="bar"><div class="t a"><small>الصقور</small><b>1,000</b></div><span class="rd">سؤال ٣ من ١٢</span><div class="t b"><small>النمور</small><b>1,000</b></div></div>
+      <div class="mid"><p class="k">الفئة الجاية</p><p class="cat">كورة سعودية</p><div class="tm">١٢</div><div class="st"><span>الصقور راهنوا ✓</span><span>النمور يفكرون…</span></div></div></div>
+  </figure>
+
+  <figure><figcaption><span class="n">٤</span><b>أركيد قديم</b><span>بكسلات وألوان أتاري، مثل ألعاب الثمانينات</span></figcaption>
+    <div class="s v4"><div class="bar"><div class="t a"><small>الصقور</small><b>1000</b></div><span class="rd">Q 3/12</span><div class="t b"><small>النمور</small><b>1000</b></div></div>
+      <div class="mid"><p class="k">الفئة الجاية</p><p class="cat">كورة سعودية</p><div class="tm">12</div><div class="st"><span>الصقور راهنوا ✓</span><span>النمور يفكرون…</span></div></div></div>
+  </figure>
+
+  <figure><figcaption><span class="n">٥</span><b>ألعاب الجوال</b><span>تدرّجات حلاوة وأزرار لامعة، مثل Royal Match</span></figcaption>
+    <div class="s v5"><div class="bar"><div class="t a"><small>الصقور</small><b>1,000</b></div><span class="rd">سؤال ٣ من ١٢</span><div class="t b"><small>النمور</small><b>1,000</b></div></div>
+      <div class="mid"><p class="k">الفئة الجاية</p><p class="cat">كورة سعودية</p><div class="tm">١٢</div><div class="st"><span>الصقور راهنوا ✓</span><span>النمور يفكرون…</span></div></div></div>
+  </figure>
+
+  <figure><figcaption><span class="n">٦</span><b>دفتر مرسوم باليد</b><span>ورق مسطّر، وخط رقعة، وتظليل قلم فسفوري</span></figcaption>
+    <div class="s v6"><div class="bar"><div class="t a"><small>الصقور</small><b>1,000</b></div><span class="rd">سؤال ٣ من ١٢</span><div class="t b"><small>النمور</small><b>1,000</b></div></div>
+      <div class="mid"><p class="k">الفئة الجاية</p><p class="cat">كورة سعودية</p><div class="tm">١٢</div><div class="st"><span>الصقور راهنوا ✓</span><span>النمور يفكرون…</span></div></div></div>
+  </figure>
+</div>
+</main>

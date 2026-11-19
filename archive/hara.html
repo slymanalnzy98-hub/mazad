@@ -1,0 +1,233 @@
+<title>ليل الحارة</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<style>
+/* Layout: one column, a phone passed around; old-neighbourhood night: indigo sky, lamp amber. Single dark look by choice. */
+:root{
+  --sky:#10111f; --panel:#1c1d33; --line:#33355a; --ink:#efe9dc; --mute:#a3a2b8;
+  --lamp:#f0b24a; --mint:#62c7a0; --blood:#e05a55;
+  --display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--sky);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background-image:radial-gradient(circle at 15% 4%,#2b2c4f 0,transparent 36%);}
+#app{max-width:560px;margin:0 auto;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.25}
+h1{font-size:2.5rem;color:var(--lamp)}
+h2{font-size:1.5rem}
+p{margin:0}
+.mute{color:var(--mute)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:14px 18px;cursor:pointer;background:var(--lamp);color:#1f1504}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.opt{background:var(--sky);color:var(--ink);border:1px solid var(--line);text-align:start}
+button.opt.sel{border-color:var(--lamp);box-shadow:inset 0 0 0 1px var(--lamp)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>button{flex:1 1 140px}
+input{font:inherit;background:var(--sky);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--sky);border:1px solid var(--line);border-radius:999px;padding:6px 12px;display:inline-flex;gap:8px;align-items:center}
+.chip b{cursor:pointer;color:var(--blood)}
+.center{text-align:center;align-items:center;justify-content:center;min-height:180px}
+.big{font-family:var(--display);font-size:2rem;color:var(--lamp);line-height:1.3}
+.story{font-size:1.2rem;line-height:1.8}
+.list{display:flex;flex-direction:column;gap:8px}
+.kv{display:flex;flex-direction:column;gap:4px}
+.kv div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);padding:6px 0}
+.dead{color:var(--mute);text-decoration:line-through}
+.timer{font-family:var(--display);font-size:3.4rem;text-align:center;font-variant-numeric:tabular-nums;color:var(--lamp)}
+.label{font-size:.85rem;letter-spacing:.04em;color:var(--mint)}
+@media (prefers-reduced-motion:no-preference){.card{animation:in .25s ease}@keyframes in{from{transform:translateY(6px);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+
+<div id="app" dir="rtl"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const app=$('#app');
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const one=a=>a[Math.floor(Math.random()*a.length)];
+
+const ROLES={
+  gang:{name:"العصابة",color:"var(--blood)",goal:"كل ليلة تختارون واحد من أهل الحارة تطلّعونه. تفوزون إذا صرتم نفس عددهم."},
+  doc:{name:"الطبيب",color:"var(--mint)",goal:"كل ليلة تختار واحد تحميه، حتى نفسك."},
+  omda:{name:"العمدة",color:"var(--lamp)",goal:"كل ليلة تسأل عن واحد، وتعرف بالسر إذا هو من العصابة."},
+  town:{name:"من أهل الحارة",color:"var(--ink)",goal:"اكشفوا العصابة بالنقاش والتصويت في النهار."}
+};
+const NIGHT_LINES=["نامت الحارة، وانطفت لمبات الشوارع…","الكلاب تنبح بعيد، والأبواب مسكّرة…","الليل طويل، وفيه أحد ما نام…"];
+const KILL_LINES=[n=>`طلع الصبح، ولقوا باب ${n} مفتوح… ${n} طلع من اللعبة.`,n=>`الحارة صحت على خبر: ${n} اختفى في الليل.`,n=>`أبو سعد راعي الدكان يقول: ما شفت ${n} من البارح.`];
+const SAVE_LINES=["العصابة حاولت، بس الطبيب كان أسرع. ما أحد طلع الليلة!","ليلة هادية… ما أحد طلع."];
+
+let names=["سليمان","أحمد","نورة","فهد","سارة","خالد"];
+let G=null, voice=false;
+
+function say(text){
+  if(!voice||!('speechSynthesis' in window))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='ar-SA';u.rate=.95;speechSynthesis.speak(u)}catch(e){}
+}
+
+function home(){
+  app.innerHTML=`
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>ليل الحارة</h1>
+    <p class="mute">مافيا بدون راوي: الجوال هو اللي يدير اللعبة، والكل يلعب. نسخة تجريبية، جوال واحد يتمرر.</p>
+  </header>
+  <div class="card">
+    <h2>اللاعبين</h2>
+    <form id="addf" class="row"><input id="pname" placeholder="اكتب اسم لاعب" autocomplete="off"><button style="flex:0 0 auto">إضافة</button></form>
+    <div class="chips" id="chips"></div>
+    <p class="mute" id="hint"></p>
+  </div>
+  <div class="card">
+    <h2>الإعدادات</h2>
+    <label class="row" style="align-items:center"><input type="checkbox" id="vc" style="flex:0 0 auto;width:22px;height:22px"> <span>الراوي يتكلم بصوت (إذا جهازك يدعم العربي)</span></label>
+  </div>
+  <button id="start">ابدأ اللعبة</button>`;
+  const draw=()=>{
+    $('#chips').innerHTML=names.map((p,i)=>`<span class="chip">${esc(p)} <b data-i="${i}" role="button" aria-label="حذف ${esc(p)}">×</b></span>`).join('');
+    const n=names.length;
+    $('#hint').textContent=n<4?'تحتاجون 4 لاعبين على الأقل.':`${n} لاعبين · العصابة ${gangCount(n)} · ${n>=5?'فيه طبيب':'بدون طبيب'} · ${n>=6?'فيه عمدة':'بدون عمدة'}`;
+    $('#start').disabled=n<4;
+  };
+  $('#vc').checked=voice; $('#vc').onchange=e=>voice=e.target.checked;
+  $('#addf').onsubmit=e=>{e.preventDefault();const v=$('#pname').value.trim();if(v&&!names.includes(v)&&names.length<14){names.push(v);$('#pname').value='';draw()}$('#pname').focus()};
+  $('#chips').onclick=e=>{if(e.target.dataset.i!==undefined){names.splice(+e.target.dataset.i,1);draw()}};
+  $('#start').onclick=start;
+  draw();
+}
+const gangCount=n=>n<=6?1:n<=9?2:3;
+
+function start(){
+  const n=names.length, order=shuffle(names), roles={};
+  let k=0;
+  for(let i=0;i<gangCount(n);i++)roles[order[k++]]='gang';
+  if(n>=5)roles[order[k++]]='doc';
+  if(n>=6)roles[order[k++]]='omda';
+  while(k<n)roles[order[k++]]='town';
+  G={roles,alive:new Set(names),day:0,log:[]};
+  const gang=names.filter(p=>roles[p]==='gang');
+  pass(names.map(p=>[p,()=>{
+    const r=ROLES[roles[p]];
+    const mates=roles[p]==='gang'&&gang.length>1?`<p class="mute">معك في العصابة: ${gang.filter(x=>x!==p).map(esc).join('، ')}</p>`:'';
+    return `<p class="mute">دورك</p><p class="big" style="color:${r.color}">${r.name}</p><p>${r.goal}</p>${mates}`;
+  }]),night,'شوف دورك');
+}
+
+// يمرّر الجوال على قائمة لاعبين؛ كل خطوة إما تعرض سر أو تطلب اختيار
+function pass(steps,done,btn='اضغط'){
+  let i=0;
+  const next=()=>{
+    if(i>=steps.length)return done();
+    const [name,content,onPick,opts]=steps[i++];
+    app.innerHTML=`<div class="card center"><p class="mute">عطوا الجوال لـ</p><p class="big">${esc(name)}</p><p class="mute">الباقين لا يطالعون</p><button id="sh">أنا ${esc(name)}، ${btn}</button></div>`;
+    $('#sh').onclick=()=>{
+      if(!onPick){
+        app.innerHTML=`<div class="card center">${content()}<button id="hd">خبّيته، مرّر الجوال</button></div>`;
+        $('#hd').onclick=next;return;
+      }
+      let sel=null;
+      app.innerHTML=`<div class="card">${content()}<div class="list" id="ops">${opts.map(o=>`<button class="opt" data-p="${esc(o)}">${esc(o)}</button>`).join('')}</div><button id="ok" disabled>تأكيد</button></div>`;
+      $('#ops').onclick=e=>{const p=e.target.dataset.p;if(!p)return;sel=p;[...document.querySelectorAll('.opt')].forEach(b=>b.classList.toggle('sel',b.dataset.p===p));$('#ok').disabled=false};
+      $('#ok').onclick=()=>{const extra=onPick(sel);
+        if(extra){app.innerHTML=`<div class="card center">${extra}<button id="hd">خبّيته، مرّر الجوال</button></div>`;$('#hd').onclick=next}else next();};
+    };
+  };
+  next();
+}
+
+function night(){
+  G.day++;
+  const alive=[...G.alive], R=G.roles, act={gang:[],doc:null,ghost:[]};
+  const line=one(NIGHT_LINES);
+  app.innerHTML=`<div class="card center"><p class="label">الليلة ${G.day}</p><p class="story">${line}</p>
+    <p class="mute">الجوال بيمر على الكل، حتى اللي طلعوا. كل واحد يختار شي، عشان ما أحد يعرف مين عنده دور.</p><button id="go">ابدأ الليل</button></div>`;
+  say(line);
+  $('#go').onclick=()=>{
+    const steps=names.map(p=>{
+      if(!G.alive.has(p))return [p,()=>`<p class="label">أنت شبح 👻</p><p>مين تشك إنه من العصابة؟ لو اتفقوا الأشباح على اسم، الحارة تسمع همسهم الصبح.</p>`,s=>{act.ghost.push(s)},alive];
+      const r=R[p];
+      if(r==='gang')return [p,()=>`<p class="label" style="color:var(--blood)">العصابة</p><p>مين تطلّعون الليلة؟</p>`,s=>{act.gang.push(s)},alive.filter(x=>R[x]!=='gang')];
+      if(r==='doc')return [p,()=>`<p class="label" style="color:var(--mint)">الطبيب</p><p>مين تحمي الليلة؟</p>`,s=>{act.doc=s},alive];
+      if(r==='omda')return [p,()=>`<p class="label">العمدة</p><p>عن مين تسأل؟</p>`,s=>`<p class="big">${esc(s)}</p><p class="story">${R[s]==='gang'?'<b style="color:var(--blood)">من العصابة!</b>':'مو من العصابة.'}</p>`,alive.filter(x=>x!==p)];
+      return [p,()=>`<p class="label">من أهل الحارة</p><p>مين تشك فيه؟ (اختيارك ما يأثر، بس عشان محد يعرف دورك)</p>`,()=>{},alive.filter(x=>x!==p)];
+    });
+    pass(steps,()=>morning(act),'كمّل');
+  };
+}
+
+function majority(arr){
+  if(!arr.length)return null;
+  const c={};arr.forEach(x=>c[x]=(c[x]||0)+1);
+  const max=Math.max(...Object.values(c));const top=Object.keys(c).filter(k=>c[k]===max);
+  return {top,max,pick:one(top)};
+}
+
+function morning(act){
+  const m=majority(act.gang); const target=m?m.pick:null;
+  let story;
+  if(target&&target!==act.doc){G.alive.delete(target);story=one(KILL_LINES)(target)}else story=one(SAVE_LINES);
+  const gm=majority(act.ghost);
+  const whisper=gm&&gm.top.length===1&&act.ghost.length>=2&&G.alive.has(gm.pick)?`<p class="mute">👻 الأشباح يهمسون باسم: <b>${esc(gm.pick)}</b></p>`:'';
+  app.innerHTML=`<div class="card center"><p class="label">صباح اليوم ${G.day}</p><p class="story">${esc(story)}</p>${whisper}</div>${aliveCard()}<button id="go">ابدأ النقاش</button>`;
+  say(story);
+  $('#go').onclick=()=>{if(!checkWin())discuss()};
+  if(checkWin(true))$('#go').textContent='النتيجة';
+}
+function aliveCard(){
+  return `<div class="card"><h2>أهل الحارة</h2><div class="chips">${names.map(p=>`<span class="chip ${G.alive.has(p)?'':'dead'}">${esc(p)}</span>`).join('')}</div></div>`;
+}
+
+function discuss(){
+  const secs=Math.min(240,60+G.alive.size*20); let end=Date.now()+secs*1000;
+  app.innerHTML=`<div class="card"><p class="label">النقاش</p><h2>مين من العصابة؟ تناقشوا</h2><div class="timer" id="tm"></div>
+    <div class="row"><button id="vt">نصوّت الحين</button><button class="ghost" id="ad">+30 ثانية</button></div></div>${aliveCard()}`;
+  say('النقاش بدأ. مين من العصابة؟');
+  const tick=()=>{const r=Math.max(0,end-Date.now());const el=$('#tm');if(!el){clearInterval(t);return}
+    el.textContent=`${Math.floor(r/60000)}:${String(Math.floor(r%60000/1000)).padStart(2,'0')}`;el.style.color=r<15000?'var(--blood)':'var(--lamp)';if(!r){clearInterval(t);vote()}};
+  const t=setInterval(tick,250);tick();
+  $('#vt').onclick=()=>{clearInterval(t);vote()};
+  $('#ad').onclick=()=>{end=Math.max(end,Date.now())+30000;tick()};
+}
+
+function vote(){
+  const alive=[...G.alive], votes=[];
+  pass(alive.map(p=>[p,()=>`<p class="label">تصويت سري</p><p>مين تطلّعه من الحارة؟</p>`,s=>{votes.push(s)},[...alive.filter(x=>x!==p),'ما أبي أطلّع أحد'].filter(Boolean)]),()=>{
+    const real=votes.filter(v=>v!=='ما أبي أطلّع أحد');
+    const m=majority(real);
+    let html;
+    if(!m||m.top.length>1||m.max<2){
+      html=`<p class="story">الأصوات ما اتفقت. ما أحد طلع اليوم.</p>`;
+    }else{
+      const out=m.pick;G.alive.delete(out);const isGang=G.roles[out]==='gang';
+      html=`<p class="mute">الحارة طلّعت</p><p class="big">${esc(out)}</p><p class="story">${isGang?'<b style="color:var(--blood)">وكان من العصابة!</b>':`وكان ${ROLES[G.roles[out]].name}… مظلوم 😬`}</p>`;
+      say(`الحارة طلّعت ${out}`);
+    }
+    const counts={};votes.forEach(v=>counts[v]=(counts[v]||0)+1);
+    app.innerHTML=`<div class="card center">${html}</div><div class="card"><h2>الأصوات</h2><div class="kv">${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div><span>${esc(k)}</span><b>${v}</b></div>`).join('')}</div></div><button id="go">الليل</button>`;
+    $('#go').onclick=()=>{if(!checkWin())night()};
+    if(checkWin(true))$('#go').textContent='النتيجة';
+  },'صوّت');
+}
+
+function checkWin(peek){
+  const alive=[...G.alive], gang=alive.filter(p=>G.roles[p]==='gang').length, town=alive.length-gang;
+  let w=null;
+  if(gang===0)w='town'; else if(gang>=town)w='gang';
+  if(!w||peek)return !!w;
+  const msg=w==='town'?'أهل الحارة فازوا! العصابة انكشفت كلها.':'العصابة سيطرت على الحارة!';
+  say(msg);
+  app.innerHTML=`<div class="card center"><p class="big" style="color:${w==='town'?'var(--mint)':'var(--blood)'}">${msg}</p></div>
+   <div class="card"><h2>الأدوار</h2><div class="kv">${names.map(p=>`<div><span class="${G.alive.has(p)?'':'dead'}">${esc(p)}</span><b style="color:${ROLES[G.roles[p]].color}">${ROLES[G.roles[p]].name}</b></div>`).join('')}</div>
+   <div class="row"><button id="ag">لعبة جديدة</button><button class="ghost" id="hm">اللاعبين</button></div></div>`;
+  $('#ag').onclick=start;$('#hm').onclick=home;
+  return true;
+}
+
+home();
+</script>
