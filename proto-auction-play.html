@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تجربة: المزايدة العلنية · جوالك</title>
+<style>
+/* نموذج تجريبي لاختبار المتعة فقط */
+:root{--bg:#14142b;--ink:#fff;--mute:#9a9ac4;--a:#2f80ed;--b:#eb5757;--ok:#3ddc84;--y:#ffd23f}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;padding:12px max(12px,env(safe-area-inset-right)) 12px max(12px,env(safe-area-inset-left))}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;font-weight:700}
+.bar b{font-size:1.6rem}
+.a{background:var(--a)}.b{background:var(--b)}
+main{flex:1;display:flex;flex-direction:column;gap:12px;justify-content:center;text-align:center}
+p{margin:0}
+.mid{font-size:1.4rem;font-weight:700}
+.mute{color:var(--mute)}
+.huge{font-size:3.4rem;font-weight:900}
+button{font:inherit;font-weight:900;border:0;border-radius:16px;cursor:pointer;color:#000;touch-action:manipulation}
+button:disabled{opacity:.25}
+.raise{display:grid;gap:12px;flex:1}
+.raise button{font-size:2rem;background:var(--y);min-height:80px}
+.raise button small{display:block;font-size:1rem;font-weight:700}
+.pass{background:#3a3a66;color:#fff;font-size:1.3rem;padding:16px}
+.abcd{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1}
+.abcd button{font-size:1.2rem;padding:12px;min-height:110px;background:#fff}
+.abcd button b{display:block;font-size:2rem}
+input{font:inherit;font-size:1.4rem;padding:12px;border-radius:12px;border:0;width:100%;text-align:center}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick button{padding:18px;font-size:1.3rem;color:#fff}
+.pick button.sel{outline:4px solid var(--y);outline-offset:3px}
+.go{background:var(--ok);padding:16px;font-size:1.5rem}
+.err{color:#ff8a8a;min-height:1.4em}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<main id="app"></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js?v=8"></script>
+<script src="net.js?v=8"></script>
+<script src="auth.js?v=8"></script>
+<script src="common.js?v=8"></script>
+<script>
+const app = document.getElementById('app'), barEl = document.getElementById('bar');
+const $ = id => document.getElementById(id);
+let ID, sign, net, S = null, ME = { name: '', team: null, room: '' }, seq = Date.now(), lastKey = '', sent = '';
+
+async function act(body) { seq = Math.max(seq + 1, Date.now()); const m = { t: 'act', room: ME.room, id: ID.id, seq, body }; m.sig = await sign(Auth.actParts(m)); net.send(m); }
+async function join() { const m = { t: 'join', room: ME.room, id: ID.id, name: ME.name, team: ME.team, pub: ID.pub }; m.sig = await sign(Auth.joinParts(m)); net.send(m); }
+
+function joinScreen(err) {
+  let team = ME.team;
+  app.innerHTML = `<p class="huge">على كم؟</p>
+    <input id="code" maxlength="5" placeholder="رمز الغرفة" value="${esc(new URLSearchParams(location.search).get('room') || '')}" autocapitalize="characters">
+    <input id="nm" maxlength="14" placeholder="اسمك" value="${esc(ME.name)}">
+    <div class="pick" id="pk"><button class="a" data-t="0">الصقور</button><button class="b" data-t="1">النمور</button></div>
+    <p class="err" id="er">${esc(err || '')}</p><button class="go" id="go">دخول</button>`;
+  const mark = () => document.querySelectorAll('#pk button').forEach(b => b.classList.toggle('sel', +b.dataset.t === team));
+  $('pk').onclick = e => { const b = e.target.closest('button'); if (b) { team = +b.dataset.t; mark(); } };
+  $('go').onclick = async () => {
+    const room = $('code').value.trim().toUpperCase(), name = $('nm').value.trim();
+    if (room.length < 4) return $('er').textContent = 'اكتب رمز الغرفة';
+    if (!name) return $('er').textContent = 'اكتب اسمك';
+    if (team === null) return $('er').textContent = 'اختر فريقك';
+    ME = { room, name, team }; $('er').textContent = 'جاري الاتصال…';
+    try { net = await Net.open(room, onMsg, st => { if (st === 'up') { join(); net.send({ t: 'hello', room }); } }); }
+    catch (e) { return $('er').textContent = 'ما قدرنا نتصل'; }
+    await join(); wait('ننتظر الشاشة…');
+  };
+}
+const wait = t => { app.innerHTML = `<p class="mid">${t}</p>`; };
+
+function onMsg(m) {
+  if (!m || m.t !== 'state' || m.room !== ME.room) return;
+  S = m;
+  if (S.phase === 'lobby' && !(S.players[ME.team] || []).includes(ME.name)) join();
+  const t = ME.team;
+  barEl.innerHTML = `<div class="bar ${t ? 'b' : 'a'}"><span>${esc(S.names[t])} · ${esc(ME.name)}</span><b>${S.coins[t]}</b></div>`;
+  const key = [S.phase, S.round, S.answering, S.top && S.top.team, S.top && S.top.amount, S.passed && S.passed.join(), S.coins.join()].join('|');
+  if (key === lastKey) { const l = $('left'); if (l) l.textContent = S.left; return; }
+  lastKey = key; render();
+}
+
+function render() {
+  const t = ME.team, o = 1 - t;
+  switch (S.phase) {
+    case 'lobby': return wait('دخلت! انتظروا الشاشة تبدأ');
+    case 'auction': {
+      const cur = S.top ? S.top.amount : 0, leading = S.top && S.top.team === t, out = S.passed[t];
+      if (out) return wait('اكتفيتوا. طالعوا الشاشة');
+      app.innerHTML = `<p class="mute">${esc(S.cat)}</p>
+        <p class="mid">${leading ? 'أنتم المتصدرين بـ ' + cur + ' 💪' : S.top ? `${esc(S.names[o])} على ${cur}` : 'على كم؟'}</p>
+        <div class="raise" id="rs">${[50, 100, 200].map(inc => `<button data-i="${inc}" ${leading || cur + inc > S.coins[t] ? 'disabled' : ''}>+${inc}<small>= ${cur + inc}</small></button>`).join('')}</div>
+        <button class="pass" id="ps">أكتفي</button>`;
+      $('rs').onclick = e => { const b = e.target.closest('button'); if (b && !b.disabled) { act({ type: 'raise', inc: +b.dataset.i }); beep(600, .05); } };
+      $('ps').onclick = () => act({ type: 'pass' });
+      return;
+    }
+    case 'question': case 'steal': {
+      if (S.answering !== t) return wait(S.phase === 'steal' ? 'غلطتوا… الخصم يحاول يسرق 😬' : `${esc(S.names[o])} يجاوبون… ادعوا يغلطون 😈`);
+      const key = S.round + S.phase;
+      app.innerHTML = `<p class="mid">${S.phase === 'steal' ? 'سرقة! ' : ''}على ${S.stake} · <span id="left">${S.left}</span></p>
+        <p class="mute">السؤال على الشاشة</p>
+        <div class="abcd" id="ab">${S.opts.map((x, k) => `<button data-k="${k}" ${k === S.gone || sent === key ? 'disabled' : ''}><b>${'أبجد'[k]}</b>${esc(x)}</button>`).join('')}</div>`;
+      $('ab').onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; sent = key; act({ type: 'answer', k: +b.dataset.k }); document.querySelectorAll('#ab button').forEach(x => x.disabled = true); };
+      return;
+    }
+    case 'result': { const L = S.last, us = L.team === t;
+      return wait(`<span class="huge" style="color:${L.ok ? (us ? 'var(--ok)' : '#ff8a8a') : 'var(--mute)'}">${L.ok ? (us ? '+' + L.delta : '😤') : '😏'}</span><br>الجواب: ${esc(L.answer)}`); }
+    case 'over': return wait(`<span class="huge">${S.coins[t] > S.coins[o] ? 'فزتوا! 🏆' : S.coins[t] < S.coins[o] ? 'خسرتوا' : 'تعادل'}</span>`);
+  }
+}
+
+(async () => {
+  try { ID = JSON.parse(sessionStorage.getItem('proto-id') || 'null'); } catch (e) {}
+  if (!ID) { ID = await Auth.createIdentity(); try { sessionStorage.setItem('proto-id', JSON.stringify(ID)); } catch (e) {} }
+  sign = await Auth.signer(ID);
+  joinScreen();
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && net) { join(); net.send({ t: 'hello', room: ME.room }); } });
+})();
+</script>
+</body>
+</html>

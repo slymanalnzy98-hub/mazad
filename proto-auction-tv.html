@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تجربة: المزايدة العلنية · الشاشة</title>
+<style>
+/* نموذج تجريبي لاختبار المتعة فقط: شكل بسيط بدون تصميم */
+:root{--bg:#14142b;--ink:#fff;--mute:#9a9ac4;--a:#2f80ed;--b:#eb5757;--ok:#3ddc84;--bad:#ff5a5a;--y:#ffd23f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,"Segoe UI",sans-serif;min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:24px;text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;font-size:1.4rem}
+.team{padding:10px 22px;border-radius:12px;font-weight:700;min-width:180px;text-align:center}
+.team b{display:block;font-size:2.2rem}
+.a{background:var(--a)}.b{background:var(--b)}
+.dim{opacity:.35}
+.big{font-size:clamp(3rem,9vw,7rem);font-weight:900;margin:0}
+.mid{font-size:clamp(1.4rem,3.5vw,2.4rem);margin:0}
+.mute{color:var(--mute)}
+.bids{display:flex;gap:40px;justify-content:center;align-items:flex-end}
+.bid{width:clamp(160px,24vw,280px);padding:20px;border-radius:18px;font-size:clamp(2.6rem,7vw,5rem);font-weight:900;transition:transform .15s}
+.bid small{display:block;font-size:1.2rem;font-weight:700}
+.bid.lead{transform:translateY(-18px) scale(1.08);outline:6px solid var(--y)}
+.bid.out{opacity:.4}
+.call{font-size:clamp(2.4rem,7vw,5rem);font-weight:900;color:var(--y);min-height:1.2em;margin:0}
+.timer{font-size:2rem;font-weight:900;color:var(--y)}
+.q{font-size:clamp(1.6rem,4vw,2.8rem);font-weight:700;max-width:1000px;margin:0}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:min(900px,100%)}
+.opt{padding:18px;border-radius:12px;background:#2a2a52;font-size:1.6rem;font-weight:700}
+.opt.right{background:var(--ok);color:#000}.opt.wrong{background:var(--bad)}.opt.gone{opacity:.2}
+.code{font-size:4rem;font-weight:900;letter-spacing:.2em;color:var(--y);direction:ltr}
+.roster{display:flex;gap:24px}
+.roster div{padding:14px 20px;border-radius:12px;min-width:220px}
+button{font:inherit;font-size:1.4rem;font-weight:700;padding:12px 32px;border:0;border-radius:12px;background:var(--y);cursor:pointer}
+#qr{background:#fff;padding:8px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="top" id="top"></div>
+<main id="app"></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js?v=8"></script>
+<script src="net.js?v=8"></script>
+<script src="auth.js?v=8"></script>
+<script src="common.js?v=8"></script>
+<script src="questions.js?v=8"></script>
+<script>
+// نموذج المزايدة العلنية: الشاشة هي الحكم، والجوالات تزايد وتجاوب.
+const ROUNDS = 6, START = 1000, AUC_S = 5, OPEN_S = 8, ANS_S = 8, RESULT_S = 3, MIN = 50;
+const app = document.getElementById('app'), top_ = document.getElementById('top');
+const NAMES = ['الصقور', 'النمور'];
+let ROOM, net, P = {}, G, T = null;
+const stop = () => { clearInterval(T); T = null; };
+
+function code() { const a = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', r = new Uint32Array(4); crypto.getRandomValues(r); return Array.from(r, n => a[n % a.length]).join(''); }
+function deck() { const d = []; Object.entries(BANK).forEach(([c, qs]) => qs.forEach(q => d.push({ cat: c, q: q[0], opts: q[1], a: q[2] }))); return shuffle(d); }
+const left = () => G && G.ends ? Math.max(0, Math.ceil((G.ends - Date.now()) / 1000)) : 0;
+
+function pub() {
+  const v = { t: 'state', room: ROOM, phase: G.phase, round: G.round, rounds: ROUNDS, coins: G.coins, names: NAMES,
+    players: [0, 1].map(i => Object.values(P).filter(p => p.team === i).map(p => p.name)), left: left() };
+  if (G.cur) v.cat = G.cur.cat;
+  if (G.phase === 'auction') { v.top = G.top; v.passed = G.passed; }
+  if (G.phase === 'question' || G.phase === 'steal') { v.opts = G.cur.opts; v.answering = G.answering; v.gone = G.gone; v.stake = G.top.amount; }
+  if (G.phase === 'result') v.last = G.last;
+  return v;
+}
+const send = () => net && net.send(pub());
+
+/* ---------- الرسائل ---------- */
+async function onMsg(m) {
+  if (!m || m.room !== ROOM) return;
+  try {
+    if (m.t === 'hello') return send();
+    if (m.t === 'join') {
+      if (await Auth.idFromPub(m.pub) !== m.id || !await Auth.verify(m.pub, Auth.joinParts(m), m.sig)) return;
+      if (!(m.team === 0 || m.team === 1)) return;
+      const k = P[m.id];
+      if (G.phase !== 'lobby' && !k) return;
+      P[m.id] = { name: String(m.name || 'لاعب').slice(0, 14), team: k && G.phase !== 'lobby' ? k.team : m.team, pub: m.pub, seq: k ? k.seq : 0 };
+      if (G.phase === 'lobby') lobby();
+      return send();
+    }
+    if (m.t === 'act') {
+      const p = P[m.id];
+      if (!p || !(m.seq > p.seq) || !await Auth.verify(p.pub, Auth.actParts(m), m.sig)) return;
+      p.seq = m.seq;
+      const b = m.body || {};
+      if (b.type === 'raise') raise(p.team, Number(b.inc));
+      else if (b.type === 'pass') pass(p.team);
+      else if (b.type === 'answer' && (G.phase === 'question' || G.phase === 'steal') && p.team === G.answering) answer(Number(b.k), p.name);
+    }
+  } catch (e) { console.warn(e); }
+}
+
+/* ---------- البداية ---------- */
+function lobby() {
+  const url = new URL('proto-auction-play.html?room=' + ROOM, location.href).href;
+  top_.innerHTML = '';
+  app.innerHTML = `<p class="mid">تجربة: المزايدة العلنية</p>
+    <div style="display:flex;gap:30px;align-items:center"><div id="qr"></div><div><p class="mute">ادخلوا بالجوال على الرابط واكتبوا الرمز</p><p class="code">${ROOM}</p><p class="mute" style="direction:ltr;font-size:.8rem">${esc(url)}</p></div></div>
+    <div class="roster">${[0, 1].map(i => `<div class="${i ? 'b' : 'a'}"><b>${NAMES[i]}</b><br>${Object.values(P).filter(p => p.team === i).map(p => esc(p.name)).join('، ') || '—'}</div>`).join('')}</div>
+    <p class="mute">لازم كل فريق فيه جوال واحد على الأقل</p>
+    <button id="go">ابدأ</button>`;
+  try { new QRCode(document.getElementById('qr'), { text: url, width: 150, height: 150 }); } catch (e) {}
+  document.getElementById('go').onclick = () => {
+    if ([0, 1].some(i => !Object.values(P).some(p => p.team === i))) { alertBox('كل فريق يحتاج جوال واحد على الأقل'); return; }
+    G = { phase: 'lobby', round: 0, coins: [START, START], deck: deck() }; nextRound();
+  };
+}
+function alertBox(t) { const p = document.createElement('p'); p.className = 'mid'; p.style.color = 'var(--bad)'; p.textContent = t; app.appendChild(p); setTimeout(() => p.remove(), 2500); }
+function header(active) {
+  top_.innerHTML = [0, 1].map(i => `<div class="team ${i ? 'b' : 'a'} ${active !== undefined && active !== i ? 'dim' : ''}">${NAMES[i]}<b>${G.coins[i]}</b></div>`).join(`<span class="mute">سؤال ${G.round} من ${ROUNDS}</span>`);
+}
+
+/* ---------- المزايدة ---------- */
+function nextRound() {
+  stop();
+  if (G.round >= ROUNDS) return over();
+  G.round++; G.cur = G.deck.pop(); G.top = null; G.passed = [false, false]; G.gone = null; G.last = null;
+  G.coins = G.coins.map(c => c < MIN ? MIN : c); // ما أحد يطلع من اللعبة
+  G.phase = 'auction'; G.ends = Date.now() + OPEN_S * 1000;
+  SFX.reveal(); renderAuction(); send();
+  T = setInterval(tickAuction, 200);
+}
+function raise(team, inc) {
+  if (G.phase !== 'auction' || ![50, 100, 200].includes(inc) || G.passed[team]) return;
+  if (G.top && G.top.team === team) return;
+  const amount = (G.top ? G.top.amount : 0) + inc;
+  if (amount > G.coins[team]) return;
+  G.top = { team, amount }; G.ends = Date.now() + AUC_S * 1000;
+  beep(500 + Math.min(amount, 1500) / 3, .08); renderAuction(); send();
+}
+function pass(team) {
+  if (G.phase !== 'auction' || G.passed[team]) return;
+  G.passed[team] = true;
+  // لو الخصم هو المتصدر وهالفريق انسحب، بيع على طول
+  if (G.top && G.top.team !== team) return sold();
+  if (G.passed.every(Boolean)) return sold();
+  renderAuction(); send();
+}
+let lastCall = null;
+function tickAuction() {
+  const l = left();
+  const call = G.top ? (l === 3 ? 'مرة…' : l === 2 ? 'مرتين…' : l === 1 ? 'مرتين ونص…' : '') : '';
+  if (call !== lastCall) { lastCall = call; const c = document.getElementById('call'); if (c) c.textContent = call; if (call) beep(330, .15); }
+  const t = document.getElementById('tl'); if (t) t.textContent = l;
+  if (l <= 0) sold(); else if (Date.now() % 1000 < 200) send();
+}
+function renderAuction() {
+  header();
+  const box = i => { const lead = G.top && G.top.team === i, amt = G.top && G.top.team === i ? G.top.amount : (G.lastBid && G.lastBid[i]) || 0;
+    return `<div class="bid ${i ? 'b' : 'a'} ${lead ? 'lead' : ''} ${G.passed[i] ? 'out' : ''}"><small>${NAMES[i]}${G.passed[i] ? ' · اكتفى' : ''}</small>${lead ? amt : (G.bidOf ? G.bidOf[i] : '') || '—'}</div>`; };
+  G.bidOf = G.bidOf || [0, 0];
+  if (G.top) G.bidOf[G.top.team] = G.top.amount;
+  app.innerHTML = `<p class="mute mid">${esc(G.cur.cat)}</p>
+    <p class="big">على كم؟</p>
+    <div class="bids">${[0, 1].map(i => `<div class="bid ${i ? 'b' : 'a'} ${G.top && G.top.team === i ? 'lead' : ''} ${G.passed[i] ? 'out' : ''}"><small>${NAMES[i]}${G.passed[i] ? ' · اكتفى' : ''}</small>${G.bidOf[i] || '—'}</div>`).join('')}</div>
+    <p class="call" id="call"></p>
+    <p class="timer"><span id="tl">${left()}</span></p>
+    <p class="mute">${G.top ? 'كل زيادة ترجّع العداد ٥ ثواني' : 'أول مزايدة؟ لو ما أحد زايد، القرعة تختار بـ ' + MIN}</p>`;
+  lastCall = null;
+}
+function sold() {
+  stop();
+  if (!G.top) { const t = Math.random() < .5 ? 0 : 1; G.top = { team: t, amount: Math.min(MIN, G.coins[t]) }; }
+  G.bidOf = null;
+  const c = document.getElementById('call'); if (c) c.textContent = `بيع! لـ${NAMES[G.top.team]} بـ ${G.top.amount}`;
+  SFX.win(); send();
+  setTimeout(() => question(G.top.team, false), 1500);
+}
+
+/* ---------- السؤال ---------- */
+function question(team, steal) {
+  stop(); G.answering = team; G.phase = steal ? 'steal' : 'question'; G.ends = Date.now() + ANS_S * 1000; G.locked = false;
+  header(team);
+  app.innerHTML = `<p class="mid">${steal ? 'سرقة! ' : ''}${NAMES[team]} يجاوبون من الجوال · على ${G.top.amount}</p>
+    <p class="q">${esc(G.cur.q)}</p>
+    <div class="opts" id="ops">${G.cur.opts.map((o, k) => `<div class="opt ${k === G.gone ? 'gone' : ''}" data-k="${k}">${'أبجد'[k]}) ${esc(o)}</div>`).join('')}</div>
+    <p class="timer" id="tl">${ANS_S}</p>`;
+  send();
+  T = setInterval(() => { const l = left(); document.getElementById('tl').textContent = l; if (l <= 3 && l > 0) SFX.tick(); send(); if (l <= 0) answer(-1, null); }, 1000);
+}
+function answer(k, by) {
+  if (G.locked || !(k >= -1 && k <= 3) || k === G.gone) return;
+  G.locked = true; stop();
+  const team = G.answering, ok = k === G.cur.a, amt = G.top.amount;
+  document.querySelectorAll('.opt').forEach((o, j) => { if (j === G.cur.a && (ok || G.phase === 'steal')) o.classList.add('right'); if (j === k && !ok) o.classList.add('wrong'); });
+  let delta = 0;
+  if (ok) delta = amt; else if (G.phase === 'question') delta = -Math.min(amt, G.coins[team]);
+  G.coins[team] += delta;
+  ok || G.phase === 'steal' ? SFX[ok ? 'win' : 'lose']() : SFX.lose();
+  if (!ok && G.phase === 'question') { G.gone = k >= 0 ? k : null; header(); return setTimeout(() => question(1 - team, true), 1500); }
+  G.last = { team, ok, delta, by, steal: G.phase === 'steal', answer: G.cur.opts[G.cur.a] };
+  G.phase = 'result'; header();
+  app.innerHTML = `<p class="big" style="color:${ok ? 'var(--ok)' : 'var(--mute)'}">${ok ? '+' + delta : '0'}</p>
+    <p class="mid">${ok ? `${G.last.steal ? 'سرقوها! ' : 'صح! '}${NAMES[team]}${by ? ' · ' + esc(by) : ''}` : 'ولا أحد عرفها'}</p>
+    <p class="mute mid">الجواب: ${esc(G.last.answer)}</p>`;
+  send();
+  setTimeout(nextRound, RESULT_S * 1000);
+}
+function over() {
+  stop(); G.phase = 'over'; header();
+  const w = G.coins[0] === G.coins[1] ? null : G.coins[0] > G.coins[1] ? 0 : 1;
+  app.innerHTML = `<p class="big">${w === null ? 'تعادل!' : NAMES[w] + ' فازوا!'}</p><p class="mid">${G.coins[0]} مقابل ${G.coins[1]}</p><button id="again">لعبة جديدة</button>`;
+  tune([523, 659, 784, 1046], .12); send();
+  document.getElementById('again').onclick = () => { G = { phase: 'lobby', round: 0, coins: [START, START] }; lobby(); send(); };
+}
+
+(async () => {
+  ROOM = code(); G = { phase: 'lobby', round: 0, coins: [START, START] };
+  try { net = await Net.open(ROOM, onMsg, st => { if (st === 'up') send(); }); } catch (e) { app.innerHTML = '<p class="mid">ما قدرنا نتصل. حدّث الصفحة.</p>'; return; }
+  lobby(); setInterval(() => { if (G.phase !== 'auction' && G.phase !== 'question' && G.phase !== 'steal') send(); }, 3000);
+})();
+</script>
+</body>
+</html>
