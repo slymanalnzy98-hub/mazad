@@ -87,9 +87,9 @@ button:focus-visible{outline:.4cqw solid var(--purple);outline-offset:.3cqw}
 
 /* المزايدة */
 .bids{display:flex;gap:6cqw;align-items:flex-end}
-.bidcol{display:flex;flex-direction:column;align-items:center;gap:1cqw}
-.bid{width:19cqw;aspect-ratio:3/4;border:.4cqw solid var(--ink);border-radius:1.6cqw;box-shadow:.6cqw .6cqw 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;color:#fff;background:var(--k);position:relative;transition:transform .3s}
-.bid b{font-size:5.4cqw;line-height:1;text-shadow:.3cqw .3cqw 0 var(--ink);font-variant-numeric:tabular-nums}
+.bidcol{display:flex;flex-direction:column;align-items:center;gap:.8cqw}
+.bid{width:15cqw;aspect-ratio:4/5;border:.4cqw solid var(--ink);border-radius:1.6cqw;box-shadow:.6cqw .6cqw 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;color:#fff;background:var(--k);position:relative;transition:transform .3s}
+.bid b{font-size:4.6cqw;line-height:1;text-shadow:.3cqw .3cqw 0 var(--ink);font-variant-numeric:tabular-nums}
 .bid span{font-family:var(--body);font-weight:900;font-size:1.8cqw}
 .bid.lead{transform:rotate(-4deg) translateY(-1.6cqw)}
 .bid.out{opacity:.5}
@@ -99,8 +99,8 @@ button:focus-visible{outline:.4cqw solid var(--purple);outline-offset:.3cqw}
 .call{font-size:3.2cqw;background:#fff;border:.35cqw solid var(--ink);border-radius:1.4cqw;padding:.3cqw 2.4cqw;box-shadow:.5cqw .5cqw 0 var(--ink);transform:rotate(-2deg);margin:0}
 .call em{font-style:normal;color:var(--red)}
 .timer{display:flex;align-items:center;gap:1cqw;font-size:2.6cqw}
-.ring{width:6cqw;height:6cqw;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--red) var(--p,100%),#fff 0);border:.3cqw solid var(--ink)}
-.ring b{width:4.4cqw;height:4.4cqw;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:2.4cqw;font-variant-numeric:tabular-nums}
+.ring{width:5.2cqw;height:5.2cqw;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--red) var(--p,100%),#fff 0);border:.3cqw solid var(--ink)}
+.ring b{width:3.8cqw;height:3.8cqw;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:2.4cqw;font-variant-numeric:tabular-nums}
 .ring.low{animation:shake .4s infinite}
 .gavel{font-size:5cqw;display:inline-block;transform-origin:80% 80%}
 .gavel.hit{animation:slam .45s cubic-bezier(.3,1.6,.5,1)}
@@ -162,6 +162,8 @@ button.opt:active{transform:translate(.3cqw,.3cqw);box-shadow:.1cqw .1cqw 0 var(
 @media (prefers-reduced-motion:reduce){.tv *,.tv{animation:none!important;transition:none!important}}
 /* بعد أول رسم، البطاقات العلوية ما تعيد حركة الدخول مع كل تحديث */
 .tv.still .team,.tv.still .tile,.tv.still .bid{animation:none}
+/* بطاقات الفرق تدخل مرة وحدة بس، أول ما تبدأ اللعبة */
+.tv.calm .team{animation:none}
 
 /* أيقونات المساعدات: رسم بسيط موحّد بدل الإيموجي */
 .ico{width:1.1em;height:1.1em;flex:0 0 auto;display:inline-block;vertical-align:-.15em}

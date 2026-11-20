@@ -91,7 +91,7 @@ const secsLeft = () => Math.ceil(Trial.leftMs(S, Date.now()) / 1000);
 function render() {
   const key = S.phase + '|' + (S.cur ? S.cur.col + ':' + S.cur.lvl : '') + '|' + S.answering + '|' + S.stealing + '|' + S.asked;
   const fresh = key !== lastKey; lastKey = key;
-  if (S.phase !== lastPhase) { tv.classList.remove('still'); lastPhase = S.phase; } else tv.classList.add('still');
+  if (S.phase !== lastPhase) { tv.classList.remove('still'); tv.classList.toggle('calm', !!lastPhase && lastPhase !== 'setup'); lastPhase = S.phase; } else tv.classList.add('still');
   if (fresh) stop();
   if (S.phase === 'setup') return setupScreen();
   ({ board, bid: S.bidMode === 'open' ? openBid : secretBid, reveal: revealBids, question, stealOffer, result, over })[S.phase](fresh);
