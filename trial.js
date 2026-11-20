@@ -115,7 +115,7 @@ function setupScreen() {
     const demo = [['كورة سعودية', 200, 'var(--c0)'], ['علوم', 400, 'var(--c2)'], ['أكلات شعبية', 600, 'var(--c1)'], ['جغرافيا', 400, 'var(--c3)']];
     app.innerHTML = `<div class="hero">
       <div>
-        <div class="lockup">${AjalIcons.MARK}<span class="word">${AjalIcons.WORD}</span></div>
+        <div class="lockup">${AjalIcons.WORD}</div>
         <p class="tagline">لعبة الجمعات اللي تزايدون فيها على الأسئلة</p>
         <div class="how">
           <div><b>١</b>تختارون بطاقة: فئة وصعوبة</div>

@@ -25,9 +25,9 @@ html,body{width:1200px;height:630px;overflow:hidden;background:#f1edff;display:b
   </div>
   <div class="fan" id="fan"></div>
 </div>
-<script src="trial-icons.js?v=2"></script>
+<script src="trial-icons.js?v=3"></script>
 <script>
-document.getElementById('lk').innerHTML = AjalIcons.MARK + '<span class="word">' + AjalIcons.WORD + '</span>';
+document.getElementById('lk').innerHTML = AjalIcons.WORD;
 document.getElementById('fan').innerHTML = [['كورة سعودية', '200', 'var(--c0)'], ['علوم', '400', 'var(--c2)'], ['أكلات شعبية', '600', 'var(--c1)'], ['جغرافيا', '400', 'var(--c3)']]
   .map(([c, v, col]) => `<span class="pcard" style="--cc:${col}"><span class="in"><span class="face"><span class="idx tl">${v}</span>${AjalIcons.catIcon(c)}<span class="idx br">${v}</span></span></span></span>`).join('') + '<span class="chiptag">' + AjalIcons.ICON.gavel + ' على كم؟</span>';
 </script>

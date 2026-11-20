@@ -276,3 +276,8 @@ button.opt:active{transform:translate(.3cqw,.3cqw);box-shadow:.1cqw .1cqw 0 var(
 .wordmark span{color:var(--purple)}
 .logo .wordmark,.word .wordmark,h1 .wordmark{color:var(--ink)}
 .logo .wordmark span,.word .wordmark span,h1 .wordmark span{color:var(--purple)}
+/* الشعار المعتمد */
+.lockup .wordmark{width:46cqw;height:auto;display:block}
+.logo .wordmark{height:5.2cqw;width:auto;display:block;transform:rotate(3deg)}
+.logo{transform:none}
+.mark{width:5.4cqw;height:auto}

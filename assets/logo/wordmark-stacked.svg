@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 280" width="300" height="280"><style>@import url("https://fonts.googleapis.com/css2?family=Lalezar&amp;display=swap");</style><g transform="translate(92 0) scale(1.35)"><g stroke-linejoin="round" stroke-linecap="round">
+<g transform="translate(5 6)" fill="#1d1446"><rect x="44" y="58" width="13" height="36" rx="6"/><circle cx="50" cy="38" r="33.5"/></g>
+<rect x="44" y="58" width="13" height="36" rx="6" fill="#d39556" stroke="#1d1446" stroke-width="5"/>
+<circle cx="50" cy="38" r="31" fill="#ff4f5e" stroke="#1d1446" stroke-width="5"/>
+<path d="M36 26a14 14 0 0 1 8-7" fill="none" stroke="#ff9aa3" stroke-width="5"/>
+<path d="M61 29c0-8-5-12-11-12s-11 4-11 11c0 9 11 9 11 17" fill="none" stroke="#fff" stroke-width="8"/>
+<circle cx="50" cy="56" r="4.5" fill="#fff"/></g></g><text x="273" y="256" font-family="Lalezar, Tahoma, sans-serif" font-size="96" text-anchor="start" direction="rtl" fill="#1d1446" stroke="#1d1446" stroke-width="13.4" stroke-linejoin="round">أجل كم</text>
+<text x="268" y="250" font-family="Lalezar, Tahoma, sans-serif" font-size="96" text-anchor="start" direction="rtl" fill="#fff" stroke="#1d1446" stroke-width="13.4" stroke-linejoin="round" paint-order="stroke">أجل <tspan fill="#ff4f5e">كم</tspan></text></svg>
