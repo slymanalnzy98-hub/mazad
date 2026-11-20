@@ -23,6 +23,22 @@ test('بنك الأسئلة كله صالح وما فيه تكرار', () => {
     assert.equal(c.opts.length, 4);
     assert.equal(new Set(c.opts).size, 4, `خيارات مكررة: ${c.q}`);
     assert.ok(!seen.has(c.q), `سؤال مكرر: ${c.q}`); seen.add(c.q);
+    assert.ok(c.answer.trim().length > 0, `جواب فاضي: ${c.q}`);
+    assert.ok([1, 2, 3].includes(c.lvl), `صعوبة غلط: ${c.q}`);
+  }
+});
+
+test('buildDeck يقبل الصيغة القديمة كمان', () => {
+  const [c] = E.buildDeck({ 'قديم': [['س؟', ['أ', 'ب', 'ج', 'د'], 2]] }, E.rng(1));
+  assert.deepEqual(c, { cat: 'قديم', q: 'س؟', opts: ['أ', 'ب', 'ج', 'د'], a: 2, answer: 'ج', lvl: null });
+});
+
+test('كل فئة فيها 3 أسئلة على الأقل لكل صعوبة (عشان تكتمل لوحة 15 سؤال)', () => {
+  for (const [cat, qs] of Object.entries(BANK)) {
+    for (const lvl of [1, 2, 3]) {
+      const n = qs.filter(q => q.lvl === lvl).length;
+      assert.ok(n >= 3, `${cat}: الصعوبة ${lvl} فيها ${n} بس`);
+    }
   }
 });
 
