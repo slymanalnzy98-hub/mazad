@@ -81,6 +81,39 @@ header p{margin:4px 0 0;color:var(--mute)}
 .stealbar{font-size:4cqw;background:var(--red);color:#fff;border:.35cqw solid var(--ink);border-radius:1.4cqw;padding:.3cqw 3cqw;box-shadow:.5cqw .5cqw 0 var(--ink);transform:rotate(-2deg)}
 
 .note{background:var(--card);border-radius:12px;padding:12px 16px;color:var(--mute);margin:0}
+
+/* open question + answer card */
+.say{font-family:var(--body);font-weight:900;font-size:2cqw;color:#5d5385}
+.flip{width:34cqw;height:9cqw;perspective:80cqw}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.2,1.4,.4,1);transform-style:preserve-3d}
+.flip.open .in{transform:rotateX(180deg)}
+.flip .f,.flip .b{position:absolute;inset:0;display:grid;place-items:center;border:.35cqw solid var(--ink);border-radius:1.4cqw;box-shadow:.5cqw .5cqw 0 var(--ink);backface-visibility:hidden}
+.flip .f{background:repeating-linear-gradient(45deg,var(--purple) 0 1.2cqw,#7a3ff0 1.2cqw 2.4cqw);color:#fff;font-size:2.4cqw}
+.flip .b{background:var(--yellow);transform:rotateX(180deg);font-size:4.4cqw}
+.host{display:flex;gap:1.2cqw}
+.hb{font-family:var(--display);font-size:2.2cqw;border:.3cqw solid var(--ink);border-radius:1.2cqw;padding:.3cqw 2.2cqw;box-shadow:.4cqw .4cqw 0 var(--ink);cursor:pointer;color:#fff}
+.hb:active{transform:translate(.3cqw,.3cqw);box-shadow:.1cqw .1cqw 0 var(--ink)}
+.hb.ok{background:var(--green)}.hb.no{background:var(--red)}.hb.rv{background:var(--ink)}
+.hostlbl{font-family:var(--body);font-weight:700;font-size:1.3cqw;color:#5d5385}
+
+/* motion: cards deal in, bids pop, gavel slam, coin rain */
+@keyframes deal{from{transform:translateY(-30cqw) rotate(-25deg);opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25) rotate(-6deg)}100%{transform:scale(1)}}
+@keyframes slam{0%{transform:rotate(-60deg) translateY(-4cqw)}60%{transform:rotate(8deg)}100%{transform:rotate(0)}}
+@keyframes shake{20%,60%{transform:translateX(-.6cqw)}40%,80%{transform:translateX(.6cqw)}}
+@keyframes coin{to{transform:translateY(70cqw) rotate(540deg)}}
+@keyframes in{from{transform:scale(.4) rotate(-10deg);opacity:0}}
+.tv .team{animation:deal .6s cubic-bezier(.2,1.3,.4,1) both}.tv .t2{animation-delay:.1s}
+.bid{animation:deal .7s cubic-bezier(.2,1.3,.4,1) both}.bid+.bid{animation-delay:.15s}
+.bid b.bump{animation:pop .35s}
+.gavel{font-size:6cqw;display:inline-block;transform-origin:80% 80%}
+.gavel.hit{animation:slam .45s cubic-bezier(.3,1.6,.5,1)}
+.tv.shake{animation:shake .35s}
+.coin{position:absolute;top:-6cqw;width:3cqw;height:3cqw;border-radius:50%;background:var(--yellow);border:.3cqw solid var(--ink);z-index:3;animation:coin linear forwards}
+.res,.q,.chip,.stealbar,.flip{animation:in .5s cubic-bezier(.2,1.4,.4,1) both}
+.secret .bid{transition:transform .6s}
+.secret.rev .bid{transform:rotateY(360deg)}
+@media (prefers-reduced-motion:reduce){.tv *,.tv{animation:none!important;transition:none!important}}
 </style>
 
 <main dir="rtl">
@@ -96,52 +129,80 @@ header p{margin:4px 0 0;color:var(--mute)}
 
 <script>
 const team=(i,name,money,used,steals,dim)=>`<div class="team t${i} ${dim?'dim':''}"><span class="nm">${name}</span><span class="money">${money.toLocaleString('en')}</span>
-  <span class="kit">${['📞','🔍','✂️'].map((e,k)=>`<span class="life ${used.includes(k)?'used':''}">${e}</span>`).join('')}<span class="steals">${'<i></i>'.repeat(steals)}</span></span></div>`;
+  <span class="kit">${['📞','🔍','💡'].map((e,k)=>`<span class="life ${used.includes(k)?'used':''}">${e}</span>`).join('')}<span class="steals">${'<i></i>'.repeat(steals)}</span></span></div>`;
 const topBar=(mid,a,b)=>`<div class="top">${team(1,'الصقور',5600,[1],3,a)}<div class="mid">${mid}</div>${team(2,'النمور',4600,[],2,b)}</div>`;
 const logo=`<span class="logo">أجل <span>كم؟</span></span>`;
 const S={
   open:{t:'١. مزايدة علنية',cap:'الفريقين يزايدون قدام بعض من جهازهم أو من الشاشة. كل زيادة ترجّع العداد',note:'آخر 3 ثواني تطلع «مرة… مرتين… بيع!». البطاقة الأعلى ترتفع وتميل.',
     h:()=>`${topBar(logo+'<span class="pill">مزايدة علنية</span>')}<div class="stage">
       <span class="chip">علوم <small>· صعب · أقل شي 600</small></span>
-      <div class="bids"><div class="bid lead" style="--k:var(--blue)"><b>1,200</b><span>الصقور</span></div><div class="bid" style="--k:var(--red)"><b>1,000</b><span>النمور</span></div></div>
-      <div class="timer"><span class="ring"><b>3</b></span><span class="call">بيع… <em>مرة!</em></span></div></div>`},
+      <div class="bids"><div class="bid" id="b1" style="--k:var(--blue)"><b>600</b><span>الصقور</span></div><div class="bid" id="b2" style="--k:var(--red)"><b>600</b><span>النمور</span></div></div>
+      <div class="timer"><span class="ring"><b id="cd">5</b></span><span class="call" id="call">على كم؟</span><span class="gavel" id="gv">🔨</span></div></div>`,
+    run(){ // محاكاة: الفريقين يزايدون، وكل زيادة ترجّع العداد، وبعدها بيع
+      const v=[600,600], seq=[[0,800],[1,1000],[0,1200],[1,1400],[0,1600]]; let i=0,cd=5;
+      const lead=()=>{['b1','b2'].forEach((id,k)=>$(id).classList.toggle('lead',v[k]===Math.max(...v)&&v[0]!==v[1]))};
+      const call=t=>$('call').innerHTML=t;
+      return every(700,()=>{
+        if(i<seq.length){const [t,n]=seq[i++];v[t]=n;const b=$(t?'b2':'b1').querySelector('b');b.textContent=n.toLocaleString('en');b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');lead();cd=5;$('cd').textContent=cd;call('زيادة!');return}
+        cd--;$('cd').textContent=Math.max(cd,0);
+        if(cd===2)call('بيع… <em>مرة!</em>');if(cd===1)call('بيع… <em>مرتين!</em>');
+        if(cd===0){call('<em>بيع!</em> للصقور بـ 1,600');$('gv').classList.add('hit');$('screen').firstChild.classList.add('shake');}
+        if(cd<-4){i=0;v[0]=v[1]=600;cd=5;$('b1').querySelector('b').textContent='600';$('b2').querySelector('b').textContent='600';lead();$('gv').classList.remove('hit');$('screen').firstChild.classList.remove('shake');call('على كم؟')}
+      });
+    }},
   secret:{t:'٢. مزايدة سرية',cap:'كل فريق يكتب رقمه بالسر، والبطاقات مقلوبة لين يخلص الطرفين',note:'بعدها البطاقتين تنقلب مع بعض قدام الكل.',
     h:()=>`${topBar(logo+'<span class="pill">مزايدة سرية</span>')}<div class="stage">
       <span class="chip">أكلات شعبية <small>· وسط · أقل شي 400</small></span>
-      <div class="bids"><div class="bid back" style="--k:var(--blue)"><b>✓ جاهزين</b><span>الصقور</span></div><div class="bid back" style="--k:var(--red)"><b>…</b><span>النمور يفكرون</span></div></div>
-      <p class="mute">أول ما يجهز الطرفين، البطاقات تنقلب</p></div>`},
-  q:{t:'٣. السؤال',cap:'الفريق اللي فاز بالمزايدة يجاوب، ومعه مساعداته',note:'المساعدة المستخدمة تبهت. الوقت حسب الصعوبة: 20 أو 25 أو 30 ثانية.',
+      <div class="bids secret" id="sec"><div class="bid back" id="s1" style="--k:var(--blue)"><b>✓ جاهزين</b><span>الصقور</span></div><div class="bid back" id="s2" style="--k:var(--red)"><b>…</b><span>النمور يفكرون</span></div></div>
+      <p class="mute" id="sm">أول ما يجهز الطرفين، البطاقات تنقلب</p></div>`,
+    run(){ // النمور يجهزون، وبعدها البطاقتين تنقلب مع بعض
+      let t=0;
+      return every(900,()=>{t++;
+        if(t===2){$('s2').innerHTML='<b>✓ جاهزين</b><span>النمور</span>'}
+        if(t===3){$('sm').textContent='3… 2… 1…'}
+        if(t===4){$('sec').classList.add('rev');setTimeout(()=>{$('s1').classList.remove('back');$('s1').innerHTML='<b>900</b><span>الصقور</span>';$('s2').classList.remove('back');$('s2').innerHTML='<b>1,300</b><span>النمور</span>';$('s2').classList.add('lead');$('sm').textContent='النمور ياخذون السؤال!'},300)}
+        if(t===9){t=0;$('sec').classList.remove('rev');$('s1').className='bid back';$('s1').innerHTML='<b>✓ جاهزين</b><span>الصقور</span>';$('s2').className='bid back';$('s2').innerHTML='<b>…</b><span>النمور يفكرون</span>';$('sm').textContent='أول ما يجهز الطرفين، البطاقات تنقلب'}
+      });
+    }},
+  q:{t:'٣. السؤال (بدون خيارات)',cap:'الفريق يقول جوابه بصوت عالي، والهوست يكشف الجواب ويحكم',note:'اضغط «اكشف الجواب» ثم «صح» أو «غلط». الأسئلة اللي لها خيارات تطلع بشكلها القديم. المساعدات: 📞 اتصال، و🔍 بحث، و💡 تلميح بدل «حذف جوابين».',
     h:()=>`${topBar(logo+'<span class="pill">الصقور يجاوبون</span>',false,true)}<div class="stage">
-      <p class="q">كم عدد عظام جسم الإنسان البالغ؟</p>
-      <div class="opts">
-        <div class="opt"><i style="--k:var(--red)">أ</i>186</div>
-        <div class="opt"><i style="--k:var(--blue)">ب</i>206</div>
-        <div class="opt gone"><i style="--k:var(--green)">ج</i>226</div>
-        <div class="opt gone"><i style="--k:var(--yellow)">د</i>256</div>
-      </div>
-      <div class="helps"><span class="help">📞 اتصال</span><span class="help used">🔍 بحث</span><span class="help used">✂️ حذف</span></div>
-      <div class="timer"><span class="ring"><b>18</b></span><span class="stake">صح <b>+2,400</b> · غلط <s>−1,200</s></span></div></div>`},
+      <p class="q">وش عاصمة اليابان؟</p>
+      <p class="say">قولوا جوابكم بصوت عالي 🗣️</p>
+      <div class="flip" id="fl"><div class="in"><div class="f">الجواب مخفي</div><div class="b">طوكيو</div></div></div>
+      <div class="helps"><span class="help">📞 اتصال</span><span class="help used">🔍 بحث</span><span class="help">💡 تلميح</span></div>
+      <div class="host" id="host"><span class="hostlbl">للهوست:</span><button class="hb rv" id="rv">اكشف الجواب</button></div>
+      <div class="timer"><span class="ring"><b id="qt">18</b></span><span class="stake">صح <b>+2,400</b> · غلط <s>−1,200</s></span></div></div>`,
+    run(){
+      $('rv').onclick=()=>{$('fl').classList.add('open');$('host').innerHTML='<span class="hostlbl">قالوا صح؟</span><button class="hb ok" id="ok">✔ صح</button><button class="hb no" id="no">✘ غلط</button>';$('ok').onclick=()=>show('win');$('no').onclick=()=>show('steal')};
+      let t=18;return every(1000,()=>{t=t>0?t-1:18;$('qt').textContent=t});
+    }},
   win:{t:'٤. النتيجة',cap:'صح: ياخذون ضعف رهانهم، والفلوس تعدّ قدامهم',note:'لو غلطوا، تنتقل لشاشة السرقة.',
     h:()=>`<div class="burst"></div>${topBar(logo+'<span class="pill">علوم · صعب</span>')}<div class="stage">
       <p class="res">صح! +2,400</p>
-      <div class="flow"><span class="from">5,600</span><span class="arrow">◀</span><span class="to">8,000</span></div>
-      <p class="mute">الجواب: 206</p></div>`},
+      <div class="flow"><span class="from">5,600</span><span class="arrow">◀</span><span class="to" id="to">5,600</span></div>
+      <p class="mute">الجواب: طوكيو</p></div>`,
+    run(){ // الفلوس تعدّ، والعملات تطيح
+      const tv=$('screen').firstChild;
+      for(let i=0;i<26;i++){const c=document.createElement('i');c.className='coin';c.style.left=Math.random()*96+'%';c.style.animationDuration=(1.2+Math.random()*1.4)+'s';c.style.animationDelay=(Math.random()*.8)+'s';tv.appendChild(c)}
+      let k=0;return every(40,()=>{if(k<40){k++;$('to').textContent=Math.round(5600+2400*k/40).toLocaleString('en')}});
+    }},
   steal:{t:'٥. السرقة',cap:'الفريق غلط، والثاني يقدر يسرق بـ10 ثواني وبدون مساعدات',note:'سرقة صح = نفس المبلغ. سرقة غلط = يخسرون نصه. ولكل فريق 3 سرقات بس.',
     h:()=>`${topBar(logo+'<span class="pill">النمور يسرقون</span>',true,false)}<div class="stage">
       <span class="stealbar">سرقة! 🏃‍♂️</span>
-      <p class="q">كم عدد عظام جسم الإنسان البالغ؟</p>
-      <div class="opts">
-        <div class="opt gone"><i style="--k:var(--red)">أ</i>186</div>
-        <div class="opt"><i style="--k:var(--blue)">ب</i>206</div>
-        <div class="opt"><i style="--k:var(--green)">ج</i>226</div>
-        <div class="opt"><i style="--k:var(--yellow)">د</i>256</div>
-      </div>
-      <div class="timer"><span class="ring"><b>7</b></span><span class="stake">صح <b>+1,200</b> · غلط <s>−600</s> · باقي لكم سرقتين</span></div></div>`}
+      <p class="q">وش عاصمة اليابان؟</p>
+      <p class="say">الصقور قالوا «كيوتو»… غلط! النمور، وش جوابكم؟</p>
+      <div class="timer"><span class="ring"><b id="st">10</b></span><span class="stake">صح <b>+1,200</b> · غلط <s>−600</s> · باقي لكم سرقتين</span></div></div>`,
+    run(){let t=10;return every(1000,()=>{t=t>0?t-1:10;$('st').textContent=t})}}
 };
+const $=id=>document.getElementById(id);
+let timers=[];
+function every(ms,fn){const id=setInterval(fn,ms);timers.push(id);return id}
 const keys=Object.keys(S), tabs=document.getElementById('tabs');
 tabs.innerHTML=keys.map(k=>`<button role="tab" data-k="${k}">${S[k].t}</button>`).join('');
 function show(k){
+  timers.forEach(clearInterval);timers=[];
   document.getElementById('screen').innerHTML=`<div class="tv">${S[k].h()}</div>`;
+  if(S[k].run)S[k].run();
   document.getElementById('cap').textContent=S[k].cap;
   document.getElementById('note').textContent=S[k].note;
   tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===k));
