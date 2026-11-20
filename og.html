@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>أجل كم؟ · صورة المشاركة</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@700;900&display=swap">
+<link rel="stylesheet" href="trial.css?v=10">
+<style>
+/* صورة المشاركة 1200×630: تطلع لما أحد يرسل الرابط في واتساب */
+html,body{width:1200px;height:630px;overflow:hidden;background:#f1edff;display:block}
+.og{width:1200px;height:630px;container-type:inline-size;position:relative;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;padding:0 70px;box-sizing:border-box;background:radial-gradient(circle at 85% 110%,#e3dbff 0 35%,transparent 36%),#f1edff;font-family:"Lalezar",sans-serif;color:#1d1446}
+.og .word{font-size:9cqw}
+.og .tagline{font-size:2.6cqw;margin:1cqw 0 2cqw}
+.og .url{font-family:"Tajawal",sans-serif;font-weight:900;font-size:1.8cqw;background:#1d1446;color:#fff;border-radius:999px;padding:.4cqw 2cqw;display:inline-block;direction:ltr}
+.og .fan{height:34cqw}
+.og .fan .pcard{width:13cqw;height:18cqw}
+</style>
+</head>
+<body>
+<div class="og">
+  <div>
+    <div class="lockup" id="lk"></div>
+    <p class="tagline">لعبة الجمعات اللي تزايدون فيها على الأسئلة</p>
+    <span class="url">slymanalnzy98-hub.github.io/mazad</span>
+  </div>
+  <div class="fan" id="fan"></div>
+</div>
+<script src="trial-icons.js?v=1"></script>
+<script>
+document.getElementById('lk').innerHTML = AjalIcons.MARK + '<span class="word">أجل <span>كم؟</span></span>';
+document.getElementById('fan').innerHTML = [['كورة سعودية', '200', 'var(--c0)'], ['علوم', '400', 'var(--c2)'], ['أكلات شعبية', '600', 'var(--c1)'], ['جغرافيا', '400', 'var(--c3)']]
+  .map(([c, v, col]) => `<span class="pcard" style="--cc:${col}"><span class="in"><span class="face"><span class="idx tl">${v}</span>${AjalIcons.catIcon(c)}<span class="idx br">${v}</span></span></span></span>`).join('') + '<span class="chiptag">' + AjalIcons.ICON.gavel + ' على كم؟</span>';
+</script>
+</body>
+</html>

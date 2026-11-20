@@ -28,10 +28,16 @@ h1{font-family:var(--display);font-weight:400;font-size:3rem;margin:0;transform:
 .chip small{font-family:var(--body);font-size:.9rem}
 .big{font-family:var(--display);font-size:3.4rem;line-height:1;font-variant-numeric:tabular-nums}
 button{font:inherit;color:var(--ink);cursor:pointer;touch-action:manipulation}
-.btn{font-family:var(--display);font-size:1.6rem;border:3px solid var(--ink);border-radius:16px;padding:12px;box-shadow:4px 4px 0 var(--ink);background:#fff}
+.btn{font-family:var(--display);font-size:1.6rem;border:3px solid var(--ink);border-radius:16px;padding:12px;box-shadow:4px 4px 0 var(--ink);background:var(--paper),#fff;transition:transform .12s}
+:root{--paper:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+.brand{display:flex;align-items:center;justify-content:center;gap:10px}.brand .mark{width:64px;height:64px}
+.bar{background:var(--paper),#fff}
+.raise .btn{background:var(--paper),var(--yellow)}
+@keyframes stagein{from{opacity:0;transform:translateY(10px)}}
+main>*{animation:stagein .3s cubic-bezier(.2,1.2,.4,1) both}
 .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
 .btn:disabled{opacity:.3;box-shadow:none;cursor:default}
-.btn.y{background:var(--yellow)}.btn.g{background:var(--green);color:#fff}.btn.r{background:var(--red);color:#fff}.btn.p{background:var(--purple);color:#fff}
+.btn.y{background:var(--paper),var(--yellow)}.btn.g{background:var(--green);color:#fff}.btn.r{background:var(--red);color:#fff}.btn.p{background:var(--purple);color:#fff}
 .btn:focus-visible{outline:4px solid var(--purple);outline-offset:2px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -64,6 +70,7 @@ button.opt:disabled{opacity:.5}
 <script src="net.js?v=8"></script>
 <script src="auth.js?v=8"></script>
 <script src="common.js?v=8"></script>
+<script src="trial-icons.js?v=1"></script>
 <script>
 // جهاز الفريق: يختار البطاقة، ويزايد، ويستخدم المساعدات، ويقرر السرقة. كل طلب موقّع.
 const app = document.getElementById('app'), barEl = document.getElementById('bar');
@@ -82,7 +89,7 @@ async function join() { const m = { t: 'join', room: ME.room, id: ID.id, name: '
 
 function joinScreen(err) {
   let team = ME.team;
-  app.innerHTML = `<h1>أجل <span>كم؟</span></h1><p class="say">جهاز واحد لكل فريق</p>
+  app.innerHTML = `<div class="brand">${AjalIcons.MARK}<h1>أجل <span>كم؟</span></h1></div><p class="say">جهاز الفريق: صوّروا الكود اللي على الشاشة</p>
     <input id="code" maxlength="5" placeholder="الرمز" value="${esc(new URLSearchParams(location.search).get('room') || ME.room)}" aria-label="رمز الغرفة">
     <div class="pick" id="pk"><button class="btn t0" data-t="0">الفريق الأول</button><button class="btn t1" data-t="1">الفريق الثاني</button></div>
     <p class="err" id="er">${esc(err || '')}</p><button class="btn g" id="go">دخول</button>`;

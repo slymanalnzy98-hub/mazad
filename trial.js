@@ -93,27 +93,41 @@ const secsLeft = () => Math.ceil(Trial.leftMs(S, Date.now()) / 1000);
 function render() {
   const key = S.phase + '|' + (S.cur ? S.cur.col + ':' + S.cur.lvl : '') + '|' + S.answering + '|' + S.stealing + '|' + S.asked;
   const fresh = key !== lastKey; lastKey = key;
-  if (S.phase !== lastPhase) { tv.classList.remove('still'); tv.classList.toggle('calm', !!lastPhase && lastPhase !== 'setup'); lastPhase = S.phase; } else tv.classList.add('still');
+  if (S.phase !== lastPhase) { enter(); tv.classList.remove('still'); tv.classList.toggle('calm', !!lastPhase && lastPhase !== 'setup'); lastPhase = S.phase; } else tv.classList.add('still');
   if (fresh) stop();
   if (S.phase === 'setup') return setupScreen();
   ({ board, bid: S.bidMode === 'open' ? openBid : secretBid, reveal: revealBids, question, stealOffer, result, over })[S.phase](fresh);
 }
 
+function enter() { tv.classList.remove('enter'); void tv.offsetWidth; tv.classList.add('enter'); }
+// أصوات قصيرة: مزايدة، ومطرقة، وعملات
+const FX = {
+  bid: n => beep(520 + Math.min(n || 0, 3000) / 8, .07, 'triangle', .07),
+  gavel: () => { beep(140, .12, 'square', .09); setTimeout(() => beep(90, .18, 'square', .07), 90); },
+  coins: () => [0, 70, 140, 210, 280].forEach((d, i) => setTimeout(() => beep(1200 + i * 140, .05, 'triangle', .04), d))
+};
+
 /* ---------- الإعداد ---------- */
 function setupScreen() {
-  stop();
+  stop(); enter();
   const cats = Trial.playableCats(BANK);
   if (setup.step === 'home') {
-    app.innerHTML = `<div class="stage">
-      <span class="logo" style="font-size:9cqw">أجل <span>كم؟</span></span>
-      <p class="say">لعبة جمعات: راهنوا على أسئلة، ومن يكسب أكثر يفوز</p>
-      <div class="panel" style="max-width:70cqw">
-        <p class="mute">١. فريقين، وكل فريق يبدأ بـ 5,000 &nbsp;·&nbsp; ٢. صاحب الدور يختار فئة وصعوبة &nbsp;·&nbsp; ٣. تزايدون، والأعلى يجاوب بصوت عالي</p>
-        <p class="mute">صح = ضعف رهانكم &nbsp;·&nbsp; غلط = تخسرونه، والفريق الثاني يقدر يسرق</p>
+    const demo = [['كورة سعودية', 200, 'var(--c0)'], ['علوم', 400, 'var(--c2)'], ['أكلات شعبية', 600, 'var(--c1)'], ['جغرافيا', 400, 'var(--c3)']];
+    app.innerHTML = `<div class="hero">
+      <div>
+        <div class="lockup">${AjalIcons.MARK}<span class="word">أجل <span>كم؟</span></span></div>
+        <p class="tagline">لعبة الجمعات اللي تزايدون فيها على الأسئلة</p>
+        <div class="how">
+          <div><b>١</b>تختارون بطاقة: فئة وصعوبة</div>
+          <div><b>٢</b>تزايدون، والأعلى يجاوب بصوت عالي</div>
+          <div><b>٣</b>صح تاخذون من خصمكم، وغلط تعطونهم</div>
+        </div>
+        <div class="ctas"><button class="hb go big" id="go">ابدأ لعبة</button><span class="mute">فريقين · 15 سؤال · تقريباً 30 دقيقة</span></div>
       </div>
-      <button class="hb go" id="go">ابدأ لعبة</button>
-      <p class="mute">نسخة تجربة للأهل والأصدقاء</p></div>`;
-    $('go').onclick = () => { setup.step = 'cats'; save(); setupScreen(); };
+      <div class="fan" aria-hidden="true">${demo.map(([c, v, col]) => `<span class="pcard" style="--cc:${col}"><span class="in"><span class="face"><span class="idx tl">${fmt(v)}</span>${AjalIcons.catIcon(c)}<span class="idx br">${fmt(v)}</span></span></span></span>`).join('')}<span class="chiptag">${AjalIcons.ICON.gavel} على كم؟</span></div>
+    </div>
+    <div class="sitefoot"><span>أجل كم؟ © 2026</span><span class="badge">نسخة تجريبية</span></div>`;
+    $('go').onclick = () => { SFX.tap(); setup.step = 'cats'; save(); setupScreen(); };
     return;
   }
   if (setup.step === 'cats') {
@@ -174,23 +188,30 @@ function startGame() {
 }
 
 /* ---------- اللوحة ---------- */
+const CC = ['var(--c0)', 'var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)'];
+const seenDone = new Set();   // البطاقات اللي انقلبت قبل، عشان الجديدة بس تنقلب قدام الناس
+function pcardHTML(c, i, l, can) {
+  const card = c.cards[l - 1], key = i + ':' + l;
+  const front = `<span class="face"><span class="idx tl">${fmt(S.config.min[l - 1])}</span><span class="tm">${S.config.time[l - 1]} ث</span>${AjalIcons.catIcon(c.cat)}<span class="lv">${LVL[l - 1]}</span><span class="idx br">${fmt(S.config.min[l - 1])}</span></span>`;
+  if (card.used) {
+    const r = card.res, d = r ? r.delta : 0, fresh = !seenDone.has(key);
+    seenDone.add(key);
+    const back = `<span class="backf"><b>${r ? (d > 0 ? '+' : d < 0 ? '−' : '') + fmt(Math.abs(d)) : '—'}</b><span>${r ? esc(S.teams[r.team].name) + (r.steal ? ' · سرقة' : '') : 'انلعبت'}</span></span>`;
+    return `<button class="pcard tile ${fresh ? 'flipnow' : 'done'} ${!r || d === 0 ? 'none' : ''}" style="--cc:${CC[i]};--tc:${r && r.team ? 'var(--red)' : 'var(--blue)'}" disabled aria-label="ملعوبة"><span class="in">${front}${back}</span></button>`;
+  }
+  return `<button class="pcard tile ${can ? '' : 'locked'}" style="--cc:${CC[i]};--i:${i + (l - 1) * 5}" data-c="${i}" data-l="${l}" ${can ? '' : 'disabled'} aria-label="${esc(c.cat)}، ${LVL[l - 1]}، أقل مزايدة ${S.config.min[l - 1]}"><span class="in">${front}</span></button>`;
+}
 function board() {
   const can = hostPlays(S.turn);
-  const tile = (c, i, l) => {
-    const card = c.cards[l - 1];
-    if (card.used) {
-      const r = card.res, d = r ? r.delta : 0;
-      return `<button class="tile done ${!r || d === 0 ? 'none' : ''}" style="--tc:${r && r.team ? 'var(--red)' : 'var(--blue)'}" disabled aria-label="ملعوبة">${r ? esc(S.teams[r.team].name) + (r.steal ? ' · سرقة' : '') : 'انلعبت'}<small>${r ? (d > 0 ? '+' : d < 0 ? '−' : '') + fmt(Math.abs(d)) : ''}</small></button>`;
-    }
-    return `<button class="tile l${l}" style="--i:${i + (l - 1) * 5}" data-c="${i}" data-l="${l}" ${can ? '' : 'disabled'}>${LVL[l - 1]}<small>من ${fmt(S.config.min[l - 1])} · ${S.config.time[l - 1]} ثانية</small></button>`;
-  };
   app.innerHTML = `${topBar(`سؤال ${S.asked + 1} من 15`, S.turn)}<div class="stage boardst">
-    <p class="say">${esc(S.teams[S.turn].name)}، اختاروا فئة وصعوبة ${can ? '' : 'من جهازكم 📱'}</p>
+    <p class="say">${esc(S.teams[S.turn].name)}، اختاروا بطاقة ${can ? '' : 'من جهازكم 📱'}</p>
     <div class="board" id="bd">
-      ${S.board.map(c => `<div class="colh">${esc(c.cat)}</div>`).join('')}
-      ${[1, 2, 3].map(l => S.board.map((c, i) => tile(c, i, l)).join('')).join('')}
+      ${S.board.map((c, i) => `<div class="colh" style="--cc:${CC[i]}">${AjalIcons.catIcon(c.cat, 'ch')}${esc(c.cat)}</div>`).join('')}
+      ${[1, 2, 3].map(l => S.board.map((c, i) => pcardHTML(c, i, l, can)).join('')).join('')}
     </div></div>`;
-  $('bd').onclick = e => { const b = e.target.closest('.tile'); if (b && !b.disabled) { SFX.tap(); dispatch({ type: 'pick', col: +b.dataset.c, lvl: +b.dataset.l }); } };
+  // البطاقة اللي انلعبت للتو تنقلب قدام الكل
+  requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('.pcard.flipnow').forEach(b => { b.classList.add('done'); setTimeout(() => SFX.tap(), 400); })));
+  $('bd').onclick = e => { const b = e.target.closest('.pcard'); if (b && !b.disabled) { SFX.tap(); dispatch({ type: 'pick', col: +b.dataset.c, lvl: +b.dataset.l }); } };
 }
 const chip = () => `<span class="chip">${esc(S.cur.cat)} <small>· ${LVL[S.cur.lvl - 1]} · أقل شي ${fmt(Math.min(S.config.min[S.cur.lvl - 1], Trial.capFor(S, S.turn)))}</small></span>`;
 
@@ -231,14 +252,14 @@ function updateOpen() {
   });
   if ($('hint') && S.top) $('hint').textContent = 'كل زيادة ترجّع العداد ' + S.config.openS + ' ثواني';
 }
-function bump(t) { const b = $('b' + t) && $('b' + t).querySelector('b'); if (b) { b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); } beep(520 + t * 80, .06); }
+function bump(t) { const b = $('b' + t) && $('b' + t).querySelector('b'); if (b) { b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); } FX.bid(S.top ? S.top.amount : 0); }
 function sold() {
   clearInterval(T); T = null;
   const top = S.top || { team: S.turn, amount: Math.min(S.config.min[S.cur.lvl - 1], S.teams[S.turn].coins) };
   if ($('call')) $('call').innerHTML = `<em>بيع!</em> لـ${esc(S.teams[top.team].name)} بـ ${fmt(top.amount)}`;
   if ($('gv')) $('gv').classList.add('hit');
   tv.classList.add('shake'); setTimeout(() => tv.classList.remove('shake'), 400);
-  SFX.win();
+  FX.gavel();
   A = setTimeout(() => { if (S.phase === 'bid') dispatch({ type: 'sold' }); }, 1300);
 }
 
@@ -248,7 +269,7 @@ function secretBid(fresh) {
   if (fresh) secretFor = null;
   const box = t => {
     const done = S.bids[t] !== null;
-    return `<div class="bidcol"><div class="bid back" style="--k:${t ? 'var(--red)' : 'var(--blue)'}"><b>${done ? '✓ جاهزين' : '…'}</b><span>${esc(S.teams[t].name)}${done ? '' : ' يفكرون'}</span></div>
+    return `<div class="bidcol"><div class="bid back" style="--k:${t ? 'var(--red)' : 'var(--blue)'}">${AjalIcons.MARK}<b>${done ? '✓ جاهزين' : '…'}</b><span>${esc(S.teams[t].name)}${done ? '' : ' يفكرون'}</span></div>
       ${done ? '' : hostPlays(t) ? `<button class="hb sm y" data-t="${t}">اكتبوا رقمكم</button>` : '<span class="hostlbl">📱 من جهازهم</span>'}</div>`;
   };
   if (secretFor !== null && S.bids[secretFor] === null) {
@@ -364,7 +385,7 @@ function result(fresh) {
   if (!fresh) { $('fl').classList.add('open'); return; }
   [0, 1].forEach(i => { const el = $('m' + i); if (el) el.textContent = fmt(before[i]); });
   setTimeout(() => { const f = $('fl'); if (f) f.classList.add('open'); }, 500);
-  ok ? SFX.win() : SFX.lose();
+  ok ? SFX.win() : SFX.lose(); setTimeout(FX.coins, 350);
   // عملات تطيح فوق الفريق اللي كسب
   const side = to === 0 ? [62, 96] : [0, 34];
   for (let i = 0; i < 22; i++) { const c = document.createElement('i'); c.className = 'coin'; c.style.left = (side[0] + Math.random() * (side[1] - side[0])) + '%'; c.style.animationDuration = (1.2 + Math.random() * 1.4) + 's'; c.style.animationDelay = Math.random() * .8 + 's'; tv.appendChild(c); setTimeout(() => c.remove(), 3500); }
@@ -389,21 +410,29 @@ function over(fresh) {
 }
 
 /* ---------- التشغيل ---------- */
-$('snd').onclick = e => { sound = !sound; e.target.textContent = sound ? '🔊' : '🔇'; };
+const sndBtn = $('snd');
+const drawSnd = () => { sndBtn.innerHTML = (sound ? AjalIcons.ICON.sound : AjalIcons.ICON.mute) + (sound ? 'الصوت' : 'صامت'); };
+drawSnd(); sndBtn.onclick = () => { sound = !sound; drawSnd(); };
+$('fs').innerHTML = AjalIcons.ICON.full + 'ملء الشاشة';
+$('fs').onclick = () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (e) {} };
+const menuBtn = $('menu'), drawMenu = t => { menuBtn.innerHTML = AjalIcons.ICON.menu + (t || 'القائمة'); };
+drawMenu();
 let menuArmed = null;
-$('menu').onclick = e => {
-  if (!menuArmed) { e.target.textContent = 'متأكد؟ اضغط مرة ثانية'; menuArmed = setTimeout(() => { menuArmed = null; e.target.textContent = 'القائمة'; }, 3000); return; }
-  clearTimeout(menuArmed); menuArmed = null; e.target.textContent = 'القائمة';
-  stop(); setup = { step: 'home', cats: [] }; S = Trial.create(); P = {}; save(); send(); lastKey = ''; render();
+menuBtn.onclick = () => {
+  if (!menuArmed) { drawMenu('متأكد؟ اضغط مرة ثانية'); menuArmed = setTimeout(() => { menuArmed = null; drawMenu(); }, 3000); return; }
+  clearTimeout(menuArmed); menuArmed = null; drawMenu();
+  stop(); setup = { step: 'home', cats: [] }; S = Trial.create(); P = {}; seenDone.clear(); save(); send(); lastKey = ''; render();
 };
 
 (async () => {
   if (!Auth.available()) { app.innerHTML = '<div class="stage"><p class="big">المتصفح قديم</p><p class="say">افتح اللعبة من كروم أو سفاري حديث</p></div>'; return; }
   const d = load();
   if (d) { S = d.S; P = d.P || {}; ROOM = d.ROOM; setup = d.setup || setup; } else { S = Trial.create(); ROOM = code(); }
-  try { net = await Net.open(ROOM, onMsg, st => { if (st === 'up') send(); }); } catch (e) { net = null; }
-  // لو الشاشة انطفت وقت السؤال وخلص الوقت، نكشف الجواب
+  // لو الشاشة انطفت وقت السؤال وخلص الوقت، نوقف العداد
   if (S.phase === 'question' && !S.revealed && S.deadline && Date.now() > S.deadline) { const r = Trial.reduce(S, { type: 'reveal' }); if (r.ok) S = r.state; }
-  save(); render(); send();
+  // نرسم الشاشة أول، والاتصال بأجهزة الفرق يكمل بعدها
+  save(); render();
+  try { net = await Net.open(ROOM, onMsg, st => { if (st === 'up') send(); }); } catch (e) { net = null; }
+  send();
   setInterval(send, 3000);
 })();
