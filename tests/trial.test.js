@@ -223,3 +223,20 @@ test('البطاقة الملعوبة تحفظ مين لعبها ونتيجته�
   const v = T.publicView(s).board[col];
   assert.equal(v.used[1], true); assert.deepEqual(v.res[1], { team: t, delta: 800, steal: false, bidder: t });
 });
+
+test('سقف المزايدة: سهل 1000، ووسط 2000، وصعب 3000', () => {
+  assert.deepEqual(T.DEFAULTS.max, [1000, 2000, 3000]);
+  let s = begin('open');
+  s = step(s, { type: 'pick', team: s.turn, col: 0, lvl: 1 });
+  const a = s.turn, b = 1 - a;
+  s = step(s, { type: 'raise', team: a, inc: 500, now: 0 });
+  s = step(s, { type: 'raise', team: b, inc: 500, now: 0 });
+  assert.equal(s.top.amount, 1000);
+  assert.equal(T.reduce(s, { type: 'raise', team: a, inc: 100 }).ok, false, 'فوق سقف السهل');
+  let x = begin('secret');
+  x = step(x, { type: 'pick', team: x.turn, col: 0, lvl: 3 });
+  assert.equal(T.reduce(x, { type: 'secret', team: 0, amount: 3100 }).ok, false);
+  x = step(x, { type: 'secret', team: 0, amount: 3000 });
+  assert.equal(x.bids[0], 3000);
+  assert.equal(T.publicView(x).cur.max, 3000);
+});

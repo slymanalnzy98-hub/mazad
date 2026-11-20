@@ -7,7 +7,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   const DEFAULTS = {
     start: 5000, cats: 5, levels: 3,
-    min: [200, 400, 600], time: [20, 25, 30],   // أقل مزايدة ووقت الجواب لكل صعوبة
+    min: [200, 400, 600], max: [1000, 2000, 3000], time: [20, 25, 30],   // max: سقف المزايدة لكل صعوبة (يتعدّل بعد التجارب)   // أقل مزايدة ووقت الجواب لكل صعوبة
     stealS: 10, steals: 3, lifeS: 30,           // السرقة، وعدد السرقات، والوقت الإضافي للاتصال والبحث
     openS: 5, openFirstS: 10                    // عداد المزايدة العلنية
   };
@@ -65,6 +65,7 @@
 
   const minBid = s => s.config.min[s.cur.lvl - 1];
   const floorFor = (s, t) => Math.min(minBid(s), s.teams[t].coins);
+  const capFor = (s, t) => Math.min(s.config.max[s.cur.lvl - 1], s.teams[t].coins);
   const leftMs = (s, now) => Math.max(0, (s.deadline || 0) - now);
 
   function finishIfDone(s) {
@@ -149,7 +150,7 @@
         const base = s.top ? s.top.amount : 0;
         const amount = Math.max(base + (Number(a.inc) || 0), floorFor(s, a.team));
         if (!(Number(a.inc) > 0) && s.top) return fail('زيادة غير صالحة');
-        if (amount > s.teams[a.team].coins) return fail('ما عندكم كفاية');
+        if (amount > capFor(s, a.team)) return fail('أعلى من السقف أو من رصيدكم');
         if (s.top && amount <= s.top.amount) return fail('لازم أعلى');
         s.top = { team: a.team, amount }; s.bids[a.team] = amount;
         s.deadline = now + s.config.openS * 1000;
@@ -172,7 +173,7 @@
         if (s.phase !== 'bid' || s.bidMode !== 'secret' || !team(a.team)) return fail('ما ينفع');
         if (s.bids[a.team] !== null) return fail('راهنتوا');
         const amount = Math.round(Number(a.amount) || 0);
-        if (amount < floorFor(s, a.team) || amount > s.teams[a.team].coins) return fail('المبلغ برا الحدود');
+        if (amount < floorFor(s, a.team) || amount > capFor(s, a.team)) return fail('المبلغ برا الحدود');
         s.bids[a.team] = amount;
         if (s.bids.every(b => b !== null)) {
           const [x, y] = s.bids;
@@ -275,7 +276,7 @@
       teams: s.teams.map(t => ({ name: t.name, coins: t.coins, life: t.life, steals: t.steals })),
       deadline: s.deadline, answering: s.answering, stealing: s.stealing, stake: s.stake, last: s.last, final: s.final,
       board: s.board.map(c => ({ cat: c.cat, used: c.cards.map(x => x.used), res: c.cards.map(x => x.res || null) })) };
-    if (s.cur) { v.cur = { cat: s.cur.cat, lvl: s.cur.lvl, min: minBid(s) }; }
+    if (s.cur) { v.cur = { cat: s.cur.cat, lvl: s.cur.lvl, min: minBid(s), max: s.config.max[s.cur.lvl - 1] }; }
     if (s.phase === 'bid') { v.top = s.top; v.passed = s.passed; v.bidIn = s.bids.map(b => b !== null); }
     if (s.phase === 'reveal' || s.phase === 'question' || s.phase === 'result' || s.phase === 'stealOffer') { v.top = s.top; v.bids = s.bids; v.tie = s.tie; }
     if (s.phase === 'question') { v.q = s.cur.q; v.optsShown = s.optsShown; if (s.optsShown) v.opts = s.cur.opts; v.revealed = s.revealed; if (s.revealed) v.answer = s.cur.a; }

@@ -124,7 +124,7 @@ function timer(id) {
   const upd = () => { const el = $(id); if (!el) return clearInterval(tick); el.textContent = S.deadline ? Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000)) : ''; };
   upd(); tick = setInterval(upd, 250);
 }
-const chip = () => S.cur ? `<span class="chip">${esc(S.cur.cat)} <small>· ${LVL[S.cur.lvl - 1]} · أقل شي ${fmt(S.cur.min)}</small></span>` : '';
+const chip = () => S.cur ? `<span class="chip">${esc(S.cur.cat)} <small>· ${LVL[S.cur.lvl - 1]} · ${fmt(S.cur.min)} – ${fmt(S.cur.max)}</small></span>` : '';
 
 function render() {
   clearInterval(tick);
@@ -146,18 +146,18 @@ function render() {
         app.innerHTML = `${chip()}
           <p class="say">${lead ? `أنتم الأعلى بـ ${fmt(cur)} 💪` : top ? `${esc(T[o].name)} على ${fmt(cur)}` : 'على كم؟'}</p>
           <p class="timer" id="tm"></p>
-          <div class="grid3 raise" id="rs">${INCS.map(i => { const v = Math.max(cur + i, min); return `<button class="btn y" data-i="${i}" ${lead || v > T[me].coins ? 'disabled' : ''}>+${i}<small>= ${fmt(v)}</small></button>`; }).join('')}</div>
+          <div class="grid3 raise" id="rs">${INCS.map(i => { const v = Math.max(cur + i, min); return `<button class="btn y" data-i="${i}" ${lead || v > Math.min(S.cur.max, T[me].coins) ? 'disabled' : ''}>+${i}<small>= ${fmt(v)}</small></button>`; }).join('')}</div>
           <button class="btn" id="ps">أكتفي</button>`;
         $('rs').onclick = e => { const b = e.target.closest('button'); if (b && !b.disabled) { beep(620, .05); act({ type: 'raise', inc: +b.dataset.i }); } };
         $('ps').onclick = () => act({ type: 'pass' });
         timer('tm'); return;
       }
       if (S.bidIn[me]) return wait('✓ ثبّتوا رقمكم. ننتظر الفريق الثاني');
-      const min = Math.min(S.cur.min, T[me].coins), max = T[me].coins;
+      const min = Math.min(S.cur.min, T[me].coins), max = Math.min(S.cur.max, T[me].coins);
       amt = Math.max(min, Math.min(max, amt || min));
       app.innerHTML = `${chip()}<p class="say">اكتبوا رقمكم بالسر 🤫</p><p class="big" id="am">${fmt(amt)}</p>
         <div class="grid2" id="st">${[-500, -100, 100, 500].map(d => `<button class="btn ${d > 0 ? 'y' : ''}" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`).join('')}</div>
-        <button class="btn" id="all">كل اللي معنا</button><button class="btn g" id="ok">ثبّتوا الرقم</button>`;
+        <button class="btn" id="all">الحد الأعلى</button><button class="btn g" id="ok">ثبّتوا الرقم</button>`;
       $('st').onclick = e => { const b = e.target.closest('button'); if (!b) return; amt = Math.max(min, Math.min(max, amt + +b.dataset.d)); $('am').textContent = fmt(amt); };
       $('all').onclick = () => { amt = max; $('am').textContent = fmt(amt); };
       $('ok').onclick = () => { act({ type: 'secret', amount: amt }); amt = 0; wait('✓ ثبّتوا رقمكم. ننتظر الفريق الثاني'); };

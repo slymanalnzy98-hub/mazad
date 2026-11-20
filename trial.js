@@ -180,7 +180,7 @@ function board() {
       const r = card.res, d = r ? r.delta : 0;
       return `<button class="tile done ${!r || d === 0 ? 'none' : ''}" style="--tc:${r && r.team ? 'var(--red)' : 'var(--blue)'}" disabled aria-label="ملعوبة">${r ? esc(S.teams[r.team].name) + (r.steal ? ' · سرقة' : '') : 'انلعبت'}<small>${r ? (d > 0 ? '+' : d < 0 ? '−' : '') + fmt(Math.abs(d)) : ''}</small></button>`;
     }
-    return `<button class="tile l${l}" data-c="${i}" data-l="${l}" ${can ? '' : 'disabled'}>${fmt(S.config.min[l - 1])}<small>${LVL[l - 1]} · ${S.config.time[l - 1]} ثانية</small></button>`;
+    return `<button class="tile l${l}" data-c="${i}" data-l="${l}" ${can ? '' : 'disabled'}>${LVL[l - 1]}<small>${fmt(S.config.min[l - 1])} – ${fmt(S.config.max[l - 1])} · ${S.config.time[l - 1]} ث</small></button>`;
   };
   app.innerHTML = `${topBar(`سؤال ${S.asked + 1} من 15`, S.turn)}<div class="stage boardst">
     <p class="say">${esc(S.teams[S.turn].name)}، اختاروا فئة وصعوبة ${can ? '' : 'من جهازكم 📱'}</p>
@@ -190,7 +190,7 @@ function board() {
     </div></div>`;
   $('bd').onclick = e => { const b = e.target.closest('.tile'); if (b && !b.disabled) { SFX.tap(); dispatch({ type: 'pick', col: +b.dataset.c, lvl: +b.dataset.l }); } };
 }
-const chip = () => `<span class="chip">${esc(S.cur.cat)} <small>· ${LVL[S.cur.lvl - 1]} · أقل شي ${fmt(S.config.min[S.cur.lvl - 1])}</small></span>`;
+const chip = () => `<span class="chip">${esc(S.cur.cat)} <small>· ${LVL[S.cur.lvl - 1]} · ${fmt(S.config.min[S.cur.lvl - 1])} – ${fmt(S.config.max[S.cur.lvl - 1])}</small></span>`;
 
 /* ---------- المزايدة العلنية ---------- */
 function openBid(fresh) {
@@ -224,7 +224,8 @@ function updateOpen() {
     el.classList.toggle('out', S.passed[t]);
     el.querySelector('span').textContent = S.teams[t].name + (S.passed[t] ? ' · اكتفوا' : '');
     const steps = app.querySelector(`.steps[data-t="${t}"]`);
-    if (steps) steps.querySelectorAll('button').forEach(b => b.disabled = S.passed[t] || (!b.dataset.pass && S.top && S.top.team === t));
+    const cap = Math.min(S.config.max[S.cur.lvl - 1], S.teams[t].coins), cur = S.top ? S.top.amount : 0;
+    if (steps) steps.querySelectorAll('button').forEach(b => b.disabled = S.passed[t] || (!b.dataset.pass && ((S.top && S.top.team === t) || Math.max(cur + +b.dataset.i, S.config.min[S.cur.lvl - 1]) > cap)));
   });
   if ($('hint') && S.top) $('hint').textContent = 'كل زيادة ترجّع العداد ' + S.config.openS + ' ثواني';
 }
@@ -249,12 +250,12 @@ function secretBid(fresh) {
       ${done ? '' : hostPlays(t) ? `<button class="hb sm y" data-t="${t}">اكتبوا رقمكم</button>` : '<span class="hostlbl">📱 من جهازهم</span>'}</div>`;
   };
   if (secretFor !== null && S.bids[secretFor] === null) {
-    const t = secretFor, o = 1 - t, min = Math.min(S.config.min[S.cur.lvl - 1], S.teams[t].coins), max = S.teams[t].coins;
+    const t = secretFor, o = 1 - t, min = Math.min(S.config.min[S.cur.lvl - 1], S.teams[t].coins), max = Math.min(S.config.max[S.cur.lvl - 1], S.teams[t].coins);
     secretAmt = Math.max(min, Math.min(max, secretAmt || min));
     app.innerHTML = `${topBar('مزايدة سرية', t)}<div class="stage">${chip()}
       <p class="say">${esc(S.teams[t].name)} يكتبون رقمهم · ${esc(S.teams[o].name)} لا يطالعون 🙈</p>
       <div class="panel"><div class="secretin"><span class="amt" id="amt">${fmt(secretAmt)}</span>
-        <div class="steps" id="st">${[-500, -100, 100, 500].map(d => `<button class="hb sm ${d < 0 ? 'w' : 'y'}" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`).join('')}<button class="hb sm w" data-all="1">كل اللي معنا</button></div>
+        <div class="steps" id="st">${[-500, -100, 100, 500].map(d => `<button class="hb sm ${d < 0 ? 'w' : 'y'}" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`).join('')}<button class="hb sm w" data-all="1">الحد الأعلى</button></div>
         <span class="mute">من ${fmt(min)} إلى ${fmt(max)}</span></div></div>
       <div class="host"><button class="hb w" id="bk">رجوع</button><button class="hb go" id="ok">ثبّتوا الرقم</button></div></div>`;
     $('st').onclick = e => { const b = e.target.closest('button'); if (!b) return; secretAmt = b.dataset.all ? max : Math.max(min, Math.min(max, secretAmt + +b.dataset.d)); $('amt').textContent = fmt(secretAmt); beep(500, .03); };
