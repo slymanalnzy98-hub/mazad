@@ -129,7 +129,7 @@ header p{margin:4px 0 0;color:var(--mute)}
 
 <script>
 const team=(i,name,money,used,steals,dim)=>`<div class="team t${i} ${dim?'dim':''}"><span class="nm">${name}</span><span class="money">${money.toLocaleString('en')}</span>
-  <span class="kit">${['📞','🔍','💡'].map((e,k)=>`<span class="life ${used.includes(k)?'used':''}">${e}</span>`).join('')}<span class="steals">${'<i></i>'.repeat(steals)}</span></span></div>`;
+  <span class="kit">${['📞','🔍','🔤'].map((e,k)=>`<span class="life ${used.includes(k)?'used':''}">${e}</span>`).join('')}<span class="steals">${'<i></i>'.repeat(steals)}</span></span></div>`;
 const topBar=(mid,a,b)=>`<div class="top">${team(1,'الصقور',5600,[1],3,a)}<div class="mid">${mid}</div>${team(2,'النمور',4600,[],2,b)}</div>`;
 const logo=`<span class="logo">أجل <span>كم؟</span></span>`;
 const S={
@@ -164,15 +164,16 @@ const S={
         if(t===9){t=0;$('sec').classList.remove('rev');$('s1').className='bid back';$('s1').innerHTML='<b>✓ جاهزين</b><span>الصقور</span>';$('s2').className='bid back';$('s2').innerHTML='<b>…</b><span>النمور يفكرون</span>';$('sm').textContent='أول ما يجهز الطرفين، البطاقات تنقلب'}
       });
     }},
-  q:{t:'٣. السؤال (بدون خيارات)',cap:'الفريق يقول جوابه بصوت عالي، والهوست يكشف الجواب ويحكم',note:'اضغط «اكشف الجواب» ثم «صح» أو «غلط». الأسئلة اللي لها خيارات تطلع بشكلها القديم. المساعدات: 📞 اتصال، و🔍 بحث، و💡 تلميح بدل «حذف جوابين».',
+  q:{t:'٣. السؤال (بدون خيارات)',cap:'الفريق يقول جوابه بصوت عالي، والهوست يكشف الجواب ويحكم',note:'اضغط «اكشف الجواب» ثم «صح» أو «غلط». الأسئلة اللي لها خيارات تطلع بشكلها القديم. المساعدات: 📞 اتصال، و🔍 بحث، و🔤 خيارات (تطلع 4 خيارات، والربح ينقص للنص). جرّب تضغطها.',
     h:()=>`${topBar(logo+'<span class="pill">الصقور يجاوبون</span>',false,true)}<div class="stage">
       <p class="q">وش عاصمة اليابان؟</p>
       <p class="say">قولوا جوابكم بصوت عالي 🗣️</p>
       <div class="flip" id="fl"><div class="in"><div class="f">الجواب مخفي</div><div class="b">طوكيو</div></div></div>
-      <div class="helps"><span class="help">📞 اتصال</span><span class="help used">🔍 بحث</span><span class="help">💡 تلميح</span></div>
+      <div class="helps"><span class="help">📞 اتصال</span><span class="help used">🔍 بحث</span><button class="help" id="ch">🔤 خيارات</button></div>
       <div class="host" id="host"><span class="hostlbl">للهوست:</span><button class="hb rv" id="rv">اكشف الجواب</button></div>
       <div class="timer"><span class="ring"><b id="qt">18</b></span><span class="stake">صح <b>+2,400</b> · غلط <s>−1,200</s></span></div></div>`,
     run(){
+      $('ch').onclick=()=>{if($('chs'))return;$('ch').classList.add('used');$('fl').insertAdjacentHTML('beforebegin','<div class="opts" id="chs"><div class="opt"><i style="--k:var(--red)">أ</i>بكين</div><div class="opt"><i style="--k:var(--blue)">ب</i>طوكيو</div><div class="opt"><i style="--k:var(--green)">ج</i>سيول</div><div class="opt"><i style="--k:var(--yellow)">د</i>كيوتو</div></div>');document.querySelector('.stake').innerHTML='صح <b>+1,200</b> (نص الربح) · غلط <s>−1,200</s>'};
       $('rv').onclick=()=>{$('fl').classList.add('open');$('host').innerHTML='<span class="hostlbl">قالوا صح؟</span><button class="hb ok" id="ok">✔ صح</button><button class="hb no" id="no">✘ غلط</button>';$('ok').onclick=()=>show('win');$('no').onclick=()=>show('steal')};
       let t=18;return every(1000,()=>{t=t>0?t-1:18;$('qt').textContent=t});
     }},
