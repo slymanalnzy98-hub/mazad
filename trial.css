@@ -267,3 +267,9 @@ button.opt:active{transform:translate(.3cqw,.3cqw);box-shadow:.1cqw .1cqw 0 var(
 .pcard .backf b,.pcard .idx,.flow .arrow,.bid b,.money{direction:ltr;unicode-bidi:isolate}
 .stage.withopts .opt{padding:.5cqw 1.2cqw}
 .stage.withopts{gap:.8cqw}
+/* زوايا البطاقة بمواضع ثابتة (ما تتأثر باتجاه الأرقام) */
+.pcard .idx.tl{inset:auto;top:.7cqw;right:.9cqw}
+.pcard .idx.br{inset:auto;bottom:.7cqw;left:.9cqw}
+.pcard .tm{inset:auto;top:.75cqw;left:.9cqw}
+.pcard .lv{inset:auto;bottom:.6cqw;right:.9cqw}
+.team .money{text-align:right}
