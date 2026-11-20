@@ -40,5 +40,7 @@
   const catIcon = (cat, cls) => svg(CAT[cat] || STAR, cls || 'cic');
   // علامة اللعبة: بطاقة مايلة ومعها مطرقة المزاد
   const MARK = `<svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="8" width="34" height="46" rx="6" fill="#ffc22e" stroke="#1d1446" stroke-width="3.5" transform="rotate(-10 27 31)"/><text x="27" y="40" text-anchor="middle" font-family="Lalezar, Tajawal, sans-serif" font-size="22" fill="#1d1446" transform="rotate(-10 27 31)">؟</text><g transform="rotate(35 46 30)"><rect x="34" y="18" width="24" height="11" rx="3" fill="#8a4dff" stroke="#1d1446" stroke-width="3.5"/><rect x="44" y="29" width="5" height="22" rx="2" fill="#1d1446"/></g></svg>`;
-  root.AjalIcons = { ICON, catIcon, MARK };
+  // الشعار المؤقت: الكلمة نص، والعلامة رسم. لما يجهز الشعار النهائي يتبدّل هنا بس (وملفات assets/logo/)
+  const WORD = '<span class="wordmark">أجل <span>كم؟</span></span>';
+  root.AjalIcons = { ICON, catIcon, MARK, WORD };
 })(typeof self !== 'undefined' ? self : this);

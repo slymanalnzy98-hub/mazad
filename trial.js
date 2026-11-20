@@ -76,7 +76,7 @@ async function onMsg(m) {
 }
 
 /* ---------- قطع مشتركة ---------- */
-const logo = `<span class="logo">أجل <span>كم؟</span></span>`;
+const logo = `<span class="logo">${AjalIcons.WORD}</span>`;
 function teamCard(i, dim) {
   const t = S.teams[i];
   return `<div class="team t${i} ${dim ? 'dim' : ''}">${S.phase === 'board' && S.turn === i ? '<span class="turnmark">دوركم تختارون</span>' : ''}<span class="nm">${esc(t.name)}${S.devices === 3 && seatOf(i) ? ' 📱' : ''}</span><span class="money" id="m${i}">${fmt(t.coins)}</span>
@@ -115,7 +115,7 @@ function setupScreen() {
     const demo = [['كورة سعودية', 200, 'var(--c0)'], ['علوم', 400, 'var(--c2)'], ['أكلات شعبية', 600, 'var(--c1)'], ['جغرافيا', 400, 'var(--c3)']];
     app.innerHTML = `<div class="hero">
       <div>
-        <div class="lockup">${AjalIcons.MARK}<span class="word">أجل <span>كم؟</span></span></div>
+        <div class="lockup">${AjalIcons.MARK}<span class="word">${AjalIcons.WORD}</span></div>
         <p class="tagline">لعبة الجمعات اللي تزايدون فيها على الأسئلة</p>
         <div class="how">
           <div><b>١</b>تختارون بطاقة: فئة وصعوبة</div>

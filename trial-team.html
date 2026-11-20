@@ -70,7 +70,7 @@ button.opt:disabled{opacity:.5}
 <script src="net.js?v=8"></script>
 <script src="auth.js?v=8"></script>
 <script src="common.js?v=8"></script>
-<script src="trial-icons.js?v=1"></script>
+<script src="trial-icons.js?v=2"></script>
 <script>
 // جهاز الفريق: يختار البطاقة، ويزايد، ويستخدم المساعدات، ويقرر السرقة. كل طلب موقّع.
 const app = document.getElementById('app'), barEl = document.getElementById('bar');
@@ -89,7 +89,7 @@ async function join() { const m = { t: 'join', room: ME.room, id: ID.id, name: '
 
 function joinScreen(err) {
   let team = ME.team;
-  app.innerHTML = `<div class="brand">${AjalIcons.MARK}<h1>أجل <span>كم؟</span></h1></div><p class="say">جهاز الفريق: صوّروا الكود اللي على الشاشة</p>
+  app.innerHTML = `<div class="brand">${AjalIcons.MARK}<h1>${AjalIcons.WORD}</h1></div><p class="say">جهاز الفريق: صوّروا الكود اللي على الشاشة</p>
     <input id="code" maxlength="5" placeholder="الرمز" value="${esc(new URLSearchParams(location.search).get('room') || ME.room)}" aria-label="رمز الغرفة">
     <div class="pick" id="pk"><button class="btn t0" data-t="0">الفريق الأول</button><button class="btn t1" data-t="1">الفريق الثاني</button></div>
     <p class="err" id="er">${esc(err || '')}</p><button class="btn g" id="go">دخول</button>`;
