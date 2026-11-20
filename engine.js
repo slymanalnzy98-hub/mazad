@@ -22,12 +22,14 @@
   const clone = s => JSON.parse(JSON.stringify(s));
 
   // البنك: { "فئة": [{ q, a: نص الجواب, opts: [4 خيارات], ai: رقم الصح, lvl: 1-3 }, ...] }
-  // البطاقة تحفظ a كرقم الصح (زي قبل)، وans نص الجواب، وlvl الصعوبة.
+  // ويقبل الصيغة القديمة [سؤال, [4 خيارات], رقم الصح] (بدون صعوبة: lvl = null).
+  // البطاقة: { cat, q, opts, a: رقم الصح (زي قبل), answer: نص الجواب, lvl }
   function buildDeck(bank, r) {
     const cards = [];
     Object.keys(bank).forEach(cat => bank[cat].forEach(q => {
-      if (!q || typeof q.q !== 'string' || typeof q.a !== 'string' || !Array.isArray(q.opts) || q.opts.length !== 4 || !(q.ai >= 0 && q.ai <= 3) || ![1, 2, 3].includes(q.lvl)) throw new Error('سؤال غير صالح في فئة ' + cat);
-      cards.push({ cat, q: q.q, opts: q.opts, a: q.ai, ans: q.a, lvl: q.lvl });
+      const o = Array.isArray(q) ? { q: q[0], opts: q[1], ai: q[2], a: Array.isArray(q[1]) ? q[1][q[2]] : undefined, lvl: null } : q;
+      if (!o || typeof o.q !== 'string' || typeof o.a !== 'string' || !Array.isArray(o.opts) || o.opts.length !== 4 || !(o.ai >= 0 && o.ai <= 3) || !(o.lvl === null || [1, 2, 3].includes(o.lvl))) throw new Error('سؤال غير صالح في فئة ' + cat);
+      cards.push({ cat, q: o.q, opts: o.opts, a: o.ai, answer: o.a, lvl: o.lvl });
     }));
     return shuffle(cards, r);
   }
