@@ -81,7 +81,7 @@
 
   function toBoard(s) {
     s.cur = null; s.bids = [null, null]; s.top = null; s.passed = [false, false]; s.tie = false;
-    s.answering = null; s.stealing = false; s.stake = 0; s.optsShown = false; s.revealed = false; s.extra = 0; s.deadline = null;
+    s.answering = null; s.stealing = false; s.stake = 0; s.optsShown = false; s.revealed = false; s.extra = 0; s.deadline = null; s.picked = null;
     if (!finishIfDone(s)) s.phase = 'board';
   }
 
@@ -204,6 +204,12 @@
         if (s.phase !== 'question') return fail('ما ينفع');
         s.revealed = true; s.deadline = null; return done();
       }
+      case 'choose': { // بعد «خيارات»: الهوست يضغط الخيار اللي قاله الفريق، والحكم تلقائي
+        if (s.phase !== 'question' || !s.optsShown || s.revealed) return fail('ما ينفع');
+        if (!(a.k >= 0 && a.k <= 3)) return fail('خيار غير صالح');
+        s.picked = a.k; s.revealed = true;
+        return reduce(s, { type: 'judge', right: a.k === s.cur.ai, now });
+      }
       case 'judge': {
         if (s.phase !== 'question' || !s.revealed) return fail('اكشفوا الجواب أول');
         const t = s.teams[s.answering], before = t.coins, right = !!a.right;
@@ -235,13 +241,15 @@
         if (a.team !== undefined && a.team !== other) return fail('مو دوركم');
         if (!a.yes) { s.phase = 'result'; return done(); }
         s.teams[other].steals--;
-        s.answering = other; s.stealing = true; s.optsShown = false; s.revealed = false;
+        s.answering = other; s.stealing = true; s.optsShown = false; s.revealed = false; s.picked = null;
         s.deadline = now + s.config.stealS * 1000;
         s.phase = 'question';
         return done();
       }
       case 'next': {
         if (s.phase !== 'result') return fail('ما ينفع');
+        const card = s.board[s.cur.col].cards[s.cur.lvl - 1];
+        card.res = { team: s.last.team, delta: s.last.delta, steal: s.last.steal, bidder: s.top ? s.top.team : null };
         s.asked++; s.turn = 1 - s.turn;
         toBoard(s); return done();
       }
@@ -266,11 +274,12 @@
     const v = { phase: s.phase, devices: s.devices, bidMode: s.bidMode, turn: s.turn, asked: s.asked, total: s.config.cats * s.config.levels,
       teams: s.teams.map(t => ({ name: t.name, coins: t.coins, life: t.life, steals: t.steals })),
       deadline: s.deadline, answering: s.answering, stealing: s.stealing, stake: s.stake, last: s.last, final: s.final,
-      board: s.board.map(c => ({ cat: c.cat, used: c.cards.map(x => x.used) })) };
+      board: s.board.map(c => ({ cat: c.cat, used: c.cards.map(x => x.used), res: c.cards.map(x => x.res || null) })) };
     if (s.cur) { v.cur = { cat: s.cur.cat, lvl: s.cur.lvl, min: minBid(s) }; }
     if (s.phase === 'bid') { v.top = s.top; v.passed = s.passed; v.bidIn = s.bids.map(b => b !== null); }
     if (s.phase === 'reveal' || s.phase === 'question' || s.phase === 'result' || s.phase === 'stealOffer') { v.top = s.top; v.bids = s.bids; v.tie = s.tie; }
     if (s.phase === 'question') { v.q = s.cur.q; v.optsShown = s.optsShown; if (s.optsShown) v.opts = s.cur.opts; v.revealed = s.revealed; if (s.revealed) v.answer = s.cur.a; }
+    if (s.phase === 'stealOffer') v.picked = s.picked;
     if (s.phase === 'over') v.stats = s.stats;
     return v;
   }

@@ -4,6 +4,13 @@ const tv = document.getElementById('tv'), app = document.getElementById('app');
 const $ = id => document.getElementById(id);
 const SAVE = 'ajalkam-trial', LVL = ['سهل', 'وسط', 'صعب'], COL = ['var(--red)', 'var(--blue)', 'var(--green)', 'var(--yellow)'], L = 'أبجد';
 const INCS = [100, 200, 500];
+// أيقونات المساعدات: SVG بسيط بخط واحد، يطلع نفس الشي على كل الأجهزة
+const ICON = {
+  call: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>',
+  search: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>',
+  opts: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>'
+};
+const LIFE_NAME = { call: 'اتصال', search: 'بحث', opts: 'خيارات' };
 const fmt = n => Number(n).toLocaleString('en');
 
 let S = null, P = {}, ROOM = null, net = null, setup = { step: 'home', cats: [] };
@@ -71,7 +78,7 @@ const logo = `<span class="logo">أجل <span>كم؟</span></span>`;
 function teamCard(i, dim) {
   const t = S.teams[i];
   return `<div class="team t${i} ${dim ? 'dim' : ''}">${S.phase === 'board' && S.turn === i ? '<span class="turnmark">دوركم تختارون</span>' : ''}<span class="nm">${esc(t.name)}${S.devices === 3 && seatOf(i) ? ' 📱' : ''}</span><span class="money" id="m${i}">${fmt(t.coins)}</span>
-    <span class="kit">${[['call', '📞'], ['search', '🔍'], ['opts', '🔤']].map(([k, e]) => `<span class="life ${t.life[k] ? '' : 'used'}" title="${k}">${e}</span>`).join('')}<span class="steals">${'<i></i>'.repeat(t.steals)}</span></span></div>`;
+    <span class="kit">${['call', 'search', 'opts'].map(k => `<span class="life ${t.life[k] ? '' : 'used'}" title="${LIFE_NAME[k]}">${ICON[k]}</span>`).join('')}<span class="steals">${'<i></i>'.repeat(t.steals)}</span></span></div>`;
 }
 function topBar(mid, active) {
   return `<div class="top">${teamCard(0, active === 1)}<div class="mid">${logo}${mid ? `<span class="pill">${mid}</span>` : ''}</div>${teamCard(1, active === 0)}</div>`;
@@ -111,10 +118,12 @@ function setupScreen() {
     const on = new Set(setup.cats);
     app.innerHTML = `<div class="top"><div></div><div class="mid">${logo}<span class="pill">اختاروا 5 فئات</span></div><div></div></div>
       <div class="stage">
-        <div class="catgrid" id="cg">${cats.map(c => `<button class="catb ${on.has(c) ? 'on' : ''}" data-c="${esc(c)}" aria-pressed="${on.has(c)}" ${!on.has(c) && on.size >= 5 ? 'disabled' : ''}>${esc(c)}</button>`).join('')}</div>
-        <p class="mute">${on.size} من 5</p>
+        <div class="catgrid" id="cg">${cats.map(c => `<button class="catb ${on.has(c) ? 'on' : on.size >= 5 ? 'full' : ''}" data-c="${esc(c)}" aria-pressed="${on.has(c)}">${esc(c)}</button>`).join('')}</div>
+        <p class="mute" id="cn">${on.size} من 5</p>
         <div class="host"><button class="hb w" id="rnd">عشوائي</button><button class="hb go" id="nx" ${on.size === 5 ? '' : 'disabled'}>التالي</button></div></div>`;
-    $('cg').onclick = e => { const b = e.target.closest('.catb'); if (!b || b.disabled) return; const c = b.dataset.c; on.has(c) ? on.delete(c) : on.add(c); setup.cats = [...on]; beep(500, .04); save(); setupScreen(); };
+    $('cg').onclick = e => { const b = e.target.closest('.catb'); if (!b) return; const c = b.dataset.c;
+      if (!on.has(c) && on.size >= 5) { $('cn').textContent = 'اخترتوا 5. شيلوا وحدة عشان تختارون غيرها'; return; }
+      on.has(c) ? on.delete(c) : on.add(c); setup.cats = [...on]; beep(500, .04); save(); setupScreen(); };
     $('rnd').onclick = () => { setup.cats = shuffle(cats).slice(0, 5); save(); setupScreen(); };
     $('nx').onclick = () => { setup.step = 'mode'; save(); setupScreen(); };
     return;
@@ -165,11 +174,19 @@ function startGame() {
 /* ---------- اللوحة ---------- */
 function board() {
   const can = hostPlays(S.turn);
-  app.innerHTML = `${topBar(`سؤال ${S.asked + 1} من 15`, S.turn)}<div class="stage">
+  const tile = (c, i, l) => {
+    const card = c.cards[l - 1];
+    if (card.used) {
+      const r = card.res, d = r ? r.delta : 0;
+      return `<button class="tile done ${!r || d === 0 ? 'none' : ''}" style="--tc:${r && r.team ? 'var(--red)' : 'var(--blue)'}" disabled aria-label="ملعوبة">${r ? esc(S.teams[r.team].name) + (r.steal ? ' · سرقة' : '') : 'انلعبت'}<small>${r ? (d > 0 ? '+' : d < 0 ? '−' : '') + fmt(Math.abs(d)) : ''}</small></button>`;
+    }
+    return `<button class="tile l${l}" data-c="${i}" data-l="${l}" ${can ? '' : 'disabled'}>${fmt(S.config.min[l - 1])}<small>${LVL[l - 1]} · ${S.config.time[l - 1]} ثانية</small></button>`;
+  };
+  app.innerHTML = `${topBar(`سؤال ${S.asked + 1} من 15`, S.turn)}<div class="stage boardst">
     <p class="say">${esc(S.teams[S.turn].name)}، اختاروا فئة وصعوبة ${can ? '' : 'من جهازكم 📱'}</p>
     <div class="board" id="bd">
       ${S.board.map(c => `<div class="colh">${esc(c.cat)}</div>`).join('')}
-      ${[1, 2, 3].map(l => S.board.map((c, i) => `<button class="tile l${l} ${c.cards[l - 1].used ? 'used' : ''}" data-c="${i}" data-l="${l}" ${c.cards[l - 1].used || !can ? 'disabled' : ''}>${fmt(S.config.min[l - 1])}<small>${LVL[l - 1]} · ${S.config.time[l - 1]} ث</small></button>`).join('')).join('')}
+      ${[1, 2, 3].map(l => S.board.map((c, i) => tile(c, i, l)).join('')).join('')}
     </div></div>`;
   $('bd').onclick = e => { const b = e.target.closest('.tile'); if (b && !b.disabled) { SFX.tap(); dispatch({ type: 'pick', col: +b.dataset.c, lvl: +b.dataset.l }); } };
 }
@@ -261,29 +278,44 @@ function revealBids(fresh) {
 function question(fresh) {
   const t = S.answering, tm = S.teams[t], win = S.stealing ? S.stake : S.optsShown ? S.stake : S.stake * 2, lose = S.stealing ? Math.floor(S.stake / 2) : S.stake;
   const total = S.stealing ? S.config.stealS : S.config.time[S.cur.lvl - 1] + S.extra;
-  const can = hostPlays(t);
-  app.innerHTML = `${topBar(S.stealing ? `${esc(tm.name)} يسرقون` : `${esc(tm.name)} يجاوبون`, t)}<div class="stage">
+  const can = hostPlays(t), opts = S.optsShown;
+  // مع «خيارات»: الخيارات أزرار، والهوست يضغط اللي قاله الفريق والحكم تلقائي
+  const answerArea = opts
+    ? `<div class="opts" id="ops">${S.cur.opts.map((o, k) => `<button class="opt" data-k="${k}"><i style="--k:${COL[k]}">${L[k]}</i>${esc(o)}</button>`).join('')}</div>
+       <span class="hostlbl">للهوست: اضغطوا الخيار اللي قالوه</span>`
+    : `<p class="say">قولوا جوابكم بصوت عالي 🗣️</p>
+       <div class="flip ${S.revealed ? 'open' : ''}" id="fl"><div class="in"><div class="f">الجواب مخفي</div><div class="b">${esc(S.cur.a)}</div></div></div>`;
+  const helps = S.stealing || S.revealed ? '' : `<div class="helps" id="hp">${['call', 'search', 'opts'].map(k => `<button class="help" data-k="${k}" ${tm.life[k] && can ? '' : 'disabled'}>${ICON[k]} ${LIFE_NAME[k]}</button>`).join('')}</div>`;
+  const hostRow = opts ? '' : S.revealed
+    ? `<div class="host"><span class="hostlbl">للهوست: قالوا صح؟</span><button class="hb ok" id="ok">✔ صح</button><button class="hb no" id="no">✘ غلط</button></div>`
+    : `<div class="host"><span class="hostlbl">للهوست:</span><button class="hb" id="rv">اكشف الجواب</button></div>`;
+  app.innerHTML = `${topBar(S.stealing ? `${esc(tm.name)} يسرقون` : `${esc(tm.name)} يجاوبون`, t)}<div class="stage ${opts ? 'withopts' : ''}">
     ${S.stealing ? '<p class="stealbar">سرقة! 🏃‍♂️</p>' : chip()}
     <p class="q">${esc(S.cur.q)}</p>
-    ${S.optsShown ? `<div class="opts">${S.cur.opts.map((o, k) => `<div class="opt"><i style="--k:${COL[k]}">${L[k]}</i>${esc(o)}</div>`).join('')}</div>` : `<p class="say">قولوا جوابكم بصوت عالي 🗣️</p>`}
-    <div class="flip ${S.revealed ? 'open' : ''}" id="fl"><div class="in"><div class="f">الجواب مخفي</div><div class="b">${esc(S.cur.a)}</div></div></div>
-    ${S.stealing ? '' : `<div class="helps" id="hp">${[['call', '📞 اتصال'], ['search', '🔍 بحث'], ['opts', '🔤 خيارات']].map(([k, n]) => `<button class="help" data-k="${k}" ${tm.life[k] && can && !S.revealed ? '' : 'disabled'}>${n}</button>`).join('')}</div>`}
-    <div class="host" id="host">${S.revealed
-      ? `<span class="hostlbl">للهوست: قالوا صح؟</span><button class="hb ok" id="ok">✔ صح</button><button class="hb no" id="no">✘ غلط</button>`
-      : `<span class="hostlbl">للهوست:</span><button class="hb" id="rv">اكشف الجواب</button>`}</div>
-    <div class="timer">${S.revealed ? '' : ring('qt', secsLeft(), total)}<span class="stake">صح <b>+${fmt(win)}</b>${S.optsShown && !S.stealing ? ' (نص الربح)' : ''} · غلط <s>−${fmt(lose)}</s>${S.stealing ? ` · باقي لهم ${tm.steals} سرقات` : ''}</span></div></div>`;
+    ${answerArea}
+    ${helps}
+    ${hostRow}
+    <div class="timer">${S.revealed ? '' : ring('qt', secsLeft(), total)}<span class="stake">صح <b>+${fmt(win)}</b>${opts && !S.stealing ? ' (نص الربح)' : ''} · غلط <s>−${fmt(lose)}</s>${S.stealing ? ` · باقي لهم ${tm.steals} سرقات` : ''}</span></div></div>`;
   if ($('hp')) $('hp').onclick = e => { const b = e.target.closest('.help'); if (b && !b.disabled) { SFX.tap(); dispatch({ type: 'life', kind: b.dataset.k }); } };
-  if (S.revealed) {
+  if (opts) $('ops').onclick = e => {
+    const b = e.target.closest('.opt'); if (!b || S.phase !== 'question') return;
+    const k = +b.dataset.k, right = k === S.cur.ai;
+    clearInterval(T); T = null;
+    $('ops').querySelectorAll('.opt').forEach(x => { x.disabled = true; const j = +x.dataset.k; if (j === S.cur.ai && right) x.classList.add('right'); else if (j === k) x.classList.add('wrong'); });
+    right ? SFX.win() : SFX.lose();
+    A = setTimeout(() => dispatch({ type: 'choose', k }), 900);
+  };
+  if (!opts && S.revealed) {
     $('ok').onclick = () => dispatch({ type: 'judge', right: true });
     $('no').onclick = () => dispatch({ type: 'judge', right: false });
-  } else {
-    $('rv').onclick = () => dispatch({ type: 'reveal' });
+  } else if (!S.revealed) {
+    if ($('rv')) $('rv').onclick = () => dispatch({ type: 'reveal' });
     clearInterval(T);
     T = setInterval(() => {
       if (S.phase !== 'question' || S.revealed) return;
       const s = secsLeft(); setRing('qt', s, total);
       if (s <= 5 && s > 0) SFX.tick();
-      if (Trial.leftMs(S, Date.now()) <= 0) { clearInterval(T); T = null; dispatch({ type: 'reveal' }); }
+      if (Trial.leftMs(S, Date.now()) <= 0) { clearInterval(T); T = null; dispatch({ type: 'reveal' }); if (opts) dispatch({ type: 'judge', right: false }); }
     }, 250);
   }
   if (fresh && S.stealing) beep(260, .3);
@@ -294,7 +326,7 @@ function stealOffer(fresh) {
   const o = 1 - S.answering, can = hostPlays(o);
   app.innerHTML = `${topBar('غلط!', o)}<div class="stage">
     <p class="res bad">غلط! −${fmt(S.stake)}</p>
-    <p class="mute">الجواب: ${esc(S.cur.a)}</p>
+    ${S.picked !== null && S.picked !== undefined ? `<p class="mute">قالوا: ${esc(S.cur.opts[S.picked])}</p>` : ''}
     <p class="stealbar">${esc(S.teams[o].name)}، تبون تسرقون؟</p>
     <p class="say">سرقة صح = +${fmt(S.stake)} · سرقة غلط = −${fmt(Math.floor(S.stake / 2))} · باقي لكم ${S.teams[o].steals} سرقات</p>
     ${can ? '<div class="host"><button class="hb no" id="y">نسرق!</button><button class="hb w" id="n">لا</button></div>' : '<span class="hostlbl">📱 يقررون من جهازهم</span>'}

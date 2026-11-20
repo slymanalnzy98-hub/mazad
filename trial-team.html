@@ -18,6 +18,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:7
 .bar b{font-family:var(--display);font-weight:400;font-size:1.8rem;color:var(--k);font-variant-numeric:tabular-nums}
 .kit{display:flex;gap:6px;font-size:.95rem}
 .kit .used{opacity:.25}
+.ico{width:1.2em;height:1.2em;vertical-align:-.2em}
 main{flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center;text-align:center;padding-top:12px}
 p{margin:0}
 h1{font-family:var(--display);font-weight:400;font-size:3rem;margin:0;transform:rotate(-3deg)} h1 span{color:var(--purple)}
@@ -67,6 +68,11 @@ input{font:inherit;font-family:var(--display);font-size:1.8rem;letter-spacing:.3
 const app = document.getElementById('app'), barEl = document.getElementById('bar');
 const $ = id => document.getElementById(id), fmt = n => Number(n).toLocaleString('en');
 const LVL = ['سهل', 'وسط', 'صعب'], INCS = [100, 200, 500], L = 'أبجد';
+const ICON = {
+  call: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></svg>',
+  search: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>',
+  opts: '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>'
+}, LIFE_NAME = { call: 'اتصال', search: 'بحث', opts: 'خيارات' };
 let ID, sign, net = null, S = null, ME = { room: '', team: null }, seq = Date.now(), lastKey = '', amt = 0, tick = null;
 const tab = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) {} }, del: k => { try { sessionStorage.removeItem(k); } catch (e) {} } };
 
@@ -106,7 +112,7 @@ function onMsg(m) {
   S = m;
   const t = S.teams[ME.team];
   document.documentElement.style.setProperty('--k', ME.team ? 'var(--red)' : 'var(--blue)');
-  barEl.innerHTML = `<div class="bar"><span class="nm">${esc(t.name)}</span><span class="kit">${[['call', '📞'], ['search', '🔍'], ['opts', '🔤']].map(([k, e]) => `<span class="${t.life[k] ? '' : 'used'}">${e}</span>`).join('')} · سرقات ${t.steals}</span><b>${fmt(t.coins)}</b></div>`;
+  barEl.innerHTML = `<div class="bar"><span class="nm">${esc(t.name)}</span><span class="kit">${['call', 'search', 'opts'].map(k => `<span class="${t.life[k] ? '' : 'used'}" title="${LIFE_NAME[k]}">${ICON[k]}</span>`).join('')} · سرقات ${t.steals}</span><b>${fmt(t.coins)}</b></div>`;
   if (!S.seats || !S.seats[ME.team]) join();
   const key = JSON.stringify([S.phase, S.turn, S.cur, S.top, S.passed, S.bidIn, S.answering, S.stealing, S.optsShown, S.revealed, S.asked, t.coins, t.life]);
   if (key === lastKey) return;
@@ -163,9 +169,9 @@ function render() {
       const t = T[me];
       app.innerHTML = `${S.stealing ? '<p class="say">سرقة! بدون مساعدات</p>' : chip()}
         <p class="q">${esc(S.q || '')}</p>
-        ${S.optsShown && S.opts ? `<div class="opts">${S.opts.map((x, k) => `<div class="opt">${L[k]}) ${esc(x)}</div>`).join('')}</div>` : '<p class="say">قولوا جوابكم بصوت عالي 🗣️</p>'}
+        ${S.optsShown && S.opts ? `<div class="opts">${S.opts.map((x, k) => `<div class="opt">${L[k]}) ${esc(x)}</div>`).join('')}</div><p class="mute">قولوا اختياركم للهوست</p>` : '<p class="say">قولوا جوابكم بصوت عالي 🗣️</p>'}
         ${S.revealed ? `<p class="ans">${esc(S.answer || '')}</p><p class="mute">الهوست يحكم…</p>` : `<p class="timer" id="tm"></p>`}
-        ${S.stealing || S.revealed ? '' : `<div class="grid3" id="hp">${[['call', '📞 اتصال'], ['search', '🔍 بحث'], ['opts', '🔤 خيارات']].map(([k, n]) => `<button class="btn" data-k="${k}" ${t.life[k] ? '' : 'disabled'} style="font-size:1.05rem">${n}</button>`).join('')}</div>`}`;
+        ${S.stealing || S.revealed ? '' : `<div class="grid3" id="hp">${['call', 'search', 'opts'].map(k => `<button class="btn" data-k="${k}" ${t.life[k] ? '' : 'disabled'} style="font-size:1.05rem">${ICON[k]}<br>${LIFE_NAME[k]}</button>`).join('')}</div>`}`;
       if ($('hp')) $('hp').onclick = e => { const b = e.target.closest('button'); if (b && !b.disabled) { beep(600, .05); act({ type: 'life', kind: b.dataset.k }); } };
       if (!S.revealed) timer('tm');
       return;

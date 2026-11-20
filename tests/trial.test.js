@@ -201,3 +201,25 @@ test('يقبل الجواب القصير باسم answer، ورقم الصح ب�
   const c = T.normalize({ q: 'س؟', opts: ['أ', 'ب', 'ج', 'د'], a: 2, answer: 'جيم', lvl: 2 }, 'x', 0, 1);
   assert.equal(c.ai, 2); assert.equal(c.a, 'جيم'); assert.equal(c.lvl, 2);
 });
+
+test('بعد «خيارات» الهوست يضغط اختيار الفريق، والحكم تلقائي', () => {
+  let s = begin();
+  s = toQuestion(s, 1, 400);
+  const t = s.answering;
+  assert.equal(T.reduce(s, { type: 'choose', k: 0 }).ok, false, 'لازم الخيارات تطلع أول');
+  s = step(s, { type: 'life', kind: 'opts' });
+  const right = step(s, { type: 'choose', k: s.cur.ai });
+  assert.equal(right.phase, 'result'); assert.equal(right.teams[t].coins, 5400);
+  const wrong = step(s, { type: 'choose', k: (s.cur.ai + 1) % 4 });
+  assert.ok(['stealOffer', 'result'].includes(wrong.phase)); assert.equal(wrong.teams[t].coins, 4600);
+  assert.equal(wrong.picked, (s.cur.ai + 1) % 4);
+});
+
+test('البطاقة الملعوبة تحفظ مين لعبها ونتيجتها', () => {
+  let s = begin();
+  s = toQuestion(s, 2, 400);
+  const t = s.answering, col = s.cur.col;
+  s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: true }); s = step(s, { type: 'next' });
+  const v = T.publicView(s).board[col];
+  assert.equal(v.used[1], true); assert.deepEqual(v.res[1], { team: t, delta: 800, steal: false, bidder: t });
+});
