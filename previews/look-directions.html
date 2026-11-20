@@ -1,0 +1,152 @@
+<title>أجل كم: اختر الشكل</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Reem+Kufi:wght@500;700&family=Lalezar&family=Tajawal:wght@500;700;900&display=swap">
+<style>
+/* Layout: neutral gallery; three 16:9 TV frames of the same category board, one per look, switchable by tabs and also stacked on scroll. Each frame owns its own palette. Single light page by choice. */
+:root{
+  --wall:#ececf1; --ink:#18181d; --mute:#66667a; --card:#ffffff;
+  --ui:"Tajawal",Tahoma,sans-serif;
+  color-scheme:light;
+}
+body{background:var(--wall);color:var(--ink);font-family:var(--ui);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1180px;margin:0 auto;padding-block:24px 64px;display:flex;flex-direction:column;gap:28px}
+h1{margin:0;font-size:1.9rem;font-weight:900}
+header p{margin:4px 0 0;color:var(--mute)}
+.tabs{display:flex;gap:10px;flex-wrap:wrap}
+.tabs button{font:inherit;font-weight:700;border:2px solid var(--ink);background:var(--card);color:var(--ink);padding:8px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--wall)}
+.tabs button:focus-visible{outline:3px solid #6b5cff;outline-offset:2px}
+section{display:flex;flex-direction:column;gap:10px}
+section h2{margin:0;font-size:1.3rem;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+section h2 span{font-size:.95rem;font-weight:500;color:var(--mute)}
+
+/* shared board skeleton */
+.tv{aspect-ratio:16/9;max-width:100%;border-radius:16px;overflow:hidden;position:relative;container-type:inline-size;display:flex;flex-direction:column;gap:2cqw;padding:2.6cqw 3cqw;box-sizing:border-box;box-shadow:0 14px 34px rgba(0,0,0,.18)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:2cqw}
+.team{display:flex;flex-direction:column;gap:.4cqw;min-width:20cqw}
+.team .nm{font-size:2cqw;font-weight:700}
+.team .money{font-size:3.6cqw;line-height:1;font-variant-numeric:tabular-nums}
+.team .kit{display:flex;gap:.8cqw;align-items:center;font-size:1.5cqw}
+.kit .life{width:3cqw;height:3cqw;display:grid;place-items:center;border-radius:50%}
+.kit .life.used{opacity:.25}
+.kit .steals{display:flex;gap:.4cqw;margin-inline-start:.6cqw}
+.kit .steals i{width:1.2cqw;height:1.2cqw;border-radius:50%}
+.turn{text-align:center;display:flex;flex-direction:column;align-items:center;gap:.3cqw}
+.turn .logo{font-size:4.2cqw;line-height:1}
+.turn .who{font-size:1.7cqw;padding:.3cqw 1.6cqw;border-radius:999px}
+.board{flex:1;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:auto repeat(3,1fr);gap:1.2cqw}
+.cat{display:grid;place-items:center;text-align:center;font-size:1.8cqw;font-weight:700;padding:.8cqw .4cqw;line-height:1.2}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.2cqw;cursor:pointer}
+.tile b{font-size:3.4cqw;line-height:1;font-variant-numeric:tabular-nums}
+.tile small{font-size:1.3cqw}
+.tile.done{cursor:default}
+
+/* ---------- A: حلاوة (soft pastel candy) ---------- */
+.a{--bg:#e9f3ff;--ink:#23304d;--mint:#bfeedd;--peach:#ffd3bf;--lilac:#ddd2ff;--butter:#fff0a8;--sky:#c4e3ff;--pink:#ff8fae;--teal:#3fb6a3;
+  background:radial-gradient(circle at 12% 10%,#fff 0 6cqw,transparent 6.2cqw),radial-gradient(circle at 92% 88%,#fff6 0 9cqw,transparent 9.2cqw),var(--bg);color:var(--ink);font-family:"Baloo Bhaijaan 2","Tajawal",sans-serif}
+.a .team{background:#fff;border-radius:2.2cqw;padding:1cqw 1.8cqw;box-shadow:0 .6cqw 0 #23304d14}
+.a .team .money{font-weight:800}
+.a .t1 .money{color:var(--teal)} .a .t2 .money{color:var(--pink)}
+.a .kit .life{background:var(--bg)} .a .steals i{background:var(--pink)} .a .t1 .steals i{background:var(--teal)}
+.a .turn .logo{font-weight:800;color:var(--ink)} .a .turn .logo span{color:var(--pink)}
+.a .turn .who{background:var(--teal);color:#fff;font-weight:700}
+.a .cat{background:#fff;border-radius:1.6cqw}
+.a .tile{border-radius:1.8cqw;box-shadow:inset 0 -.6cqw 0 #23304d1c;transition:transform .15s}
+.a .tile:hover{transform:translateY(-.4cqw)}
+.a .tile b{font-weight:800} .a .tile small{font-weight:600;opacity:.75}
+.a .c1{background:var(--mint)}.a .c2{background:var(--peach)}.a .c3{background:var(--lilac)}.a .c4{background:var(--butter)}.a .c5{background:var(--sky)}
+.a .tile.done{background:#fff;opacity:.5;box-shadow:none}
+.a .tile.done b{font-size:2cqw}
+
+/* ---------- B: سوق المزاد (warm market, Saudi touch) ---------- */
+.b{--bg:#0f4c5c;--deep:#0a3742;--saffron:#f2a93b;--rose:#e26d5c;--sand:#f6e7cf;--palm:#7cc4a4;
+  background:var(--bg);color:var(--sand);font-family:"Reem Kufi","Tajawal",sans-serif}
+.b::before{content:"";position:absolute;inset:0 0 auto;height:1.6cqw;background:
+  linear-gradient(135deg,var(--rose) 25%,transparent 25%) 0 0/2.4cqw 1.6cqw,linear-gradient(225deg,var(--rose) 25%,transparent 25%) 0 0/2.4cqw 1.6cqw,
+  linear-gradient(45deg,var(--saffron) 25%,var(--deep) 25%) 0 0/2.4cqw 1.6cqw}
+.b .top{margin-top:1cqw}
+.b .team{border:.3cqw solid var(--saffron);border-radius:1cqw;padding:.8cqw 1.6cqw;background:var(--deep)}
+.b .team .money{color:var(--saffron);font-weight:700}
+.b .t2{border-color:var(--rose)} .b .t2 .money{color:var(--rose)}
+.b .kit .life{background:#ffffff14} .b .steals i{background:var(--saffron)} .b .t2 .steals i{background:var(--rose)}
+.b .turn .logo{font-weight:700;color:var(--sand)} .b .turn .logo span{color:var(--saffron)}
+.b .turn .who{border:.2cqw solid var(--saffron);color:var(--saffron)}
+.b .cat{color:var(--saffron);border-bottom:.3cqw dotted var(--saffron)}
+.b .tile{background:var(--sand);color:var(--deep);border-radius:.8cqw;position:relative;clip-path:polygon(0 0,100% 0,100% 72%,88% 100%,0 100%)}
+.b .tile::after{content:"";position:absolute;top:1cqw;inset-inline-start:1cqw;width:1.2cqw;height:1.2cqw;border-radius:50%;background:var(--bg)}
+.b .tile b{font-weight:700;color:var(--deep)} .b .tile small{color:var(--rose);font-weight:700}
+.b .tile.done{background:#ffffff14;color:var(--sand)} .b .tile.done b{color:var(--palm);font-size:1.8cqw}
+
+/* ---------- C: بطاقات (bold playing cards) ---------- */
+.c{--bg:#f1edff;--ink:#1d1446;--red:#ff4f5e;--blue:#3a6bff;--green:#19b37a;--yellow:#ffc22e;--purple:#8a4dff;
+  background:var(--bg);color:var(--ink);font-family:"Lalezar","Tajawal",sans-serif}
+.c::after{content:"";position:absolute;inset:auto -4cqw -10cqw auto;width:34cqw;height:34cqw;border-radius:50%;background:#e3dbff;z-index:0}
+.c>*{position:relative;z-index:1}
+.c .team{background:#fff;border:.3cqw solid var(--ink);border-radius:1.4cqw;padding:.8cqw 1.6cqw;box-shadow:.5cqw .5cqw 0 var(--ink)}
+.c .team .nm{font-family:"Tajawal",sans-serif;font-weight:900}
+.c .t1 .money{color:var(--blue)} .c .t2 .money{color:var(--red)}
+.c .kit .life{background:var(--bg);border:.2cqw solid var(--ink)} .c .steals i{background:var(--blue)} .c .t2 .steals i{background:var(--red)}
+.c .turn .logo{transform:rotate(-3deg)} .c .turn .logo span{color:var(--purple)}
+.c .turn .who{background:var(--ink);color:#fff;font-family:"Tajawal",sans-serif;font-weight:700}
+.c .cat{font-size:2cqw}
+.c .tile{background:var(--k);color:#fff;border:.3cqw solid var(--ink);border-radius:1.4cqw;box-shadow:.5cqw .5cqw 0 var(--ink);transform:rotate(var(--r,0deg));transition:transform .15s}
+.c .tile:hover{transform:rotate(0) translateY(-.5cqw)}
+.c .tile b{font-size:3.8cqw;text-shadow:.25cqw .25cqw 0 var(--ink)} .c .tile small{font-family:"Tajawal",sans-serif;font-weight:700}
+.c .k1{--k:var(--red)}.c .k2{--k:var(--blue)}.c .k3{--k:var(--green)}.c .k4{--k:var(--yellow)}.c .k5{--k:var(--purple)}
+.c .tile.done{background:#fff;color:var(--ink);box-shadow:none;border-style:dashed} .c .tile.done b{font-size:1.8cqw;text-shadow:none}
+
+.note{background:var(--card);border-radius:12px;padding:12px 16px;color:var(--mute)}
+@media (prefers-reduced-motion:reduce){.tile{transition:none}}
+</style>
+
+<main dir="rtl">
+<header>
+  <h1>أجل كم: أي شكل يعجبك؟</h1>
+  <p>نفس الشاشة، لوحة الفئات على التلفزيون، بثلاث أساليب. كلها هادية وملونة ومرحة، بس كل واحد له إحساس. الأرقام والفئات أمثلة.</p>
+</header>
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" aria-selected="true" data-t="A">أ) حلاوة</button>
+  <button role="tab" aria-selected="false" data-t="B">ب) سوق المزاد</button>
+  <button role="tab" aria-selected="false" data-t="C">ج) بطاقات</button>
+</div>
+<div id="boards"></div>
+<p class="note">الأيقونات الصغيرة تحت كل فريق هي المساعدات: 📞 اتصال، و🔍 بحث، و✂️ حذف جوابين. والنقاط هي السرقات الباقية من 3. والمربعات الباهتة أسئلة انلعبت.</p>
+</main>
+
+<script>
+const CATS=['كورة سعودية','جغرافيا','أكلات شعبية','علوم','معلومات عامة'];
+const LV=[['سهل',200],['وسط',400],['صعب',600]];
+const DONE={'0-0':'الصقور +400','2-1':'النمور −400','4-0':'الصقور +200'};
+const LOOKS={
+  A:{cls:'a',title:'أ) حلاوة',sub:'ألوان باستيل فاتحة، وأشكال دائرية ناعمة. هادي ومبهج، ويناسب العوائل والصغار'},
+  B:{cls:'b',title:'ب) سوق المزاد',sub:'أخضر بحري وزعفراني، وبطاقات أسعار مثل السوق، ونقش سدو خفيف. دافي وسعودي'},
+  C:{cls:'c',title:'ج) بطاقات',sub:'بطاقات ملونة قوية مائلة شوي مثل ورق اللعب. مرح وحيوي أكثر'}
+};
+function board(key){
+  const L=LOOKS[key];
+  const team=(i,name,money,lifeUsed,steals)=>`<div class="team t${i}"><span class="nm">${name}</span><span class="money">${money.toLocaleString('en')}</span>
+    <span class="kit">${['📞','🔍','✂️'].map((e,k)=>`<span class="life ${lifeUsed.includes(k)?'used':''}">${e}</span>`).join('')}<span class="steals">${'<i></i>'.repeat(steals)}</span></span></div>`;
+  let cells=CATS.map((c,ci)=>`<div class="cat">${c}</div>`).join('');
+  LV.forEach(([lvl,min],r)=>CATS.forEach((c,ci)=>{
+    const d=DONE[ci+'-'+r];
+    const rot=key==='C'?`--r:${((ci*7+r*3)%5-2)*1.2}deg;`:'';
+    cells+=d?`<div class="tile done c${ci+1} k${ci+1}" style="${rot}"><b>${d}</b></div>`
+            :`<div class="tile c${ci+1} k${ci+1}" style="${rot}" tabindex="0"><b>${min}</b><small>${lvl}</small></div>`;
+  }));
+  return `<section data-k="${key}"><h2>${L.title} <span>${L.sub}</span></h2>
+    <div class="tv ${L.cls}">
+      <div class="top">${team(1,'الصقور',5600,[1],3)}<div class="turn"><span class="logo">أجل <span>كم؟</span></span><span class="who">دور الصقور يختارون</span></div>${team(2,'النمور',4600,[],2)}</div>
+      <div class="board">${cells}</div>
+    </div></section>`;
+}
+const wrap=document.getElementById('boards');
+function show(k){
+  wrap.innerHTML=board(k);
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===k));
+  try{localStorage.setItem('ajal-look',k)}catch(e){}
+}
+document.getElementById('tabs').onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.t)};
+let start='A';try{start=localStorage.getItem('ajal-look')||'A'}catch(e){}
+show(LOOKS[start]?start:'A');
+</script>
