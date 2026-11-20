@@ -131,7 +131,7 @@ button.opt:active{transform:translate(.3cqw,.3cqw);box-shadow:.1cqw .1cqw 0 var(
 .stealbar{font-size:3.6cqw;background:var(--red);color:#fff;border:.35cqw solid var(--ink);border-radius:1.4cqw;padding:.3cqw 3cqw;box-shadow:.5cqw .5cqw 0 var(--ink);transform:rotate(-2deg);margin:0}
 
 /* النتيجة */
-.res{font-size:6.6cqw;line-height:1.1;margin-bottom:1.2cqw;color:var(--green);text-shadow:.5cqw .5cqw 0 var(--ink);transform:rotate(-4deg);margin:0}
+.res{font-size:6.6cqw;line-height:1.1;margin-bottom:2.4cqw;color:var(--green);text-shadow:.5cqw .5cqw 0 var(--ink);transform:rotate(-4deg);margin:0}
 .res.bad{color:var(--red)}
 .flow{display:flex;align-items:center;gap:2cqw;font-size:3.4cqw;font-variant-numeric:tabular-nums}
 .flow .from{color:#8f86b5}.flow .arrow{color:var(--purple)}.flow .to{color:var(--blue);font-size:4.6cqw}
