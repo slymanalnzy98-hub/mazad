@@ -274,3 +274,5 @@ button.opt:active{transform:translate(.3cqw,.3cqw);box-shadow:.1cqw .1cqw 0 var(
 .pcard .lv{inset:auto;bottom:.6cqw;right:.9cqw}
 .team .money{text-align:right}
 .wordmark span{color:var(--purple)}
+.logo .wordmark,.word .wordmark,h1 .wordmark{color:var(--ink)}
+.logo .wordmark span,.word .wordmark span,h1 .wordmark span{color:var(--purple)}
