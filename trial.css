@@ -88,7 +88,7 @@ button:focus-visible{outline:.4cqw solid var(--purple);outline-offset:.3cqw}
 /* المزايدة */
 .bids{display:flex;gap:6cqw;align-items:flex-end}
 .bidcol{display:flex;flex-direction:column;align-items:center;gap:.8cqw}
-.bid{width:15cqw;aspect-ratio:4/5;border:.4cqw solid var(--ink);border-radius:1.6cqw;box-shadow:.6cqw .6cqw 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;color:#fff;background:var(--k);position:relative;transition:transform .3s}
+.bid{width:14cqw;aspect-ratio:5/6;border:.4cqw solid var(--ink);border-radius:1.6cqw;box-shadow:.6cqw .6cqw 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6cqw;color:#fff;background:var(--k);position:relative;transition:transform .3s}
 .bid b{font-size:4.6cqw;line-height:1;text-shadow:.3cqw .3cqw 0 var(--ink);font-variant-numeric:tabular-nums}
 .bid span{font-family:var(--body);font-weight:900;font-size:1.8cqw}
 .bid.lead{transform:rotate(-4deg) translateY(-1.6cqw)}
