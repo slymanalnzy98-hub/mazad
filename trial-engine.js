@@ -7,7 +7,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   const DEFAULTS = {
     start: 5000, cats: 5, levels: 3,
-    min: [200, 400, 600], max: [1000, 2000, 3000], time: [20, 25, 30],   // max: سقف المزايدة لكل صعوبة (يتعدّل بعد التجارب)   // أقل مزايدة ووقت الجواب لكل صعوبة
+    min: [200, 400, 600], time: [20, 25, 30],   // أقل مزايدة ووقت الجواب لكل صعوبة
     stealS: 10, steals: 3, lifeS: 30,           // السرقة، وعدد السرقات، والوقت الإضافي للاتصال والبحث
     openS: 5, openFirstS: 10                    // عداد المزايدة العلنية
   };
@@ -64,8 +64,11 @@
   }
 
   const minBid = s => s.config.min[s.cur.lvl - 1];
-  const floorFor = (s, t) => Math.min(minBid(s), s.teams[t].coins);
-  const capFor = (s, t) => Math.min(s.config.max[s.cur.lvl - 1], s.teams[t].coins);
+  // الفلوس تنتقل بين الفريقين بس (مجموعها ثابت)، فأقصى مزايدة = الأقل بين رصيدك ورصيد خصمك
+  const capFor = (s, t) => Math.min(s.teams[t].coins, s.teams[1 - t].coins);
+  const floorFor = (s, t) => Math.min(minBid(s), capFor(s, t));
+  // ينقل مبلغ من فريق لفريق، وما ينقل أكثر من اللي عنده
+  function transfer(s, from, to, amount) { const m = Math.max(0, Math.min(amount, s.teams[from].coins)); s.teams[from].coins -= m; s.teams[to].coins += m; return m; }
   const leftMs = (s, now) => Math.max(0, (s.deadline || 0) - now);
 
   function finishIfDone(s) {
@@ -150,7 +153,7 @@
         const base = s.top ? s.top.amount : 0;
         const amount = Math.max(base + (Number(a.inc) || 0), floorFor(s, a.team));
         if (!(Number(a.inc) > 0) && s.top) return fail('زيادة غير صالحة');
-        if (amount > capFor(s, a.team)) return fail('أعلى من السقف أو من رصيدكم');
+        if (amount > capFor(s, a.team)) return fail('أعلى من رصيدكم أو رصيد الخصم');
         if (s.top && amount <= s.top.amount) return fail('لازم أعلى');
         s.top = { team: a.team, amount }; s.bids[a.team] = amount;
         s.deadline = now + s.config.openS * 1000;
@@ -201,36 +204,35 @@
         else { s.deadline = Math.max(s.deadline, now) + s.config.lifeS * 1000; s.extra += s.config.lifeS; }
         return done();
       }
-      case 'reveal': { // الهوست يكشف الجواب (أو خلص الوقت)
+      case 'reveal': { // خلص الوقت: نوقف العداد بس، والجواب يبقى مخفي لين يخلص السؤال
         if (s.phase !== 'question') return fail('ما ينفع');
         s.revealed = true; s.deadline = null; return done();
       }
       case 'choose': { // بعد «خيارات»: الهوست يضغط الخيار اللي قاله الفريق، والحكم تلقائي
-        if (s.phase !== 'question' || !s.optsShown || s.revealed) return fail('ما ينفع');
+        if (s.phase !== 'question' || !s.optsShown || s.stealing) return fail('ما ينفع');
+        if (a.team !== undefined && a.team !== s.answering) return fail('مو دوركم');
         if (!(a.k >= 0 && a.k <= 3)) return fail('خيار غير صالح');
         s.picked = a.k; s.revealed = true;
         return reduce(s, { type: 'judge', right: a.k === s.cur.ai, now });
       }
       case 'judge': {
-        if (s.phase !== 'question' || !s.revealed) return fail('اكشفوا الجواب أول');
-        const t = s.teams[s.answering], before = t.coins, right = !!a.right;
+        if (s.phase !== 'question') return fail('ما ينفع'); // الهوست يشوف الجواب لحاله ويحكم، بدون ما ينكشف للغرفة
+        const me = s.answering, other = 1 - me, right = !!a.right;
+        let moved, from, to;
         if (!s.stealing) {
-          const win = s.optsShown ? s.stake : s.stake * 2;
-          if (right) { t.coins += win; t.right++; }
-          else t.coins = Math.max(0, t.coins - s.stake);
-          s.last = { team: s.answering, right, steal: false, delta: t.coins - before, answer: s.cur.a, opts: s.optsShown };
-          if (right) {
-            const w = s.stats.biggestWin; if (!w || s.last.delta > w.amount) s.stats.biggestWin = { team: s.answering, amount: s.last.delta };
-            s.phase = 'result';
-          } else {
-            const other = 1 - s.answering;
-            s.phase = s.teams[other].steals > 0 && s.teams[other].coins > 0 ? 'stealOffer' : 'result';
-          }
+          // صح: تاخذون المزايدة من الخصم (ونصها لو استخدمتوا الخيارات). غلط: تعطونها الخصم
+          if (right) { from = other; to = me; moved = transfer(s, other, me, s.optsShown ? Math.floor(s.stake / 2) : s.stake); s.teams[me].right++; }
+          else { from = me; to = other; moved = transfer(s, me, other, s.stake); }
+          s.last = { team: me, right, steal: false, delta: right ? moved : -moved, from, to, moved, answer: s.cur.a, opts: s.optsShown };
+          if (right) { const w = s.stats.biggestWin; if (!w || moved > w.amount) s.stats.biggestWin = { team: me, amount: moved }; }
+          const broke = s.teams.some(t => t.coins <= 0);
+          s.phase = !right && !broke && s.teams[other].steals > 0 ? 'stealOffer' : 'result';
         } else {
-          if (right) { t.coins += s.stake; t.right++; }
-          else t.coins = Math.max(0, t.coins - Math.floor(s.stake / 2));
-          s.last = { team: s.answering, right, steal: true, delta: t.coins - before, answer: s.cur.a };
-          if (right) { const b = s.stats.biggestSteal; if (!b || s.stake > b.amount) s.stats.biggestSteal = { team: s.answering, amount: s.stake }; }
+          // سرقة صح: تاخذون المزايدة من الفريق اللي غلط. سرقة غلط: تعطونه نصها
+          if (right) { from = other; to = me; moved = transfer(s, other, me, s.stake); s.teams[me].right++; }
+          else { from = me; to = other; moved = transfer(s, me, other, Math.floor(s.stake / 2)); }
+          s.last = { team: me, right, steal: true, delta: right ? moved : -moved, from, to, moved, answer: s.cur.a };
+          if (right) { const b = s.stats.biggestSteal; if (!b || moved > b.amount) s.stats.biggestSteal = { team: me, amount: moved }; }
           s.phase = 'result';
         }
         s.deadline = null;
@@ -274,16 +276,19 @@
   function publicView(s) {
     const v = { phase: s.phase, devices: s.devices, bidMode: s.bidMode, turn: s.turn, asked: s.asked, total: s.config.cats * s.config.levels,
       teams: s.teams.map(t => ({ name: t.name, coins: t.coins, life: t.life, steals: t.steals })),
-      deadline: s.deadline, answering: s.answering, stealing: s.stealing, stake: s.stake, last: s.last, final: s.final,
+      deadline: s.deadline, answering: s.answering, stealing: s.stealing, stake: s.stake, final: s.final,
+      // نتيجة الجولة بدون الجواب، لين يخلص السؤال (عشان الفريق اللي يسرق ما يشوفه)
+      last: s.last ? Object.assign({}, s.last, (s.phase === 'result' || s.phase === 'over') ? {} : { answer: undefined }) : null,
       board: s.board.map(c => ({ cat: c.cat, used: c.cards.map(x => x.used), res: c.cards.map(x => x.res || null) })) };
-    if (s.cur) { v.cur = { cat: s.cur.cat, lvl: s.cur.lvl, min: minBid(s), max: s.config.max[s.cur.lvl - 1] }; }
+    if (s.cur) { v.cur = { cat: s.cur.cat, lvl: s.cur.lvl, min: minBid(s), caps: [capFor(s, 0), capFor(s, 1)] }; }
     if (s.phase === 'bid') { v.top = s.top; v.passed = s.passed; v.bidIn = s.bids.map(b => b !== null); }
     if (s.phase === 'reveal' || s.phase === 'question' || s.phase === 'result' || s.phase === 'stealOffer') { v.top = s.top; v.bids = s.bids; v.tie = s.tie; }
-    if (s.phase === 'question') { v.q = s.cur.q; v.optsShown = s.optsShown; if (s.optsShown) v.opts = s.cur.opts; v.revealed = s.revealed; if (s.revealed) v.answer = s.cur.a; }
+    if (s.phase === 'question') { v.q = s.cur.q; v.optsShown = s.optsShown; if (s.optsShown) v.opts = s.cur.opts; v.timeUp = s.revealed; }
+    if (s.phase === 'result') v.answer = s.cur.a;
     if (s.phase === 'stealOffer') v.picked = s.picked;
     if (s.phase === 'over') v.stats = s.stats;
     return v;
   }
 
-  return { DEFAULTS, LIFE, create, reduce, publicView, playableCats, pool, normalize, leftMs };
+  return { DEFAULTS, LIFE, capFor, create, reduce, publicView, playableCats, pool, normalize, leftMs };
 });

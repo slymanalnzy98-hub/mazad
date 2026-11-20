@@ -48,7 +48,8 @@ input{font:inherit;font-family:var(--display);font-size:1.8rem;letter-spacing:.3
 .tile:disabled{opacity:.2;box-shadow:none}
 .q{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:12px;box-shadow:3px 3px 0 var(--ink);font-size:1.15rem;font-weight:900}
 .opts{display:grid;gap:8px}
-.opt{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px;font-weight:900}
+.opt{background:#fff;border:3px solid var(--ink);border-radius:12px;padding:12px;font-weight:900;font-size:1.15rem;box-shadow:3px 3px 0 var(--ink);text-align:start}
+button.opt:disabled{opacity:.5}
 .err{color:var(--red);min-height:1.3em;font-weight:900}
 .timer{font-family:var(--display);font-size:2rem;color:var(--red)}
 .ans{font-family:var(--display);font-size:2.2rem;background:var(--yellow);border:3px solid var(--ink);border-radius:14px;padding:6px;box-shadow:3px 3px 0 var(--ink)}
@@ -114,7 +115,7 @@ function onMsg(m) {
   document.documentElement.style.setProperty('--k', ME.team ? 'var(--red)' : 'var(--blue)');
   barEl.innerHTML = `<div class="bar"><span class="nm">${esc(t.name)}</span><span class="kit">${['call', 'search', 'opts'].map(k => `<span class="${t.life[k] ? '' : 'used'}" title="${LIFE_NAME[k]}">${ICON[k]}</span>`).join('')} · سرقات ${t.steals}</span><b>${fmt(t.coins)}</b></div>`;
   if (!S.seats || !S.seats[ME.team]) join();
-  const key = JSON.stringify([S.phase, S.turn, S.cur, S.top, S.passed, S.bidIn, S.answering, S.stealing, S.optsShown, S.revealed, S.asked, t.coins, t.life]);
+  const key = JSON.stringify([S.phase, S.turn, S.cur, S.top, S.passed, S.bidIn, S.answering, S.stealing, S.optsShown, S.timeUp, S.asked, t.coins, t.life]);
   if (key === lastKey) return;
   lastKey = key; render();
 }
@@ -124,7 +125,7 @@ function timer(id) {
   const upd = () => { const el = $(id); if (!el) return clearInterval(tick); el.textContent = S.deadline ? Math.max(0, Math.ceil((S.deadline - Date.now()) / 1000)) : ''; };
   upd(); tick = setInterval(upd, 250);
 }
-const chip = () => S.cur ? `<span class="chip">${esc(S.cur.cat)} <small>· ${LVL[S.cur.lvl - 1]} · ${fmt(S.cur.min)} – ${fmt(S.cur.max)}</small></span>` : '';
+const chip = () => S.cur ? `<span class="chip">${esc(S.cur.cat)} <small>· ${LVL[S.cur.lvl - 1]} · أقل شي ${fmt(Math.min(S.cur.min, S.cur.caps[ME.team]))}</small></span>` : '';
 
 function render() {
   clearInterval(tick);
@@ -141,19 +142,19 @@ function render() {
     }
     case 'bid': {
       if (S.bidMode === 'open') {
-        const top = S.top, lead = top && top.team === me, cur = top ? top.amount : 0, out = S.passed[me], min = Math.min(S.cur.min, T[me].coins);
+        const top = S.top, lead = top && top.team === me, cur = top ? top.amount : 0, out = S.passed[me], min = Math.min(S.cur.min, S.cur.caps[me]);
         if (out) return wait('اكتفيتوا. طالعوا الشاشة');
         app.innerHTML = `${chip()}
           <p class="say">${lead ? `أنتم الأعلى بـ ${fmt(cur)} 💪` : top ? `${esc(T[o].name)} على ${fmt(cur)}` : 'على كم؟'}</p>
           <p class="timer" id="tm"></p>
-          <div class="grid3 raise" id="rs">${INCS.map(i => { const v = Math.max(cur + i, min); return `<button class="btn y" data-i="${i}" ${lead || v > Math.min(S.cur.max, T[me].coins) ? 'disabled' : ''}>+${i}<small>= ${fmt(v)}</small></button>`; }).join('')}</div>
+          <div class="grid3 raise" id="rs">${INCS.map(i => { const v = Math.max(cur + i, min); return `<button class="btn y" data-i="${i}" ${lead || v > S.cur.caps[me] ? 'disabled' : ''}>+${i}<small>= ${fmt(v)}</small></button>`; }).join('')}</div>
           <button class="btn" id="ps">أكتفي</button>`;
         $('rs').onclick = e => { const b = e.target.closest('button'); if (b && !b.disabled) { beep(620, .05); act({ type: 'raise', inc: +b.dataset.i }); } };
         $('ps').onclick = () => act({ type: 'pass' });
         timer('tm'); return;
       }
       if (S.bidIn[me]) return wait('✓ ثبّتوا رقمكم. ننتظر الفريق الثاني');
-      const min = Math.min(S.cur.min, T[me].coins), max = Math.min(S.cur.max, T[me].coins);
+      const max = S.cur.caps[me], min = Math.min(S.cur.min, max);
       amt = Math.max(min, Math.min(max, amt || min));
       app.innerHTML = `${chip()}<p class="say">اكتبوا رقمكم بالسر 🤫</p><p class="big" id="am">${fmt(amt)}</p>
         <div class="grid2" id="st">${[-500, -100, 100, 500].map(d => `<button class="btn ${d > 0 ? 'y' : ''}" data-d="${d}">${d > 0 ? '+' : '−'}${Math.abs(d)}</button>`).join('')}</div>
@@ -167,19 +168,22 @@ function render() {
     case 'question': {
       if (S.answering !== me) return wait(S.stealing ? 'الفريق الثاني يحاول يسرق… 😬' : `${esc(T[o].name)} يجاوبون… ادعوا يغلطون 😈`);
       const t = T[me];
+      const win = S.stealing ? S.stake : S.optsShown ? Math.floor(S.stake / 2) : S.stake, lose = S.stealing ? Math.floor(S.stake / 2) : S.stake;
       app.innerHTML = `${S.stealing ? '<p class="say">سرقة! بدون مساعدات</p>' : chip()}
+        <p class="mute">صح: تاخذون ${fmt(win)} · غلط: تعطونهم ${fmt(lose)}</p>
         <p class="q">${esc(S.q || '')}</p>
-        ${S.optsShown && S.opts ? `<div class="opts">${S.opts.map((x, k) => `<div class="opt">${L[k]}) ${esc(x)}</div>`).join('')}</div><p class="mute">قولوا اختياركم للهوست</p>` : '<p class="say">قولوا جوابكم بصوت عالي 🗣️</p>'}
-        ${S.revealed ? `<p class="ans">${esc(S.answer || '')}</p><p class="mute">الهوست يحكم…</p>` : `<p class="timer" id="tm"></p>`}
-        ${S.stealing || S.revealed ? '' : `<div class="grid3" id="hp">${['call', 'search', 'opts'].map(k => `<button class="btn" data-k="${k}" ${t.life[k] ? '' : 'disabled'} style="font-size:1.05rem">${ICON[k]}<br>${LIFE_NAME[k]}</button>`).join('')}</div>`}`;
+        ${S.optsShown && S.opts ? `<div class="opts" id="ops">${S.opts.map((x, k) => `<button class="opt" data-k="${k}">${L[k]}) ${esc(x)}</button>`).join('')}</div><p class="mute">اختاروا جوابكم</p>` : `<p class="say">${S.timeUp ? 'خلص الوقت! الهوست يحكم…' : 'قولوا جوابكم بصوت عالي 🗣️'}</p>`}
+        ${S.timeUp ? '' : `<p class="timer" id="tm"></p>`}
+        ${S.stealing || S.timeUp || S.optsShown ? '' : `<div class="grid3" id="hp">${['call', 'search', 'opts'].map(k => `<button class="btn" data-k="${k}" ${t.life[k] ? '' : 'disabled'} style="font-size:1.05rem">${ICON[k]}<br>${LIFE_NAME[k]}</button>`).join('')}</div>`}`;
       if ($('hp')) $('hp').onclick = e => { const b = e.target.closest('button'); if (b && !b.disabled) { beep(600, .05); act({ type: 'life', kind: b.dataset.k }); } };
-      if (!S.revealed) timer('tm');
+      if (!S.timeUp) timer('tm');
+      if ($('ops')) $('ops').onclick = e => { const b = e.target.closest('button'); if (!b) return; document.querySelectorAll('#ops button').forEach(x => x.disabled = true); b.style.outline = '4px solid var(--ink)'; beep(700, .05); act({ type: 'choose', k: +b.dataset.k }); };
       return;
     }
     case 'stealOffer': {
       if (S.answering === me) return wait('غلطتوا… الفريق الثاني يقرر يسرق ولا لا');
       app.innerHTML = `<p class="say">${esc(T[o].name)} غلطوا! تسرقون؟</p>
-        <p class="mute">صح = +${fmt(S.stake)} · غلط = −${fmt(Math.floor(S.stake / 2))} · باقي لكم ${T[me].steals}</p>
+        <p class="mute">صح: تاخذون ${fmt(S.stake)} منهم · غلط: تعطونهم ${fmt(Math.floor(S.stake / 2))} · باقي لكم ${T[me].steals}</p>
         <button class="btn r" id="y" style="font-size:2.2rem">نسرق!</button><button class="btn" id="n">لا</button>`;
       $('y').onclick = () => { act({ type: 'steal', yes: true }); wait('…'); };
       $('n').onclick = () => { act({ type: 'steal', yes: false }); wait('…'); };

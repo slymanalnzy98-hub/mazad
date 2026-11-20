@@ -20,12 +20,13 @@ const begin = (mode = 'open', seed = 3) => {
 // يختار بطاقة ويوصل لمرحلة السؤال بمزايدة معيّنة للفريق صاحب الدور
 function toQuestion(s, lvl, amount, now = 0) {
   s = step(s, { type: 'pick', team: s.turn, col: s.board.findIndex(c => !c.cards[lvl - 1].used), lvl, now });
+  { const cap = T.capFor(s, s.turn), floor = Math.min(T.DEFAULTS.min[lvl - 1], cap); amount = Math.max(floor, Math.min(amount, cap)); } // داخل المسموح
   if (s.bidMode === 'open') {
     s = step(s, { type: 'raise', team: s.turn, inc: amount, now });
     s = step(s, { type: 'pass', team: 1 - s.turn, now });
   } else {
     s = step(s, { type: 'secret', team: s.turn, amount, now });
-    s = step(s, { type: 'secret', team: 1 - s.turn, amount: T.DEFAULTS.min[lvl - 1], now });
+    s = step(s, { type: 'secret', team: 1 - s.turn, amount: Math.min(T.DEFAULTS.min[lvl - 1], T.capFor(s, 1 - s.turn), amount - 1 > 0 ? Math.max(Math.min(T.DEFAULTS.min[lvl - 1], T.capFor(s, 1 - s.turn)), 0) : 0), now });
     s = step(s, { type: 'toQuestion', now });
   }
   return s;
@@ -94,41 +95,41 @@ test('المزايدة السرية: الأعلى ياخذ، والأقل من �
   assert.equal(s.deadline, 20000, 'وقت السهل 20 ثانية');
 });
 
-test('صح = ضعف الرهان، والدور ينتقل للفريق الثاني', () => {
+test('صح = تاخذون المزايدة من الخصم، والدور ينتقل للفريق الثاني', () => {
   let s = begin();
   const turn = s.turn;
   s = toQuestion(s, 1, 500);
   const t = s.answering;
-  assert.equal(T.reduce(s, { type: 'judge', right: true }).ok, false, 'لازم يكشف الجواب أول');
+  // الهوست يحكم بدون كشف الجواب للغرفة
   s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: true });
-  assert.equal(s.teams[t].coins, 6000); assert.equal(s.phase, 'result');
+  assert.equal(s.teams[t].coins, 5500); assert.equal(s.teams[1 - t].coins, 4500); assert.equal(s.phase, 'result');
   s = step(s, { type: 'next' });
   assert.equal(s.phase, 'board'); assert.equal(s.turn, 1 - turn); assert.equal(s.asked, 1);
 });
 
-test('غلط = يخسر الرهان، والخصم يسرق: صح ياخذ نفس المبلغ', () => {
+test('غلط = تعطون المزايدة للخصم، وسرقة صح تاخذ نفس المبلغ من اللي غلط', () => {
   let s = begin();
   s = toQuestion(s, 2, 600, 0);
   const t = s.answering, o = 1 - t;
   s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: false });
-  assert.equal(s.teams[t].coins, 4400); assert.equal(s.phase, 'stealOffer');
+  assert.equal(s.teams[t].coins, 4400); assert.equal(s.teams[o].coins, 5600); assert.equal(s.phase, 'stealOffer');
   s = step(s, { type: 'steal', team: o, yes: true, now: 1000 });
   assert.equal(s.answering, o); assert.equal(s.stealing, true); assert.equal(s.deadline, 11000);
   assert.equal(s.teams[o].steals, 2);
   assert.equal(T.reduce(s, { type: 'life', kind: 'call' }).ok, false, 'بدون مساعدات في السرقة');
   s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: true });
-  assert.equal(s.teams[o].coins, 5600);
+  assert.equal(s.teams[o].coins, 6200); assert.equal(s.teams[t].coins, 3800);
   assert.equal(s.stats.biggestSteal.amount, 600);
 });
 
-test('سرقة غلط = يخسرون نص المبلغ', () => {
+test('سرقة غلط = يعطون نص المبلغ للفريق الثاني', () => {
   let s = begin();
   s = toQuestion(s, 3, 800);
   const o = 1 - s.answering;
   s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: false });
   s = step(s, { type: 'steal', yes: true });
   s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: false });
-  assert.equal(s.teams[o].coins, 4600);
+  assert.equal(s.teams[o].coins, 5400);
 });
 
 test('3 سرقات بس لكل فريق', () => {
@@ -147,7 +148,7 @@ test('مساعدة الخيارات: تطلع الخيارات والربح نص
   assert.equal(T.publicView(s).opts.length, 4);
   assert.equal(T.reduce(s, { type: 'life', kind: 'opts' }).ok, false);
   s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: true });
-  assert.equal(s.teams[t].coins, 5400, 'نص الربح: الرهان مرة وحدة بدل مرتين');
+  assert.equal(s.teams[t].coins, 5200, 'مع الخيارات تاخذون نص المزايدة');
 });
 
 test('الاتصال والبحث يزيدون الوقت 30 ثانية', () => {
@@ -161,7 +162,7 @@ test('الاتصال والبحث يزيدون الوقت 30 ثانية', () => 
 
 test('اللعبة تخلص بعد 15 سؤال', () => {
   let s = begin();
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 15 && s.phase !== 'over'; i++) {
     const lvl = [1, 2, 3].find(l => s.board.some(c => !c.cards[l - 1].used));
     s = toQuestion(s, lvl, T.DEFAULTS.min[lvl - 1]);
     s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: i % 2 === 0 });
@@ -209,7 +210,7 @@ test('بعد «خيارات» الهوست يضغط اختيار الفريق، 
   assert.equal(T.reduce(s, { type: 'choose', k: 0 }).ok, false, 'لازم الخيارات تطلع أول');
   s = step(s, { type: 'life', kind: 'opts' });
   const right = step(s, { type: 'choose', k: s.cur.ai });
-  assert.equal(right.phase, 'result'); assert.equal(right.teams[t].coins, 5400);
+  assert.equal(right.phase, 'result'); assert.equal(right.teams[t].coins, 5200);
   const wrong = step(s, { type: 'choose', k: (s.cur.ai + 1) % 4 });
   assert.ok(['stealOffer', 'result'].includes(wrong.phase)); assert.equal(wrong.teams[t].coins, 4600);
   assert.equal(wrong.picked, (s.cur.ai + 1) % 4);
@@ -221,22 +222,56 @@ test('البطاقة الملعوبة تحفظ مين لعبها ونتيجته�
   const t = s.answering, col = s.cur.col;
   s = step(s, { type: 'reveal' }); s = step(s, { type: 'judge', right: true }); s = step(s, { type: 'next' });
   const v = T.publicView(s).board[col];
-  assert.equal(v.used[1], true); assert.deepEqual(v.res[1], { team: t, delta: 800, steal: false, bidder: t });
+  assert.equal(v.used[1], true); assert.deepEqual(v.res[1], { team: t, delta: 400, steal: false, bidder: t });
 });
 
-test('سقف المزايدة: سهل 1000، ووسط 2000، وصعب 3000', () => {
-  assert.deepEqual(T.DEFAULTS.max, [1000, 2000, 3000]);
+test('أقصى مزايدة = الأقل بين رصيدك ورصيد خصمك', () => {
   let s = begin('open');
+  s.teams[1 - s.turn].coins = 700; s.teams[s.turn].coins = 9300;
   s = step(s, { type: 'pick', team: s.turn, col: 0, lvl: 1 });
-  const a = s.turn, b = 1 - a;
-  s = step(s, { type: 'raise', team: a, inc: 500, now: 0 });
-  s = step(s, { type: 'raise', team: b, inc: 500, now: 0 });
-  assert.equal(s.top.amount, 1000);
-  assert.equal(T.reduce(s, { type: 'raise', team: a, inc: 100 }).ok, false, 'فوق سقف السهل');
-  let x = begin('secret');
-  x = step(x, { type: 'pick', team: x.turn, col: 0, lvl: 3 });
-  assert.equal(T.reduce(x, { type: 'secret', team: 0, amount: 3100 }).ok, false);
-  x = step(x, { type: 'secret', team: 0, amount: 3000 });
-  assert.equal(x.bids[0], 3000);
-  assert.equal(T.publicView(x).cur.max, 3000);
+  assert.equal(T.capFor(s, s.turn), 700);
+  assert.equal(T.reduce(s, { type: 'raise', team: s.turn, inc: 1000 }).ok, false);
+  s = step(s, { type: 'raise', team: s.turn, inc: 500, now: 0 });
+  assert.equal(T.reduce(s, { type: 'raise', team: 1 - s.turn, inc: 500 }).ok, false, 'الخصم ما عنده أكثر من 700');
+});
+
+test('مجموع الفلوس يبقى 10,000 طول اللعبة', () => {
+  for (const seed of [1, 2, 3, 4, 5]) {
+    let s = begin(seed % 2 ? 'open' : 'secret', seed), n = 0;
+    while (s.phase !== 'over' && n++ < 40) {
+      const lvl = [1, 2, 3].find(l => s.board.some(c => !c.cards[l - 1].used));
+      const cap = Math.min(s.teams[0].coins, s.teams[1].coins);
+      s = toQuestion(s, lvl, Math.min(cap, 300 + n * 137 % 1500));
+      if (n % 4 === 0 && s.teams[s.answering].life.opts) { s = step(s, { type: 'life', kind: 'opts' }); s = step(s, { type: 'choose', k: (s.cur.ai + n) % 4 }); }
+      else s = step(s, { type: 'judge', right: n % 3 === 0 });
+      if (s.phase === 'stealOffer') { s = step(s, { type: 'steal', yes: n % 2 === 0 }); if (s.phase === 'question') s = step(s, { type: 'judge', right: n % 5 === 0 }); }
+      assert.equal(s.teams[0].coins + s.teams[1].coins, 10000, 'المجموع تغيّر');
+      assert.ok(s.teams.every(t => t.coins >= 0));
+      s = step(s, { type: 'next' });
+    }
+    assert.equal(s.phase, 'over');
+  }
+});
+
+test('الجواب ما ينكشف للأجهزة قبل ما يخلص السؤال (ولا وقت السرقة)', () => {
+  let s = begin();
+  s = toQuestion(s, 1, 300);
+  const ans = s.cur.a, hidden = st => !JSON.stringify(T.publicView(st)).includes('"answer"');
+  assert.ok(hidden(s));
+  s = step(s, { type: 'judge', right: false }); // الهوست يحكم بدون كشف
+  assert.equal(s.phase, 'stealOffer'); assert.ok(hidden(s));
+  s = step(s, { type: 'steal', yes: true }); assert.ok(hidden(s));
+  s = step(s, { type: 'reveal' }); assert.ok(hidden(s), 'خلص الوقت ما يكشف الجواب');
+  s = step(s, { type: 'judge', right: false });
+  assert.equal(s.phase, 'result'); assert.equal(T.publicView(s).answer, ans);
+});
+
+test('جهاز الفريق يختار من الخيارات، والفريق الثاني ما يقدر', () => {
+  let s = begin();
+  s = toQuestion(s, 1, 300);
+  const t = s.answering;
+  s = step(s, { type: 'life', team: t, kind: 'opts' });
+  assert.equal(T.reduce(s, { type: 'choose', team: 1 - t, k: s.cur.ai }).ok, false);
+  const r = step(s, { type: 'choose', team: t, k: s.cur.ai });
+  assert.equal(r.phase, 'result'); assert.equal(r.teams[t].coins, 5150);
 });
