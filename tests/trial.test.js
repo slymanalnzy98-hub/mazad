@@ -196,3 +196,8 @@ test('الحركات ما تغيّر الحالة القديمة', () => {
   T.reduce(s, { type: 'pick', team: s.turn, col: 0, lvl: 1 });
   assert.equal(JSON.stringify(s), copy);
 });
+
+test('يقبل الجواب القصير باسم answer، ورقم الصح باسم a أو ai', () => {
+  const c = T.normalize({ q: 'س؟', opts: ['أ', 'ب', 'ج', 'د'], a: 2, answer: 'جيم', lvl: 2 }, 'x', 0, 1);
+  assert.equal(c.ai, 2); assert.equal(c.a, 'جيم'); assert.equal(c.lvl, 2);
+});

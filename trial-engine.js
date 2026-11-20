@@ -30,7 +30,7 @@
   function normalize(item, cat, index, count) {
     let c;
     if (Array.isArray(item)) c = { q: item[0], opts: item[1], ai: item[2] };
-    else if (item && typeof item === 'object') c = { q: item.q, opts: item.opts, ai: item.ai, a: item.a, lvl: item.lvl };
+    else if (item && typeof item === 'object') c = { q: item.q, opts: item.opts, ai: Number.isInteger(item.ai) ? item.ai : item.a, a: typeof item.answer === 'string' ? item.answer : item.a, lvl: item.lvl };
     else return null;
     if (typeof c.q !== 'string' || !Array.isArray(c.opts) || c.opts.length !== 4 || !(c.ai >= 0 && c.ai <= 3)) return null;
     c.a = typeof c.a === 'string' && c.a.trim() ? c.a : c.opts[c.ai];
