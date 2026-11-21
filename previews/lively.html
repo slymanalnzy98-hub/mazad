@@ -1,0 +1,161 @@
+<title>أجل كم: مرتب وفيه حياة</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Tajawal:wght@500;700;800;900&display=swap">
+<style>
+/* Layout: an app-like game shell: a fixed coloured top bar with a wavy edge, content that fills the screen in an even grid, and a fixed bottom tray that always shows both teams. Warm cream ground, purple brand bar, yellow accent; soft shadows instead of heavy outlines. Single light look by choice. */
+:root{
+  --ground:#fff7ec; --card:#ffffff; --ink:#2a1e4a; --mute:#8a7fa6; --line:#efe4d4;
+  --brand:#6b3fe6; --brand2:#5631c4; --sun:#ffc23d; --sun2:#f2a900; --t1:#2f7bff; --t2:#ff5a6a; --ok:#20b27a;
+  --display:"Lalezar","Tajawal",sans-serif; --body:"Tajawal",Tahoma,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:#e9e3f5;color:var(--ink);font-family:var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1240px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button{font:inherit;font-weight:800;border:0;background:#fff;color:var(--ink);padding:8px 16px;border-radius:999px;cursor:pointer;box-shadow:0 2px 6px #2a1e4a1a}
+.tabs button[aria-selected="true"]{background:var(--brand);color:#fff}
+.tabs button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.hint{margin:0;color:#6c6290;font-weight:700}
+
+/* the TV frame */
+.tv{aspect-ratio:16/9;max-width:100%;border-radius:18px;overflow:hidden;position:relative;container-type:inline-size;background:var(--ground);display:flex;flex-direction:column;box-shadow:0 18px 40px #2a1e4a33}
+
+/* top bar */
+.bar{position:relative;background:var(--brand);color:#fff;display:flex;align-items:center;gap:2cqw;padding:1.2cqw 2.4cqw 2cqw;z-index:2}
+.bar::after{content:"";position:absolute;inset:auto 0 -1.6cqw 0;height:2cqw;background:
+  radial-gradient(circle at 1.6cqw 0,var(--brand) 1.6cqw,transparent 1.65cqw) 0 0/3.2cqw 2cqw repeat-x}
+.logo{display:flex;align-items:center;gap:.8cqw;font-family:var(--display);font-size:3cqw;line-height:1}
+.logo i{width:3.2cqw;height:3.6cqw;border-radius:.6cqw;background:var(--sun);display:grid;place-items:center;color:var(--ink);font-style:normal;font-size:2cqw;transform:rotate(-8deg);box-shadow:0 .3cqw 0 #0003}
+.logo span{color:var(--sun)}
+.nav{display:flex;gap:2.2cqw;font-weight:800;font-size:1.5cqw;opacity:.9}
+.spacer{flex:1}
+.chip{display:flex;align-items:center;gap:.6cqw;font-weight:800;font-size:1.4cqw;border:.15cqw solid #ffffff66;border-radius:999px;padding:.4cqw 1.4cqw}
+.cta{font-family:var(--display);font-size:1.8cqw;background:var(--sun);color:var(--ink);border-radius:999px;padding:.4cqw 2cqw;box-shadow:0 .35cqw 0 var(--sun2)}
+
+/* content */
+.content{flex:1;padding:3.2cqw 3cqw 1cqw;display:flex;flex-direction:column;gap:1.4cqw;min-height:0}
+.title{display:flex;align-items:baseline;gap:1.2cqw}
+.title h2{margin:0;font-family:var(--display);font-weight:400;font-size:2.6cqw}
+.title p{margin:0;color:var(--mute);font-weight:700;font-size:1.4cqw}
+
+/* category cards */
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1.3cqw;flex:1;min-height:0}
+.cat{background:var(--card);border-radius:1.4cqw;box-shadow:0 .5cqw 1.4cqw #2a1e4a14,0 .2cqw 0 var(--line);display:flex;flex-direction:column;overflow:hidden;cursor:pointer;position:relative;transition:transform .15s,box-shadow .15s}
+.cat:hover{transform:translateY(-.4cqw);box-shadow:0 .9cqw 2cqw #2a1e4a22}
+.cat .top{flex:1;background:var(--c);display:grid;place-items:center;position:relative;min-height:0}
+.cat .top svg{width:42%;height:auto;color:#fff;opacity:.95}
+.cat .top::after{content:"";position:absolute;inset:auto 0 0 0;height:30%;background:linear-gradient(transparent,#0000001a)}
+.cat .nm{font-weight:900;font-size:1.45cqw;text-align:center;padding:.7cqw .4cqw .8cqw;line-height:1.2}
+.badge{position:absolute;top:.7cqw;inset-inline-start:.7cqw;background:#ffffffe6;color:var(--ink);font-weight:800;font-size:1.05cqw;border-radius:999px;padding:.1cqw .8cqw}
+.info{position:absolute;top:.7cqw;inset-inline-end:.7cqw;width:2cqw;height:2cqw;border-radius:50%;background:#ffffffe6;display:grid;place-items:center;font-weight:900;font-size:1.1cqw;color:var(--c)}
+.cat.on{outline:.35cqw solid var(--sun);outline-offset:.15cqw}
+.cat.on .nm{background:var(--sun)}
+.cat.on::before{content:"✓";position:absolute;z-index:2;bottom:3.4cqw;inset-inline-end:.8cqw;width:2.4cqw;height:2.4cqw;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-weight:900;font-size:1.4cqw;box-shadow:0 .2cqw .6cqw #0003}
+
+/* bottom tray */
+.tray{display:flex;align-items:center;gap:2cqw;padding:1cqw 3cqw 1.4cqw;background:linear-gradient(transparent,#fff7ec 30%)}
+.team{flex:1;display:flex;align-items:center;gap:1cqw;background:#fff;border-radius:1.4cqw;padding:.8cqw 1.4cqw;box-shadow:0 .4cqw 1.2cqw #2a1e4a14}
+.team .dot{width:1.4cqw;height:1.4cqw;border-radius:50%;background:var(--tc)}
+.team b{font-family:var(--display);font-weight:400;font-size:1.8cqw;color:var(--tc)}
+.team .money{margin-inline-start:auto;font-family:var(--display);font-size:2.2cqw;font-variant-numeric:tabular-nums}
+.slots{display:flex;gap:.7cqw}
+.slot{width:4.4cqw;height:3.4cqw;border-radius:.9cqw;border:.2cqw dashed #cbbfe0;display:grid;place-items:center;color:#cbbfe0;font-weight:900;font-size:1.6cqw}
+.slot.full{border:0;background:var(--c);color:#fff;font-size:1.1cqw;font-weight:800;text-align:center;line-height:1.1;padding:.2cqw}
+.go{font-family:var(--display);font-size:2cqw;background:var(--brand);color:#fff;border-radius:1.2cqw;padding:.6cqw 2.6cqw;box-shadow:0 .4cqw 0 var(--brand2);cursor:pointer;border:0}
+.go[disabled]{opacity:.45;cursor:default}
+
+/* board */
+.board{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:auto repeat(3,1fr);gap:1.1cqw;flex:1;min-height:0}
+.colh{display:flex;align-items:center;gap:.7cqw;justify-content:center;background:var(--c);color:#fff;border-radius:1.1cqw;padding:.7cqw;font-weight:900;font-size:1.45cqw}
+.colh svg{width:1.8cqw;height:1.8cqw}
+.tile{background:#fff;border-radius:1.2cqw;box-shadow:0 .4cqw 1.2cqw #2a1e4a12,0 .2cqw 0 var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 1.4cqw;cursor:pointer;position:relative;overflow:hidden;transition:transform .15s}
+.tile:hover{transform:translateY(-.3cqw)}
+.tile::before{content:"";position:absolute;inset:0 auto 0 0;width:.6cqw;background:var(--c)}
+.tile b{font-family:var(--display);font-weight:400;font-size:3cqw;color:var(--c);font-variant-numeric:tabular-nums}
+.tile small{font-weight:800;font-size:1.2cqw;color:var(--mute);text-align:end;line-height:1.3}
+.tile.done{background:repeating-linear-gradient(-45deg,#f6f1fb 0 .8cqw,#fff 0 1.6cqw);cursor:default}
+.tile.done::before{background:var(--tc)}
+.tile.done b{font-size:1.7cqw;color:var(--tc)}
+.turn{display:flex;align-items:center;gap:.8cqw;font-weight:800;font-size:1.5cqw}
+.turn .pill{background:var(--t1);color:#fff;border-radius:999px;padding:.2cqw 1.2cqw}
+.helps{display:flex;gap:.5cqw}
+.helps span{width:2.6cqw;height:2.6cqw;border-radius:50%;background:#f3eefc;display:grid;place-items:center;font-size:1.2cqw}
+.helps span.used{opacity:.3}
+
+@keyframes rise{from{transform:translateY(2cqw);opacity:0}}
+.grid .cat,.board>*{animation:rise .45s cubic-bezier(.2,1.2,.4,1) both}
+@media (prefers-reduced-motion:reduce){.tv *{animation:none!important;transition:none!important}}
+</style>
+
+<main dir="rtl">
+<div class="tabs" role="tablist" id="tabs">
+  <button role="tab" data-k="cats" aria-selected="true">اختيار الفئات</button>
+  <button role="tab" data-k="board" aria-selected="false">لوحة الأسئلة</button>
+</div>
+<p class="hint">معاينة لفكرة «مرتب وفيه حياة»: شريط علوي ثابت، والشاشة مليانة ومنظمة، وتفاصيل صغيرة، وشريط سفلي للفريقين. اضغط على الفئات.</p>
+<div id="screen"></div>
+</main>
+
+<script>
+const ICONS={
+  ball:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/><path d="M12 3v4M21 10l-5 0M18 19l-3.5-4.5M6 19l3.5-4.5M3 10h5"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>',
+  pot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16v2a7 7 0 0 1-7 7h-2a7 7 0 0 1-7-7z"/><path d="M9 7c0-1 1-1 1-2M13 7c0-1 1-1 1-2"/></svg>',
+  flask:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 15h9"/></svg>',
+  bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  paw:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="9" r="1.8"/><circle cx="12" cy="6.5" r="1.8"/><circle cx="17" cy="9" r="1.8"/><path d="M12 12c-3 0-5 3-5 5 0 1.5 1.5 2 2.5 1.5S11 18 12 18s1.5 0 2.5.5S17 18.5 17 17c0-2-2-5-5-5z"/></svg>',
+  trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6"/></svg>',
+  scroll:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h11v13a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-1h11v1a3 3 0 0 0 3 3"/><path d="M7 4a2 2 0 0 0-2 2v10M10 8h5M10 12h5"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14A8 8 0 1 1 10 4a6.5 6.5 0 0 0 10 10z"/></svg>'
+};
+const CATS=[
+  ['كورة سعودية','ball','#1fa36a',68],['جغرافيا','globe','#2f7bff',72],['أكلات شعبية','pot','#ff8a3d',54],['علوم','flask','#8b5cf6',80],['معلومات عامة','bulb','#f2a900',95],['جغرافيا السعودية','pin','#14a3a3',60],
+  ['حيوانات','paw','#c27c2c',48],['رياضة عالمية','trophy','#e0475b',66],['تاريخ السعودية','scroll','#7a5230',57],['تقنية','phone','#3b4cca',62],['لغة عربية','pen','#d64ba0',58],['ثقافة إسلامية','moon','#0f8a6a',70]
+];
+const bar=(right)=>`<div class="bar"><div class="logo"><i>؟</i>أجل <span>كم؟</span></div><nav class="nav"><span>كيف تلعب</span><span>الباقات</span></nav><div class="spacer"></div>${right}</div>`;
+
+function cats(){
+  const picked=[1,4,0];
+  const card=([n,ic,c,count],i)=>`<div class="cat ${picked.includes(i)?'on':''}" data-i="${i}" style="--c:${c};animation-delay:${i*.03}s" tabindex="0">
+    <div class="top">${ICONS[ic]}<span class="badge">${count} سؤال</span><span class="info">i</span></div><div class="nm">${n}</div></div>`;
+  const slots=()=>Array.from({length:5},(_,k)=>{const i=picked[k];return i===undefined?`<span class="slot">+</span>`:`<span class="slot full" style="--c:${CATS[i][2]}">${CATS[i][0]}</span>`}).join('');
+  return `<div class="tv">${bar('<span class="chip">🎁 لعبة مجانية</span><span class="cta">العب الآن</span>')}
+    <div class="content"><div class="title"><h2>اختاروا 5 فئات</h2><p>كل فئة تصير عمود في لوحة الأسئلة</p></div>
+      <div class="grid" id="grid">${CATS.map(card).join('')}</div></div>
+    <div class="tray"><div class="team" style="--tc:var(--brand)"><b>فئات اللعبة</b><div class="slots" id="slots">${slots()}</div><button class="go" id="go" ${picked.length<5?'disabled':''}>التالي</button></div></div>
+  </div>`;
+}
+function board(){
+  const cols=[0,1,4,6,10];
+  const head=cols.map(i=>`<div class="colh" style="--c:${CATS[i][2]}">${ICONS[CATS[i][1]]}${CATS[i][0]}</div>`).join('');
+  const lv=[[200,'سهل'],[400,'وسط'],[600,'صعب']];
+  const done={'0-0':['الصقور +200','var(--t1)'],'2-1':['النمور +400','var(--t2)'],'4-0':['الصقور · سرقة','var(--t1)']};
+  let tiles='';lv.forEach(([v,l],r)=>cols.forEach((i,c)=>{const d=done[c+'-'+r];
+    tiles+=d?`<div class="tile done" style="--c:${CATS[i][2]};--tc:${d[1]}"><b>${d[0]}</b></div>`
+            :`<div class="tile" style="--c:${CATS[i][2]}" tabindex="0"><b>${v}</b><small>${l}<br>${v}–${v*5}</small></div>`}));
+  const team=(n,c,m,used)=>`<div class="team" style="--tc:${c}"><span class="dot"></span><b>${n}</b><div class="helps">${['📞','🔍','🔤'].map((e,k)=>`<span class="${used.includes(k)?'used':''}">${e}</span>`).join('')}</div><span class="money">${m}</span></div>`;
+  return `<div class="tv">${bar('<span class="chip">سؤال 4 من 15</span><div class="turn"><span class="pill">دور الصقور</span>يختارون بطاقة</div>')}
+    <div class="content"><div class="board">${head}${tiles}</div></div>
+    <div class="tray">${team('الصقور','var(--t1)','5,800',[1])}${team('النمور','var(--t2)','4,200',[])}</div>
+  </div>`;
+}
+const S={cats,board};
+function show(k){
+  document.getElementById('screen').innerHTML=S[k]();
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===k));
+  const g=document.getElementById('grid');
+  if(g){const picked=[...g.querySelectorAll('.cat.on')].map(x=>+x.dataset.i);
+    g.onclick=e=>{const c=e.target.closest('.cat');if(!c)return;const i=+c.dataset.i,at=picked.indexOf(i);
+      if(at>=0)picked.splice(at,1);else if(picked.length<5)picked.push(i);
+      g.querySelectorAll('.cat').forEach(x=>x.classList.toggle('on',picked.includes(+x.dataset.i)));
+      document.getElementById('slots').innerHTML=Array.from({length:5},(_,k)=>{const j=picked[k];return j===undefined?`<span class="slot">+</span>`:`<span class="slot full" style="--c:${CATS[j][2]}">${CATS[j][0]}</span>`}).join('');
+      document.getElementById('go').disabled=picked.length<5}}
+}
+document.getElementById('tabs').onclick=e=>{const b=e.target.closest('button');if(b)show(b.dataset.k)};
+show('cats');
+</script>
